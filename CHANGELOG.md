@@ -54,6 +54,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ajv 8 JSON Schema 2020-12 validation; graceful fallback to raw JSON for unsupported constructs
   - 51 unit tests (98 total)
   - Wired into the request panel with a Form / Raw mode toggle per tool
+- Per-tool canned requests: "Save as…" stores the current form value under
+  a user-chosen name in localStorage; "Load saved" dropdown restocks the form.
+- Shareable URLs: deflate-raw + base64url-encoded hash fragment carrying
+  server URL + transport + tool + arguments; the `ShareUrlLoader` component
+  materialises the link on recipient page load (but does not auto-connect).
+  Tokens are never included.
+- 5 additional unit tests for the shareable URL encoder (108 total).
 
 ### Changed
 

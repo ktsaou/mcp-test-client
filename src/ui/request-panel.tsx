@@ -4,6 +4,8 @@ import { useConnection } from '../state/connection.tsx';
 import { useLog } from '../state/log.tsx';
 import { JsonView } from './json-view.tsx';
 import { SchemaForm, type JSONSchema } from '../schema-form/index.ts';
+import { CannedRequests } from './canned-requests.tsx';
+import { ShareButton } from './share-button.tsx';
 import type { Selection } from './inspector.tsx';
 
 interface Props {
@@ -181,6 +183,10 @@ export function RequestPanel({ selection }: Props) {
             </button>
           </div>
         ) : null}
+
+        <CannedRequests selection={selection} formValue={formValue} onLoad={setFormValue} />
+
+        <ShareButton selection={selection} formValue={formValue} rawText={text} mode={mode} />
 
         <button
           className="btn btn--primary"

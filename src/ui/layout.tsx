@@ -5,11 +5,13 @@ import { Inspector, type Selection } from './inspector.tsx';
 import { LogPanel } from './log-panel.tsx';
 import { RequestPanel } from './request-panel.tsx';
 import { ServerPicker } from './server-picker.tsx';
+import { ShareUrlLoader } from './share-url-loader.tsx';
 
 export function Layout() {
   const [selection, setSelection] = useState<Selection | null>(null);
   return (
     <div className="shell">
+      <ShareUrlLoader />
       <ConnectionBar />
       <ServerPicker />
       <div className="shell__main">

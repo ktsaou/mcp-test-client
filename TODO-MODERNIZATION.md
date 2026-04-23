@@ -178,15 +178,14 @@ each box as the phase lands.
 - [x] Integrated into request-panel.tsx with Form / Raw mode toggle
 - [ ] Conformance suite of real-world MCP server schemas (Phase 8 follow-up)
 
-### Phase 6 — Request / response UX
+### Phase 6 — Request / response UX (partial)
 
-- [ ] Form editor ↔ raw JSON editor bidirectional sync
-- [ ] "Import from LLM paste" — parse messy tool-call JSON
-- [ ] Per-tool canned-request save/load in localStorage
-- [ ] Full message log with syntax highlighting and copy-to-clipboard
-- [ ] Shareable URL — hash fragment encodes server URL + tool + params
-      (see `specs/shareable-urls.md`)
-- [ ] History tab
+- [x] Form editor ↔ raw JSON editor bidirectional sync (Phase 5 integrated)
+- [x] Per-tool canned-request save/load in localStorage (with delete)
+- [x] Full message log with syntax highlighting (Phase 4)
+- [x] Shareable URL — deflate-raw + base64url in the hash fragment; decoder materialises the server on load
+- [ ] "Import from LLM paste" — parse messy tool-call JSON (post-v1.0)
+- [ ] History tab (post-v1.0)
 
 ### Phase 7 — Public servers catalog ✅
 
