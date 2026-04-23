@@ -144,13 +144,13 @@ each box as the phase lands.
 - [x] `src/mcp/client.ts` — thin wrapper around SDK `Client` with our defaults
 - [x] Unit tests for each (25 tests green)
 
-### Phase 3 — Persistence + state
+### Phase 3 — Persistence (storage wrapper)
 
-- [ ] `src/persistence/store.ts` — typed, namespaced localStorage wrapper
-- [ ] `src/persistence/schema.ts` — versioned storage schema (v1)
-- [ ] `src/persistence/migrations.ts` — empty for v1, ready for future versions
-- [ ] `src/state/` — React contexts for servers, connection, theme, log
-- [ ] Unit tests for migrations and store
+- [x] `src/persistence/schema.ts` — v1 keys + value types (ServerEntry, HistoryRecord, etc.)
+- [x] `src/persistence/store.ts` — typed, namespaced localStorage wrapper with quota handling
+- [x] `src/persistence/migrations.ts` — version framework; empty until v2
+- [x] Unit tests for store + migrations (21 tests; 46 total green)
+- [ ] **Next**: `src/state/` — React contexts wiring Store + McpClient into the UI (Phase 4)
 
 ### Phase 4 — UI shell + theming
 

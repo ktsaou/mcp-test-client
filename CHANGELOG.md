@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `logging-transport.ts` — decorator surfacing every JSON-RPC message to a subscriber
   - `client.ts` — thin `McpClient` wrapper around the SDK `Client` with our defaults
   - 25 unit tests covering transport selection, decorator semantics, and connect/init flow
+- `src/persistence/` — typed localStorage layer:
+  - `schema.ts` — key namespace `mcptc:*`, v1 value types (ServerEntry, HistoryRecord)
+  - `store.ts` — Store class with JSON round-tripping, quota-error reporting, and bulk reset
+  - `migrations.ts` — version framework with discriminated outcome (fresh / upToDate / migrated / downgrade)
+  - 21 additional unit tests (46 total green)
 
 ### Changed
 
