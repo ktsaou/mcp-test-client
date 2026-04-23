@@ -1,90 +1,91 @@
-# MCP Test Client
+# mcp-test-client
 
-A zero-install, browser-based client for **exploring any online MCP server** — paste a URL, connect, and interact with the server's tools, prompts, and resources through auto-generated forms. Everything runs client-side; nothing is sent anywhere except your browser and the MCP server you point at.
+A zero-install, browser-only test client for exploring public [Model Context
+Protocol](https://modelcontextprotocol.io) servers.
 
-No install. No backend. Open the URL in a browser and connect.
+Paste a URL, connect, and interact with a server's tools, prompts, and
+resources through auto-generated forms. Nothing is sent anywhere except your
+browser and the MCP server you point at. No backend, no account, no
+telemetry.
 
-## What it is for
+**Status**: rewrite in progress. See [`TODO-MODERNIZATION.md`](TODO-MODERNIZATION.md).
 
-This is for **exploring other people's online MCP servers**:
+## What it's for
 
-- Evaluating a public MCP service before deciding to integrate it
-- Inspecting what tools, prompts, and resources a given server exposes
-- Invoking tools interactively to see the real response shapes
-- Sharing a reproducible "here is the tool call" link with a teammate
+- **Evaluating a public MCP server** before you integrate it
+- **Seeing what a server exposes** — tools, prompts, resources, their schemas
+- **Exercising a tool interactively** without writing any code
+- **Sharing a reproducible "here's the call I made"** via a copy-able URL
 
-It is **not** for testing an MCP server you're writing locally — for that, use [MCP Inspector](https://github.com/modelcontextprotocol/inspector), which is installable locally and supports stdio transport.
+It is **not** for testing an MCP server you are writing locally. For that,
+use [MCP Inspector](https://github.com/modelcontextprotocol/inspector) —
+it's installable, spawns your stdio server, and proxies to a browser UI.
 
-## Transports supported
+## Transports
 
-- **Streamable HTTP** (`https://…`)
-- **Server-Sent Events / SSE** (`https://…`)
-- **WebSocket** (`wss://…`)
+| Transport | Status | URL scheme |
+|-----------|--------|------------|
+| Streamable HTTP (current MCP spec) | ✅ | `https://…` |
+| Server-Sent Events (legacy, pre-2025-03) | ✅ | `https://…` |
+| WebSocket (custom, not in MCP spec — see [`specs/websocket-transport.md`](specs/websocket-transport.md)) | ✅ | `wss://…` |
+| stdio | ❌ browsers cannot spawn processes |
 
-**Not supported**: `stdio` (browsers cannot spawn processes) and unencrypted `http://` / `ws://` to non-localhost addresses (browsers block mixed content).
-
-## Features
-
-- **Multi-transport**: WebSocket, Streamable HTTP, SSE — choose per server
-- **Schema-driven forms**: auto-generates input widgets for any tool's JSON Schema, including:
-  - `anyOf` / `oneOf` unions — tab switcher between type options
-  - `additionalProperties` — editable key/value maps
-  - Arrays, tuple arrays, array-of-objects
-  - Enums as dropdowns or multi-select checkboxes
-- **Three ways to send**: generated form, raw JSON editor, or schema inspector
-- **Send with / without validation**: deliberately bypass client-side checks to exercise server-side validation
-- **Import from LLM output**: paste a tool call your LLM produced (even with backtick-quoted JSON) and the client converts it to a valid request
-- **Full message log**: every JSON-RPC request and response, colored and pretty-printed
-- **Local-first persistence**: server list, transport preferences, auth tokens, and per-tool last-used parameters are saved in browser `localStorage`. No account, no sync, no telemetry.
-- **Bearer token auth**: configurable per server
+Mixed content (plain `http://` or `ws://` to non-localhost) is blocked by
+browsers and will not work.
 
 ## Quick start
 
-### Option A — use the hosted version
-Open https://ktsaou.github.io/mcp-test-client/ and enter your MCP server URL.
+**Hosted version** (once v1.0 ships): https://ktsaou.github.io/mcp-test-client/
 
-### Option B — run locally
+**Run locally**:
+
 ```bash
 git clone https://github.com/ktsaou/mcp-test-client
 cd mcp-test-client
-# Open index.html in a browser
-```
-Or serve it from any static HTTP server:
-```bash
-python3 -m http.server 8080
-# open http://localhost:8080
+npm install
+npm run dev
 ```
 
-## How connections work
+Then open http://localhost:5173 and add a server.
 
-The client talks directly from your browser to the MCP server. The tool never proxies your traffic through a backend — there is no backend.
+## Known limitation: CORS
 
-For this to work, the target MCP server must:
+Because this app talks directly from your browser to the MCP server, the
+server **must** include CORS headers allowing your origin — either our
+hosted origin or `http://localhost:5173` if you run it locally. If the
+server does not permit your origin, the browser will block the connection
+and there is nothing the client can do about it. See
+[`docs/cors-explainer.md`](docs/cors-explainer.md) for what a server
+operator has to configure.
 
-- Be reachable over `https://` or `wss://`
-- Send the appropriate **CORS headers** (`Access-Control-Allow-Origin`) for the origin you're loading the client from
-- Accept an `Authorization: Bearer <token>` header if authentication is required
+## Features
 
-If CORS is not configured on the server, the browser will refuse the connection. That is the server's responsibility — the client cannot work around it.
+- Multi-transport: Streamable HTTP, SSE, WebSocket
+- JSON Schema 2020-12 form generator: unions, tuples, dynamic objects,
+  arrays-of-objects, enums, `$ref` / `$defs`, `allOf`
+- Three send modes: form, raw JSON, schema inspector
+- Send with or without client-side validation
+- "Import from LLM paste" — tolerant parser for sloppy tool-call JSON
+- Full message log with syntax highlighting
+- Dark and light themes (dark default)
+- Shareable URLs — copy a link that opens a pre-filled request on the
+  recipient's browser
+- Public servers catalog — curated list of known-good public MCP servers
+- localStorage persistence: servers, themes, last-used params, canned
+  requests. No backend, no sync, no telemetry.
 
-## File layout
+## For contributors
 
-| File | Purpose |
-|------|---------|
-| `index.html` | Main UI shell — transport selection, server list, request/response panels |
-| `mcp-schema-ui-generator.js` | JSON Schema → HTML form generator (handles unions, dynamic objects, tuples, etc.) |
-| `json-pretty-printer.js` | JSON response formatter with syntax highlighting and nested-JSON detection |
-
-No dependencies. No build step.
-
-## Contributing
-
-Pull requests welcome. If you find a tool schema that doesn't render cleanly, open an issue with a minimal reproduction (the offending schema + a short description).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Internal design decisions live in
+[`specs/`](specs/); the maintainer runbook is in [`CLAUDE.md`](CLAUDE.md).
 
 ## License
 
-GPL-3.0-or-later. See `LICENSE`.
+GPL-3.0-or-later. Fork freely; vendoring into closed software is not
+permitted under GPL.
 
 ## History
 
-Originally developed as part of [Netdata](https://github.com/netdata/netdata) to test Netdata's MCP server implementation. Extracted and positioned as a general-purpose MCP exploration tool.
+Extracted from [Netdata's MCP test client](https://github.com/netdata/netdata),
+originally built to exercise Netdata's MCP server. Re-positioned as a
+general-purpose tool for the community.
