@@ -129,28 +129,28 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
       <div className="modal" role="dialog" aria-label="Server details">
         <h2>{spec.mode === 'add' ? 'Add MCP server' : 'Edit server'}</h2>
 
-        <div className="field">
-          <label>Name</label>
+        <label className="field">
+          <span>Name</span>
           <input
             className="input"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Friendly name (optional)"
           />
-        </div>
+        </label>
 
-        <div className="field">
-          <label>URL</label>
+        <label className="field">
+          <span>URL</span>
           <input
             className="input"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://example.com/mcp or wss://…"
           />
-        </div>
+        </label>
 
-        <div className="field">
-          <label>Transport</label>
+        <label className="field">
+          <span>Transport</span>
           <select
             className="select"
             value={transport}
@@ -161,10 +161,10 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
             <option value="sse-legacy">SSE (legacy)</option>
             <option value="websocket">WebSocket (custom)</option>
           </select>
-        </div>
+        </label>
 
-        <div className="field">
-          <label>Authentication</label>
+        <label className="field">
+          <span>Authentication</span>
           <select
             className="select"
             value={authKind}
@@ -174,11 +174,11 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
             <option value="bearer">Bearer token</option>
             <option value="header">Custom header</option>
           </select>
-        </div>
+        </label>
 
         {authKind === 'bearer' ? (
-          <div className="field">
-            <label>Bearer token</label>
+          <label className="field">
+            <span>Bearer token</span>
             <input
               className="input"
               type="password"
@@ -186,29 +186,29 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
               onChange={(e) => setToken(e.target.value)}
               placeholder="paste token"
             />
-          </div>
+          </label>
         ) : null}
 
         {authKind === 'header' ? (
           <>
-            <div className="field">
-              <label>Header name</label>
+            <label className="field">
+              <span>Header name</span>
               <input
                 className="input"
                 value={headerName}
                 onChange={(e) => setHeaderName(e.target.value)}
                 placeholder="X-Api-Key"
               />
-            </div>
-            <div className="field">
-              <label>Header value</label>
+            </label>
+            <label className="field">
+              <span>Header value</span>
               <input
                 className="input"
                 type="password"
                 value={headerValue}
                 onChange={(e) => setHeaderValue(e.target.value)}
               />
-            </div>
+            </label>
           </>
         ) : null}
 

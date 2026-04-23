@@ -1,0 +1,5 @@
+{
+  "$schema": "./public-servers.schema.json",
+  "version": 1,
+  "servers": []
+}

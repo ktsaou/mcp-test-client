@@ -31,11 +31,23 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env['CI'],
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  webServer: [
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env['CI'],
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+    {
+      command:
+        'node --experimental-strip-types tests/fixtures/mock-mcp-server/run.ts',
+      url: 'http://127.0.0.1:4321/health',
+      reuseExistingServer: !process.env['CI'],
+      stdout: 'pipe',
+      stderr: 'pipe',
+      env: { MOCK_MCP_PORT: '4321' },
+      ignoreHTTPSErrors: true,
+    },
+  ],
 });

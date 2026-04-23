@@ -7,6 +7,10 @@ export default defineConfig({
   // Serve Vite from the repo root; the actual entry document lives in src/.
   root: 'src',
 
+  // Static assets (public-servers.json etc.) live at the repo root so they
+  // can be PR-updated separately from application code.
+  publicDir: '../public',
+
   // Use relative paths so the built app works under any subpath.
   // GitHub Pages serves at `<user>.github.io/<repo>/`, which would break
   // absolute-rooted asset URLs. Relative asset URLs work everywhere.

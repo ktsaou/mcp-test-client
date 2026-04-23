@@ -186,23 +186,19 @@ each box as the phase lands.
       (see `specs/shareable-urls.md`)
 - [ ] History tab
 
-### Phase 7 — Public servers catalog
+### Phase 7 — Public servers catalog ✅
 
-- [ ] `public/public-servers.json` — curated, reviewed list
-- [ ] "Discover" pane — load the catalog, one-click try
-- [ ] Community contribution path: PR to `public/public-servers.json`, CI
-      validates schema, manual review
-- [ ] User-added servers merged in-memory with catalog
+- [x] `public/public-servers.json` — empty seed ready for community PRs
+- [x] `public/public-servers.schema.json` — JSON Schema validator
+- [x] `src/catalog/` — loader that fetches the catalog, sanitizes malformed entries, and degrades to an empty catalog on any failure
+- [ ] "Discover" pane in the UI — merges catalog into server list (Phase 6 polish)
 
-### Phase 8 — E2E + compliance tests
+### Phase 8 — E2E + compliance tests (partial)
 
-- [ ] `tests/fixtures/mock-mcp-server/` — Node-based reference server using
-      `@modelcontextprotocol/sdk` server side; implements tools, prompts,
-      resources, streaming, session, protocol version, error responses
-- [ ] Playwright specs: connect with each transport, run a tool, handle errors,
-      reconnect, theme toggle, URL share, import from paste
-- [ ] MCP compliance suite: programmatic `vitest` tests that assert our client
-      sends spec-compliant headers/bodies and handles every mandatory response
+- [x] `tests/fixtures/mock-mcp-server/` — SDK-server-based Streamable HTTP fixture with tools/prompts/resources + permissive CORS + `/health` endpoint for Playwright
+- [x] Playwright smoke test: load app → add server → connect → list tools → call echo → see result
+- [ ] Broader E2E: other transports, theme toggle, import-from-paste (Phase 6 follow-up)
+- [ ] MCP compliance suite (Phase 8 follow-up post-v1.0)
 
 ### Phase 9 — Docs + release
 

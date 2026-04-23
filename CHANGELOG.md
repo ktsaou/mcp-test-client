@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     inspector tabs (tools/prompts/resources/templates), raw JSON-RPC request panel with template seeding,
     auto-scrolling wire-message log, React-element JSON pretty-printer, dark/light/system theme cycling
   - Happy-dom + in-memory localStorage polyfill for the test environment
+- Public servers catalog scaffolding:
+  - `public/public-servers.json` shipped as a static asset + `public-servers.schema.json` validator
+  - `src/catalog/` loader resilient to missing / malformed catalogs (4 tests, 51 total green)
+- E2E harness:
+  - `tests/fixtures/mock-mcp-server/` — SDK-based Streamable HTTP fixture with echo/add tools, a sample prompt, a sample resource, and permissive CORS
+  - Playwright smoke test that drives the full add → connect → list-tools → call-echo flow against the fixture
 
 ### Changed
 

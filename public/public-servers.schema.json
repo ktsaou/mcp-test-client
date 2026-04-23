@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ktsaou.github.io/mcp-test-client/public-servers.schema.json",
+  "title": "mcp-test-client — public servers catalog",
+  "description": "Shape of public/public-servers.json. See specs/public-servers-catalog.md.",
+  "type": "object",
+  "required": ["version", "servers"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "const": 1 },
+    "servers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/server" }
+    }
+  },
+  "$defs": {
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "url", "transport", "description", "auth", "addedAt", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "URL-safe slug. Stable once published."
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "url": { "type": "string", "format": "uri" },
+        "transport": {
+          "type": "string",
+          "enum": ["streamable-http", "sse-legacy", "websocket", "auto"]
+        },
+        "description": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+        },
+        "auth": {
+          "type": "string",
+          "enum": ["none", "bearer", "oauth", "header"]
+        },
+        "docs": { "type": "string", "format": "uri" },
+        "addedAt": { "type": "string", "format": "date" },
+        "status": {
+          "type": "string",
+          "enum": ["active", "unstable", "retired"]
+        }
+      }
+    }
+  }
+}

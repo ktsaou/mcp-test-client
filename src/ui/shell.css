@@ -252,7 +252,8 @@
   gap: 4px;
 }
 
-.field label {
+.field > span,
+.field > label {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
 }
