@@ -55,8 +55,23 @@ users:
 
 ### 2.3 A malicious origin iframing us
 
-We emit `X-Frame-Options: DENY` via `<meta>` and a
-`frame-ancestors 'none'` CSP. Embedding is not supported.
+Clickjacking protection is the hosting layer's responsibility. Browsers
+ignore `X-Frame-Options` and `frame-ancestors` when delivered via
+`<meta>` — both directives only take effect as HTTP response headers.
+
+- **GitHub Pages** (the canonical deploy) does not let us set response
+  headers, so the page is embeddable from there. Users who care about
+  clickjacking should self-host behind a server that adds
+  `Content-Security-Policy: frame-ancestors 'none'` or
+  `X-Frame-Options: DENY`.
+- **Self-hosted deployments** should configure their web server (nginx,
+  Caddy, a CDN, etc.) to set those headers.
+
+The app itself has no sensitive in-frame interactions: there is no
+login, no confirmation dialogs that could be clickjacked into
+auto-confirming, and no privileged actions gated on clicks rather than
+explicit user-typed input. The risk is low; the mitigation belongs at
+the hosting layer.
 
 ### 2.4 The hosting provider (GitHub Pages)
 
@@ -93,10 +108,12 @@ script-src 'self';
 style-src 'self' 'unsafe-inline';
 img-src 'self' data:;
 font-src 'self';
-frame-ancestors 'none';
 base-uri 'self';
 form-action 'none';
 ```
+
+`frame-ancestors` is intentionally omitted from the meta CSP — browsers
+ignore it when delivered via `<meta>`. See §2.3.
 
 Notes:
 
