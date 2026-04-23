@@ -1,0 +1,27 @@
+.json-view {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.json-key {
+  color: var(--color-syntax-key);
+}
+.json-string {
+  color: var(--color-syntax-string);
+}
+.json-number {
+  color: var(--color-syntax-number);
+}
+.json-boolean {
+  color: var(--color-syntax-boolean);
+}
+.json-null {
+  color: var(--color-syntax-null);
+}
+.json-punct {
+  color: var(--color-syntax-punct);
+}

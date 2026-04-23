@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `store.ts` — Store class with JSON round-tripping, quota-error reporting, and bulk reset
   - `migrations.ts` — version framework with discriminated outcome (fresh / upToDate / migrated / downgrade)
   - 21 additional unit tests (46 total green)
+- End-to-end UI shell — first visibly-functional build:
+  - `src/state/` React Context providers (theme, servers, log, connection) over the Store and McpClient
+  - `src/ui/` — grid layout with header/sidebar/main/log, server CRUD modal, connection bar with status pill,
+    inspector tabs (tools/prompts/resources/templates), raw JSON-RPC request panel with template seeding,
+    auto-scrolling wire-message log, React-element JSON pretty-printer, dark/light/system theme cycling
+  - Happy-dom + in-memory localStorage polyfill for the test environment
 
 ### Changed
 

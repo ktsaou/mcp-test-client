@@ -152,14 +152,19 @@ each box as the phase lands.
 - [x] Unit tests for store + migrations (21 tests; 46 total green)
 - [ ] **Next**: `src/state/` — React contexts wiring Store + McpClient into the UI (Phase 4)
 
-### Phase 4 — UI shell + theming
+### Phase 4 — UI shell + theming ✅
 
-- [ ] `src/ui/theme.css` — CSS custom properties for dark + light
-- [ ] `src/ui/theme-toggle.tsx` — system / dark / light
-- [ ] `src/ui/layout/` — sidebar, main, log panel
-- [ ] `src/ui/server-list/` — add / edit / delete / select
-- [ ] `src/ui/connection-bar/` — transport picker, connect button, status
-- [ ] Visual regression tests via Playwright screenshots
+- [x] `src/ui/theme.css` — CSS custom properties for dark + light (+ system)
+- [x] `src/ui/theme-toggle.tsx` — cycle system → dark → light
+- [x] `src/ui/layout.tsx` — grid shell (header / sidebar / main / log)
+- [x] `src/ui/server-picker.tsx` — add / edit / delete / select + modal
+- [x] `src/ui/connection-bar.tsx` — transport-aware, connect/disconnect, status pill
+- [x] `src/ui/inspector.tsx` — tools / prompts / resources / templates tabs
+- [x] `src/ui/request-panel.tsx` — raw JSON-RPC editor with template seeding + result view
+- [x] `src/ui/log-panel.tsx` — wire messages + system messages, auto-scroll, clear
+- [x] `src/ui/json-view.tsx` + `.css` — pretty-printer as React elements (no raw HTML)
+- [x] `src/state/` — theme, servers, log, connection contexts; lazy Store accessor
+- [ ] Visual regression tests via Playwright screenshots (Phase 8)
 
 ### Phase 5 — Schema form renderer (the crown jewel)
 
