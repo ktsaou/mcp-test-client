@@ -1,6 +1,13 @@
 /*
  * Theme system — CSS custom properties.
- * Dark is the default (see specs/persistence.md §1 and README).
+ *
+ * Colours are modelled on the VS Code Dark+/Light+ defaults so the app
+ * feels at home next to a developer's editor. Tokens keep the original
+ * semantic names (`--color-bg`, `--color-accent`, etc.) so consumers
+ * don't care which palette is underneath.
+ *
+ * VS Code colour references:
+ *   https://code.visualstudio.com/api/references/theme-color
  *
  * Activating a theme: set the `data-theme` attribute on <html>:
  *   <html data-theme="dark">   (default)
@@ -15,83 +22,99 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* Surface */
-  --color-bg: #0b0d10;
-  --color-bg-raised: #14171c;
-  --color-bg-sunken: #07080a;
-  --color-border: #252a31;
-  --color-border-subtle: #1a1e24;
+  /* Surface — VS Code Dark+ */
+  --color-bg: #1e1e1e; /* editor.background */
+  --color-bg-raised: #252526; /* sideBar.background */
+  --color-bg-sunken: #1e1e1e; /* panel.background */
+  --color-bg-titlebar: #3c3c3c; /* titleBar.activeBackground */
+  --color-bg-statusbar: #007acc; /* statusBar.background */
+  --color-border: #3c3c3c; /* editorGroup.border */
+  --color-border-subtle: #2d2d30; /* editorGroupHeader.tabsBackground */
 
   /* Text */
-  --color-text: #e6e9ef;
-  --color-text-muted: #9aa4b2;
-  --color-text-faint: #5a6472;
+  --color-text: #cccccc; /* editor foreground */
+  --color-text-muted: #858585; /* activityBar.inactiveForeground */
+  --color-text-faint: #6b6b6b;
+  --color-text-on-accent: #ffffff;
 
-  /* Accent */
-  --color-accent: #6ea8ff;
-  --color-accent-hover: #8cbcff;
-  --color-accent-muted: #2a3a5a;
+  /* Accent — VS Code status-bar / button blue */
+  --color-accent: #007acc; /* statusBar.background */
+  --color-accent-hover: #1177bb; /* button.hoverBackground */
+  --color-accent-muted: #0e639c; /* button.background */
 
   /* Status */
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
-  --color-info: #60a5fa;
+  --color-success: #89d185; /* gitDecoration.untrackedResourceForeground */
+  --color-warning: #cca700; /* editorWarning.foreground */
+  --color-danger: #f14c4c; /* editorError.foreground */
+  --color-info: #75beff; /* editorInfo.foreground */
 
-  /* Syntax highlighting (JSON viewer) */
-  --color-syntax-key: #8cbcff;
-  --color-syntax-string: #a3e4a3;
-  --color-syntax-number: #f0b77c;
-  --color-syntax-boolean: #f87171;
-  --color-syntax-null: #9aa4b2;
-  --color-syntax-punct: #5a6472;
+  /* Syntax highlighting (JSON viewer) — VS Code Dark+ tokens */
+  --color-syntax-key: #9cdcfe; /* variable / property */
+  --color-syntax-string: #ce9178; /* string */
+  --color-syntax-number: #b5cea8; /* number */
+  --color-syntax-boolean: #569cd6; /* keyword */
+  --color-syntax-null: #569cd6; /* keyword */
+  --color-syntax-punct: #cccccc; /* delimiter */
+
+  /* Input controls — VS Code Dark+ */
+  --color-input-bg: #3c3c3c;
+  --color-input-border: #3c3c3c;
+  --color-input-focus: #007fd4;
 
   /* Layout */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.5);
 
-  /* Typography */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Typography — VS Code default stacks */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif;
   --font-mono:
-    ui-monospace, 'SF Mono', Menlo, Monaco, 'Cascadia Mono', 'Roboto Mono', Consolas,
-    'DejaVu Sans Mono', monospace;
-  --font-size-base: 14px;
-  --font-size-sm: 12px;
-  --font-size-lg: 16px;
-  --line-height-base: 1.5;
+    Menlo, Monaco, Consolas, 'Droid Sans Mono', 'Courier New', monospace, 'Droid Sans Fallback';
+  --font-size-base: 13px; /* VS Code default */
+  --font-size-sm: 11px;
+  --font-size-lg: 14px;
+  --line-height-base: 1.4;
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --color-bg: #f7f8fa;
-  --color-bg-raised: #ffffff;
-  --color-bg-sunken: #eef1f5;
-  --color-border: #d5dae2;
-  --color-border-subtle: #e7ebf0;
+  /* Surface — VS Code Light+ */
+  --color-bg: #ffffff; /* editor.background */
+  --color-bg-raised: #f3f3f3; /* sideBar.background */
+  --color-bg-sunken: #ffffff; /* panel.background */
+  --color-bg-titlebar: #dddddd; /* titleBar.activeBackground */
+  --color-bg-statusbar: #007acc; /* statusBar.background */
+  --color-border: #e5e5e5;
+  --color-border-subtle: #ececec;
 
-  --color-text: #14171c;
-  --color-text-muted: #5a6472;
-  --color-text-faint: #9aa4b2;
+  --color-text: #3b3b3b;
+  --color-text-muted: #616161;
+  --color-text-faint: #959595;
+  --color-text-on-accent: #ffffff;
 
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
-  --color-accent-muted: #cfddff;
+  --color-accent: #0066b8;
+  --color-accent-hover: #005ba4;
+  --color-accent-muted: #0e639c;
 
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
-  --color-info: #2563eb;
+  --color-success: #388a34;
+  --color-warning: #bf8803;
+  --color-danger: #e51400;
+  --color-info: #1a85ff;
 
-  --color-syntax-key: #2563eb;
-  --color-syntax-string: #15803d;
-  --color-syntax-number: #b45309;
-  --color-syntax-boolean: #dc2626;
-  --color-syntax-null: #5a6472;
-  --color-syntax-punct: #9aa4b2;
+  --color-syntax-key: #0451a5;
+  --color-syntax-string: #a31515;
+  --color-syntax-number: #098658;
+  --color-syntax-boolean: #0000ff;
+  --color-syntax-null: #0000ff;
+  --color-syntax-punct: #3b3b3b;
+
+  --color-input-bg: #ffffff;
+  --color-input-border: #cecece;
+  --color-input-focus: #0090f1;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.12);
@@ -102,31 +125,38 @@
   :root[data-theme='system'] {
     color-scheme: light;
 
-    --color-bg: #f7f8fa;
-    --color-bg-raised: #ffffff;
-    --color-bg-sunken: #eef1f5;
-    --color-border: #d5dae2;
-    --color-border-subtle: #e7ebf0;
+    --color-bg: #ffffff;
+    --color-bg-raised: #f3f3f3;
+    --color-bg-sunken: #ffffff;
+    --color-bg-titlebar: #dddddd;
+    --color-bg-statusbar: #007acc;
+    --color-border: #e5e5e5;
+    --color-border-subtle: #ececec;
 
-    --color-text: #14171c;
-    --color-text-muted: #5a6472;
-    --color-text-faint: #9aa4b2;
+    --color-text: #3b3b3b;
+    --color-text-muted: #616161;
+    --color-text-faint: #959595;
+    --color-text-on-accent: #ffffff;
 
-    --color-accent: #2563eb;
-    --color-accent-hover: #1d4ed8;
-    --color-accent-muted: #cfddff;
+    --color-accent: #0066b8;
+    --color-accent-hover: #005ba4;
+    --color-accent-muted: #0e639c;
 
-    --color-success: #16a34a;
-    --color-warning: #d97706;
-    --color-danger: #dc2626;
-    --color-info: #2563eb;
+    --color-success: #388a34;
+    --color-warning: #bf8803;
+    --color-danger: #e51400;
+    --color-info: #1a85ff;
 
-    --color-syntax-key: #2563eb;
-    --color-syntax-string: #15803d;
-    --color-syntax-number: #b45309;
-    --color-syntax-boolean: #dc2626;
-    --color-syntax-null: #5a6472;
-    --color-syntax-punct: #9aa4b2;
+    --color-syntax-key: #0451a5;
+    --color-syntax-string: #a31515;
+    --color-syntax-number: #098658;
+    --color-syntax-boolean: #0000ff;
+    --color-syntax-null: #0000ff;
+    --color-syntax-punct: #3b3b3b;
+
+    --color-input-bg: #ffffff;
+    --color-input-border: #cecece;
+    --color-input-focus: #0090f1;
   }
 }
 
@@ -170,6 +200,6 @@ textarea {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: 1px solid var(--color-input-focus);
+  outline-offset: -1px;
 }

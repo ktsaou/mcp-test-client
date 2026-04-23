@@ -1,19 +1,51 @@
 /*
  * Shell layout + shared widget styles. All colours come from CSS custom
  * properties declared in theme.css.
+ *
+ * The layout adapts to viewport width:
+ *   - narrow  (< 1400px): log is a row at the bottom, resizable vertically.
+ *   - wide    (>= 1400px): log is a column on the right, resizable horizontally.
+ *
+ * Panel sizes live in CSS custom properties set by React via inline style:
+ *   --log-size           pixel size of the log panel (height or width, by layout)
+ *   --sidebar-size       pixel width of the sidebar
  */
 
 .shell {
+  /* Defaults; React overrides via inline --log-size / --sidebar-size. */
+  --log-size: 240px;
+  --sidebar-size: 280px;
+  --resizer-thickness: 4px;
+
   display: grid;
-  grid-template-columns: 280px 1fr;
-  grid-template-rows: 48px 1fr 240px;
+  grid-template-columns: var(--sidebar-size) 1fr;
+  grid-template-rows:
+    48px /* header */
+    1fr /* main */
+    var(--resizer-thickness) /* resizer */
+    var(--log-size); /* log */
   grid-template-areas:
-    'header header'
+    'header  header'
     'sidebar main'
+    'resizer resizer'
     'log     log';
   height: 100vh;
-  gap: 1px;
-  background-color: var(--color-border-subtle);
+  gap: 0;
+  background-color: var(--color-bg);
+}
+
+@media (min-width: 1400px) {
+  .shell {
+    grid-template-columns:
+      var(--sidebar-size)
+      1fr
+      var(--resizer-thickness)
+      var(--log-size);
+    grid-template-rows: 48px 1fr;
+    grid-template-areas:
+      'header  header header  header'
+      'sidebar main   resizer log';
+  }
 }
 
 .shell__header {
@@ -22,12 +54,13 @@
   align-items: center;
   padding: 0 16px;
   gap: 12px;
-  background-color: var(--color-bg-raised);
+  background-color: var(--color-bg-titlebar);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .shell__brand {
   font-weight: 600;
-  color: var(--color-accent);
+  color: var(--color-text);
   letter-spacing: 0.02em;
 }
 
@@ -35,6 +68,7 @@
   grid-area: sidebar;
   background-color: var(--color-bg-raised);
   overflow: auto;
+  border-right: 1px solid var(--color-border);
 }
 
 .shell__main {
@@ -42,12 +76,12 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1px;
-  background-color: var(--color-border-subtle);
+  background-color: var(--color-border);
   overflow: hidden;
 }
 
 .shell__panel {
-  background-color: var(--color-bg-raised);
+  background-color: var(--color-bg);
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -58,6 +92,50 @@
   background-color: var(--color-bg-sunken);
   overflow: auto;
   border-top: 1px solid var(--color-border);
+}
+
+@media (min-width: 1400px) {
+  .shell__log {
+    border-top: none;
+    border-left: 1px solid var(--color-border);
+  }
+}
+
+/* Resizer — thin draggable strip between main and log. */
+.resizer {
+  grid-area: resizer;
+  background-color: var(--color-border);
+  transition: background-color 0.12s;
+}
+
+.resizer:hover,
+.resizer:focus-visible {
+  background-color: var(--color-accent);
+  outline: none;
+}
+
+.resizer--horizontal {
+  cursor: row-resize;
+  height: 100%;
+  width: 100%;
+}
+
+.resizer--vertical {
+  cursor: col-resize;
+  height: 100%;
+  width: 100%;
+}
+
+/* In narrow layout the resizer is horizontal (log below); in wide, vertical. */
+@media (max-width: 1399.98px) {
+  .resizer {
+    cursor: row-resize;
+  }
+}
+@media (min-width: 1400px) {
+  .resizer {
+    cursor: col-resize;
+  }
 }
 
 /* Generic small components */
@@ -93,21 +171,21 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 4px 12px;
   font-size: var(--font-size-sm);
   border: 1px solid var(--color-border);
   background-color: var(--color-bg-raised);
   color: var(--color-text);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition:
-    background-color 0.12s,
-    border-color 0.12s;
+    background-color 0.08s,
+    border-color 0.08s;
 }
 
 .btn:hover {
-  background-color: var(--color-bg);
-  border-color: var(--color-text-muted);
+  background-color: var(--color-bg-titlebar);
+  border-color: var(--color-border);
 }
 
 .btn:disabled {
@@ -116,10 +194,9 @@
 }
 
 .btn--primary {
-  background-color: var(--color-accent);
-  color: var(--color-bg);
-  border-color: var(--color-accent);
-  font-weight: 600;
+  background-color: var(--color-accent-muted);
+  color: var(--color-text-on-accent);
+  border-color: var(--color-accent-muted);
 }
 
 .btn--primary:hover {
@@ -140,19 +217,20 @@
 
 .btn--ghost:hover {
   color: var(--color-text);
-  background-color: var(--color-bg);
+  background-color: var(--color-bg-raised);
+  border-color: transparent;
 }
 
 .input,
 .textarea,
 .select {
   width: 100%;
-  padding: 6px 10px;
+  padding: 4px 8px;
   font-size: var(--font-size-base);
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
   color: var(--color-text);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   font-family: inherit;
 }
 
@@ -166,9 +244,9 @@
 .input:focus,
 .textarea:focus,
 .select:focus {
-  outline: 2px solid var(--color-accent);
+  outline: 1px solid var(--color-input-focus);
   outline-offset: -1px;
-  border-color: var(--color-accent);
+  border-color: var(--color-input-focus);
 }
 
 .row {
