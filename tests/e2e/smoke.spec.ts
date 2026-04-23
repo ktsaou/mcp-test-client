@@ -29,20 +29,16 @@ test('loads, connects to mock server, and sees its tools', async ({ page }) => {
   await expect(page.getByText('echo').first()).toBeVisible();
   await expect(page.getByText('add').first()).toBeVisible();
 
-  // Click echo → a JSON-RPC template should land in the textarea.
+  // Click echo → the schema-driven form appears.
   await page.getByText('echo').first().click();
-  const editor = page.locator('textarea.textarea');
-  await expect(editor).toContainText('tools/call');
-  await expect(editor).toContainText('"echo"');
 
-  // Fire the request with the default empty arguments.
-  // Fill in a string to exercise real content.
-  const raw = await editor.inputValue();
-  const patched = raw.replace(
-    '"arguments": {}',
-    '"arguments": { "text": "hi from test" }',
-  );
-  await editor.fill(patched);
+  // Fill the "text" field the tool declares as required.
+  const textInput = page
+    .locator('.shell__panel')
+    .last()
+    .getByRole('textbox')
+    .first();
+  await textInput.fill('hi from test');
 
   await page.getByRole('button', { name: 'Send' }).click();
 

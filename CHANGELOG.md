@@ -48,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - E2E harness:
   - `tests/fixtures/mock-mcp-server/` — SDK-based Streamable HTTP fixture with echo/add tools, a sample prompt, a sample resource, and permissive CORS
   - Playwright smoke test that drives the full add → connect → list-tools → call-echo flow against the fixture
+- Schema-driven form renderer at `src/schema-form/`:
+  - Every field type (string/number/boolean/enum/array/tuple/object/additionalProperties) with a bespoke widget
+  - `$ref` / `$defs` resolution with cycle detection, `allOf` merge with conflict detection, `anyOf`/`oneOf` as tab switcher, `const`-discriminator labelling
+  - Ajv 8 JSON Schema 2020-12 validation; graceful fallback to raw JSON for unsupported constructs
+  - 51 unit tests (98 total)
+  - Wired into the request panel with a Form / Raw mode toggle per tool
 
 ### Changed
 

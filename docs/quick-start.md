@@ -52,29 +52,21 @@ Click **Connect** in the top bar.
 
 ## 4. Call a tool
 
-Click a tool in the **tools** tab. The right panel seeds a JSON-RPC
-request template:
+Click a tool in the **tools** tab. The right panel auto-generates an
+interactive form from the tool's JSON Schema — one field per
+parameter, with the right widget for each type (text, number, enum
+dropdown, boolean checkbox, nested objects, array builders, etc.).
 
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "echo",
-    "arguments": {}
-  }
-}
-```
+Fill in the required fields. Click **Send**. The response renders
+below the form and the full wire traffic appears in the bottom log.
 
-Fill in `arguments` with the input the tool expects. Click **Send**.
-The response renders below the editor, and the full wire traffic
-appears in the bottom log.
+If the schema uses a construct the form renderer can't handle cleanly,
+it falls back to a raw JSON editor seeded with a valid-shaped default
+— so you can still send the request.
 
-*(When the schema-driven form renderer ships, clicking a tool will open
-an auto-generated form instead of the raw editor. Until then, the
-schema inspector in the log area shows the tool's input schema so you
-know what fields to fill.)*
+Every request panel has a **Raw** tab that switches from the form to
+direct JSON-RPC editing, in case you want to exercise edge cases or
+malformed inputs deliberately.
 
 ## 5. Other features
 

@@ -40,8 +40,7 @@ export default defineConfig({
       stderr: 'pipe',
     },
     {
-      command:
-        'node --experimental-strip-types tests/fixtures/mock-mcp-server/run.ts',
+      command: 'node --experimental-strip-types tests/fixtures/mock-mcp-server/run.ts',
       url: 'http://127.0.0.1:4321/health',
       reuseExistingServer: !process.env['CI'],
       stdout: 'pipe',

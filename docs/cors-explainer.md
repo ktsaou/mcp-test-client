@@ -23,7 +23,7 @@ Nobody can test your public MCP server this way.
 ## What to send
 
 These are the minimum headers for a public MCP server that wants to be
-reachable from `https://ktsaou.github.io` *and* from any user running
+reachable from `https://ktsaou.github.io` _and_ from any user running
 the client locally on `http://localhost:5173`:
 
 ```
@@ -41,13 +41,13 @@ above. No body is required.
 
 You have three reasonable strategies:
 
-| Strategy | Header value | When to use |
-|---|---|---|
-| Allow any origin | `Access-Control-Allow-Origin: *` | Truly public server. Cannot combine with credentialed requests. |
-| Reflect request origin | Echo the incoming `Origin` value | Same effect as `*` but lets you scope by-origin later. |
-| Allowlist | A specific origin | Only want certain hosted clients to reach you. |
+| Strategy               | Header value                     | When to use                                                     |
+| ---------------------- | -------------------------------- | --------------------------------------------------------------- |
+| Allow any origin       | `Access-Control-Allow-Origin: *` | Truly public server. Cannot combine with credentialed requests. |
+| Reflect request origin | Echo the incoming `Origin` value | Same effect as `*` but lets you scope by-origin later.          |
+| Allowlist              | A specific origin                | Only want certain hosted clients to reach you.                  |
 
-If you need cookies or per-origin credentials, you *must* reflect the
+If you need cookies or per-origin credentials, you _must_ reflect the
 origin exactly (wildcard is not allowed) and set
 `Access-Control-Allow-Credentials: true`.
 

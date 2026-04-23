@@ -81,6 +81,8 @@ export default tseslint.config(
       // Mock implementations need async to match the interface they mimic,
       // even if the body doesn't actually await anything.
       '@typescript-eslint/require-await': 'off',
+      // Tests often carry deliberate casts to keep fixtures readable.
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
     },
   },
 

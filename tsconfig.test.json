@@ -21,6 +21,7 @@
     "tests/unit/**/*",
     "tests/conformance/**/*",
     "tests/compliance/**/*",
-    "tests/fixtures/**/*"
+    "tests/fixtures/**/*",
+    "tests/e2e/**/*"
   ]
 }

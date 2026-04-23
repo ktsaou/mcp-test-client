@@ -166,15 +166,17 @@ each box as the phase lands.
 - [x] `src/state/` — theme, servers, log, connection contexts; lazy Store accessor
 - [ ] Visual regression tests via Playwright screenshots (Phase 8)
 
-### Phase 5 — Schema form renderer (the crown jewel)
+### Phase 5 — Schema form renderer ✅
 
-- [ ] `src/schema-form/` — one file per field type (string, number, boolean,
-      enum, array, tuple, object, anyOf, oneOf, additionalProperties)
-- [ ] JSON Schema 2020-12 support: `$ref`, `$defs`, `allOf` merge, `prefixItems`,
-      discriminated `oneOf` with tabs
-- [ ] Ajv 8 validator integration
-- [ ] Complete unit test matrix — one test per field type, plus a conformance
-      suite of ~30 real tool schemas harvested from public MCP servers
+- [x] `src/schema-form/` ported from the legacy generator with:
+  - one component per field type (string/number/boolean/enum/array/tuple/object/additionalProperties/union/fallback)
+  - `$ref`/`$defs` resolution with cycle detection (falls back to raw JSON on recursion)
+  - `allOf` merge with conflict detection
+  - `anyOf`/`oneOf` tab switcher with `const`-discriminator labelling
+  - Ajv 8 / JSON Schema 2020-12 validation
+- [x] 51 unit tests (98 total project-wide)
+- [x] Integrated into request-panel.tsx with Form / Raw mode toggle
+- [ ] Conformance suite of real-world MCP server schemas (Phase 8 follow-up)
 
 ### Phase 6 — Request / response UX
 

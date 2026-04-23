@@ -100,7 +100,9 @@ export async function startMockServer(port = 0): Promise<RunningServer> {
   }));
 
   mcp.setRequestHandler(ReadResourceRequestSchema, (req) => ({
-    contents: [{ uri: req.params.uri, mimeType: 'text/plain', text: 'Hello from the mock server.' }],
+    contents: [
+      { uri: req.params.uri, mimeType: 'text/plain', text: 'Hello from the mock server.' },
+    ],
   }));
 
   const transport = new StreamableHTTPServerTransport({
@@ -117,10 +119,7 @@ export async function startMockServer(port = 0): Promise<RunningServer> {
       'Access-Control-Allow-Headers',
       'Content-Type, Authorization, MCP-Session-Id, MCP-Protocol-Version, Last-Event-ID',
     );
-    res.setHeader(
-      'Access-Control-Allow-Methods',
-      'GET, POST, DELETE, OPTIONS',
-    );
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Expose-Headers', 'MCP-Session-Id, MCP-Protocol-Version');
 
     if (req.method === 'OPTIONS') {
@@ -160,8 +159,7 @@ export async function startMockServer(port = 0): Promise<RunningServer> {
 if (import.meta.url === `file://${process.argv[1] ?? ''}`) {
   const portEnv = process.env['MOCK_MCP_PORT'];
   const port = portEnv ? Number(portEnv) : 0;
-  startMockServer(port).then((s) => {
-    // eslint-disable-next-line no-console
+  void startMockServer(port).then((s) => {
     console.log(`mock-mcp-server listening at ${s.url}`);
   });
 }

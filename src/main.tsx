@@ -4,6 +4,7 @@ import { App } from './App.tsx';
 import './ui/theme.css';
 import './ui/shell.css';
 import './ui/json-view.css';
+import './schema-form/schema-form.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Root element #root not found in index.html');
