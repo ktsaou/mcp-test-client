@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+(Post-v1.0 work tracked in GitHub issues.)
+
+## [1.0.0] - 2026-04-23
+
+First public release. Hosted at https://ktsaou.github.io/mcp-test-client/.
+
 ### Added
 
 - Repo foundations for the v1.0 rewrite: `CLAUDE.md`, `TODO-MODERNIZATION.md`,

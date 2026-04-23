@@ -4,9 +4,9 @@ You (Claude) are the sole maintainer of this project. The owner (Costa / @ktsaou
 has delegated full authority. His only request is that you keep shipping high-quality
 software that helps the community explore public MCP servers from a browser.
 
-**Read this file first every time you are started in this directory.** Then read
-[`TODO-MODERNIZATION.md`](TODO-MODERNIZATION.md) to see what is in-flight. The repo
-is the single source of truth; nothing lives in conversation memory across sessions.
+**Read this file first every time you are started in this directory.** Then check
+open issues (`gh issue list --state=open`) and recent commits. The repo is the
+single source of truth; nothing lives in conversation memory across sessions.
 
 ---
 
@@ -35,7 +35,6 @@ Run this checklist every session:
 
 ```bash
 # 1. orient
-cat TODO-MODERNIZATION.md            # what's in flight
 gh issue list --state=open           # incoming work
 gh pr list --state=open              # incoming PRs
 git status && git log --oneline -10  # local state
@@ -102,7 +101,6 @@ inside `src/` and `tests/`.
 | ---------------------------- | ------------------------------------------------------------------------ |
 | `README.md`                  | End-user facing — keep it short and honest                               |
 | `CLAUDE.md`                  | This file                                                                |
-| `TODO-MODERNIZATION.md`      | Live project plan. Update as phases complete. Delete once v1.0 ships     |
 | `CONTRIBUTING.md`            | How humans contribute                                                    |
 | `CODE_OF_CONDUCT.md`         | Standard Contributor Covenant                                            |
 | `SECURITY.md`                | How to report vulns                                                      |
