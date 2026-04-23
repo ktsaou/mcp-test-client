@@ -1,48 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { bundleToJson } from '../diagnostics/build.ts';
-import { snapshotBundle } from '../diagnostics/current.ts';
 import { useLog, type LogEntry } from '../state/log.tsx';
 import { JsonView } from './json-view.tsx';
-
-const ISSUE_URL = 'https://github.com/ktsaou/mcp-test-client/issues/new?template=bug_report.yml';
+import { ReportIssueDialog } from './report-issue-dialog.tsx';
 
 export function LogPanel() {
   const { entries, clear } = useLog();
   const endRef = useRef<HTMLDivElement | null>(null);
-  const [reportState, setReportState] = useState<'idle' | 'copied' | 'error'>('idle');
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
   }, [entries.length]);
-
-  function onReportIssue() {
-    const bundle = snapshotBundle();
-    if (!bundle) {
-      setReportState('error');
-      window.setTimeout(() => setReportState('idle'), 4000);
-      return;
-    }
-    navigator.clipboard
-      .writeText(bundleToJson(bundle))
-      .then(() => {
-        setReportState('copied');
-        window.open(ISSUE_URL, '_blank', 'noopener,noreferrer');
-      })
-      .catch(() => {
-        setReportState('error');
-      })
-      .finally(() => {
-        window.setTimeout(() => setReportState('idle'), 4000);
-      });
-  }
-
-  const reportLabel =
-    reportState === 'copied'
-      ? 'Copied — paste into the Diagnostics field'
-      : reportState === 'error'
-        ? 'Copy failed — use mcpClientDiagnostics() in console'
-        : 'Report issue';
 
   return (
     <section className="shell__log" aria-label="Message log">
@@ -52,10 +21,10 @@ export function LogPanel() {
           <button
             className="btn btn--ghost"
             type="button"
-            onClick={onReportIssue}
-            title="Copy a redacted session bundle to clipboard and open the bug-report form"
+            onClick={() => setReportOpen(true)}
+            title="View the session diagnostic bundle — copy, download, or open a GitHub issue"
           >
-            {reportLabel}
+            Report issue
           </button>
           <button
             className="btn btn--ghost"
@@ -75,6 +44,7 @@ export function LogPanel() {
         )}
         <div ref={endRef} />
       </div>
+      {reportOpen && <ReportIssueDialog onClose={() => setReportOpen(false)} />}
     </section>
   );
 }
