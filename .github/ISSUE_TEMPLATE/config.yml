@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/ktsaou/mcp-test-client/security/advisories/new
+    about: Please report security issues privately via a security advisory.
+  - name: MCP spec questions
+    url: https://github.com/modelcontextprotocol/specification/issues
+    about: Questions about the Model Context Protocol itself belong upstream.

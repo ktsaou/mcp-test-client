@@ -4,12 +4,12 @@ All state lives in the user's browser. No cookies, no server, no sync.
 
 **Storage backends**
 
-| Backend         | Used for                                                  |
-|-----------------|-----------------------------------------------------------|
-| `localStorage`  | Everything durable: server list, theme, tool params, etc. |
-| `sessionStorage`| Nothing in v1.0. Reserved for OAuth state in v1.1.        |
-| URL hash        | Shareable state (see `shareable-urls.md`).                |
-| In-memory only  | Active connection, log buffer, transient UI state.        |
+| Backend          | Used for                                                  |
+| ---------------- | --------------------------------------------------------- |
+| `localStorage`   | Everything durable: server list, theme, tool params, etc. |
+| `sessionStorage` | Nothing in v1.0. Reserved for OAuth state in v1.1.        |
+| URL hash         | Shareable state (see `shareable-urls.md`).                |
+| In-memory only   | Active connection, log buffer, transient UI state.        |
 
 ---
 
@@ -23,16 +23,16 @@ Every key lives under the prefix `mcptc:` (mcp-test-client). Using a prefix:
 
 **Reserved top-level keys**
 
-| Key                     | Purpose                                              |
-|-------------------------|------------------------------------------------------|
-| `mcptc:version`         | Schema version integer. Currently `1`.               |
-| `mcptc:servers`         | Array of server entries (see §3).                    |
-| `mcptc:servers.active`  | ID of the currently selected server, or `null`.      |
-| `mcptc:theme`           | `"system" | "dark" | "light"`. Default `"dark"`.     |
-| `mcptc:history`         | Last N request/response records (cap 100).           |
-| `mcptc:tools.<server-id>.<tool-name>` | Last-used form params for that tool.   |
-| `mcptc:canned.<server-id>.<tool-name>` | Named saved requests for that tool.   |
-| `mcptc:ui.<feature>`    | Per-feature UI prefs (panel widths, etc.)            |
+| Key                                    | Purpose                                         |
+| -------------------------------------- | ----------------------------------------------- | ------ | --------------------------- |
+| `mcptc:version`                        | Schema version integer. Currently `1`.          |
+| `mcptc:servers`                        | Array of server entries (see §3).               |
+| `mcptc:servers.active`                 | ID of the currently selected server, or `null`. |
+| `mcptc:theme`                          | `"system"                                       | "dark" | "light"`. Default `"dark"`. |
+| `mcptc:history`                        | Last N request/response records (cap 100).      |
+| `mcptc:tools.<server-id>.<tool-name>`  | Last-used form params for that tool.            |
+| `mcptc:canned.<server-id>.<tool-name>` | Named saved requests for that tool.             |
+| `mcptc:ui.<feature>`                   | Per-feature UI prefs (panel widths, etc.)       |
 
 ## 2. Schema versioning + migrations
 
@@ -48,7 +48,9 @@ Migration signature:
 type Migration = (storage: Storage) => void;
 const migrations: Record<number, Migration> = {
   // from v1 -> v2
-  2: (storage) => { /* transform keys in place */ },
+  2: (storage) => {
+    /* transform keys in place */
+  },
 };
 ```
 
@@ -56,20 +58,22 @@ const migrations: Record<number, Migration> = {
 
 ```ts
 interface ServerEntry {
-  id: string;             // nanoid
-  url: string;            // full URL including scheme
-  name: string;           // user-provided label
+  id: string; // nanoid
+  url: string; // full URL including scheme
+  name: string; // user-provided label
   transport: 'streamable-http' | 'sse-legacy' | 'websocket' | 'auto';
-  auth?: {
-    kind: 'bearer';
-    token: string;        // stored in localStorage — see §5 for the security note
-  } | {
-    kind: 'header';
-    name: string;
-    value: string;
-  };
-  tags?: string[];        // 'public', 'local', user-defined
-  addedAt: number;        // ms since epoch
+  auth?:
+    | {
+        kind: 'bearer';
+        token: string; // stored in localStorage — see §5 for the security note
+      }
+    | {
+        kind: 'header';
+        name: string;
+        value: string;
+      };
+  tags?: string[]; // 'public', 'local', user-defined
+  addedAt: number; // ms since epoch
   lastUsed: number | null;
 }
 ```

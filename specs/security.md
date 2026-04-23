@@ -37,7 +37,7 @@ What it can try:
   execute descriptions as HTML (see §3 about XSS).
 - **CSRF-like via GET SSE stream** → irrelevant: we initiate all traffic and
   use explicit POST.
-- **Exhausting localStorage** → response payloads are *not* persisted to
+- **Exhausting localStorage** → response payloads are _not_ persisted to
   localStorage. In-memory log only (capped).
 
 ### 2.2 A malicious user (of our app)
@@ -99,6 +99,7 @@ form-action 'none';
 ```
 
 Notes:
+
 - `connect-src *` is required: the whole point is that users connect to any
   MCP server they choose. We cannot restrict this without breaking the app.
   We balance it with the other directives locking down every other vector.

@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest a feature that would help you explore MCP servers.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please check that the feature fits the project's
+        mission: a **zero-install, browser-only test client for public MCP
+        servers**. Features that only help server authors debug their own
+        server belong in
+        [MCP Inspector](https://github.com/modelcontextprotocol/inspector).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation where the current app falls short.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false

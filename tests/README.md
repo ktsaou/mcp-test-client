@@ -2,13 +2,13 @@
 
 Test suites, grouped by intent.
 
-| Directory          | What lives here                                           |
-|--------------------|-----------------------------------------------------------|
-| `unit/`            | Vitest unit tests co-located per module (`src/x.ts` → `unit/x.test.ts`) |
-| `e2e/`             | Playwright specs driving the real app in a browser        |
-| `conformance/`     | Schema-rendering conformance against real tool schemas    |
-| `compliance/`      | MCP spec compliance — exercises our client against `fixtures/mock-mcp-server` |
-| `fixtures/`        | Shared test fixtures; includes a mock MCP server          |
+| Directory      | What lives here                                                               |
+| -------------- | ----------------------------------------------------------------------------- |
+| `unit/`        | Vitest unit tests co-located per module (`src/x.ts` → `unit/x.test.ts`)       |
+| `e2e/`         | Playwright specs driving the real app in a browser                            |
+| `conformance/` | Schema-rendering conformance against real tool schemas                        |
+| `compliance/`  | MCP spec compliance — exercises our client against `fixtures/mock-mcp-server` |
+| `fixtures/`    | Shared test fixtures; includes a mock MCP server                              |
 
 ## Adding a schema conformance test
 

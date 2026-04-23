@@ -74,12 +74,12 @@ connectivity bugs the user is trying to see.
 
 The SDK emits `onclose(code, reason)`. We render:
 
-| Code range     | UI label                                       |
-|----------------|------------------------------------------------|
-| 1000           | "Disconnected cleanly"                         |
-| 1001–1015      | The standard WebSocket reason, verbatim        |
-| 4000–4999      | "Application close: `<code>` `<reason>`"       |
-| anything else  | "Unknown close: `<code>`"                      |
+| Code range    | UI label                                 |
+| ------------- | ---------------------------------------- |
+| 1000          | "Disconnected cleanly"                   |
+| 1001–1015     | The standard WebSocket reason, verbatim  |
+| 4000–4999     | "Application close: `<code>` `<reason>`" |
+| anything else | "Unknown close: `<code>`"                |
 
 ## 6. Testing
 

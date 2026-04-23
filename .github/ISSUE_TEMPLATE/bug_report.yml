@@ -1,0 +1,62 @@
+name: Bug report
+description: Something broke or doesn't behave as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill in as much as
+        you can — minimal reproductions get fixed faster.
+
+  - type: input
+    id: server-url
+    attributes:
+      label: MCP server URL you were connecting to (if public)
+      description: Skip if private or sensitive.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport
+      options:
+        - Streamable HTTP
+        - SSE (legacy)
+        - WebSocket
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what did you see?
+    validations:
+      required: true
+
+  - type: textarea
+    id: schema
+    attributes:
+      label: Schema that failed to render (if applicable)
+      description: Paste the offending tool/prompt/resource JSON Schema here.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: browser
+    attributes:
+      label: Browser & OS
+      description: e.g. Chrome 133 on macOS 14
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors
+      description: Open DevTools → Console. Paste any red errors here.
+    validations:
+      required: false

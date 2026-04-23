@@ -22,34 +22,34 @@ How the schema renderer turns a JSON Schema into an interactive form.
 
 ## 2. Construct support matrix
 
-| Construct                         | Status | Widget                                              |
-|-----------------------------------|--------|-----------------------------------------------------|
-| `type: string`                    | ✅     | text input (textarea if `maxLength > 120`)          |
-| `type: string, format: date`      | ✅     | native `<input type="date">`                        |
-| `type: string, format: date-time` | ✅     | native `<input type="datetime-local">`              |
-| `type: string, format: email`     | ✅     | native `<input type="email">`                       |
-| `type: string, format: uri`       | ✅     | native `<input type="url">`                         |
-| `type: string, format: password` (custom) | ✅ | masked text input                              |
-| `type: string, contentMediaType: application/json` | ✅ | code editor, validated as JSON       |
-| `type: number` / `integer`        | ✅     | numeric input with `min`/`max`/`step`               |
-| `type: boolean`                   | ✅     | checkbox                                            |
-| `type: "null"`                    | ✅     | fixed null display                                  |
-| `type: array`                     | ✅     | add/remove rows, item schema recursed               |
-| `type: array, items: { enum }`    | ✅     | checkbox set (multi-select)                         |
-| `type: array, prefixItems: [...]` | ✅     | tuple form — one slot per position                  |
-| `type: object`                    | ✅     | nested field group                                  |
-| `type: object, additionalProperties: T` | ✅ | editable key/value rows, value typed by `T`     |
-| `enum: [...]`                     | ✅     | `<select>` with "— unset —" option if not required  |
-| `const`                           | ✅     | read-only display                                   |
-| `oneOf` with `const`-discriminator | ✅    | tab switcher; discriminator fixes the branch        |
-| `oneOf` / `anyOf` (general)       | ✅     | tab switcher between branches; user picks           |
-| `allOf`                           | ✅     | merged schema before rendering (see §5)             |
-| `not`                             | ⚠️     | rendered as the underlying form with a validator    |
-| `$ref`, `$defs`                   | ✅     | resolved before rendering (see §4)                  |
-| `if` / `then` / `else`            | ⚠️     | v1.0: ignored and warn; v1.1: conditional rendering |
-| `dependentSchemas`                | ⚠️     | same as above                                       |
-| `dependentRequired`               | ✅     | required markers update live                        |
-| `pattern`                         | ✅     | validated on blur with the schema's pattern         |
+| Construct                                          | Status | Widget                                              |
+| -------------------------------------------------- | ------ | --------------------------------------------------- |
+| `type: string`                                     | ✅     | text input (textarea if `maxLength > 120`)          |
+| `type: string, format: date`                       | ✅     | native `<input type="date">`                        |
+| `type: string, format: date-time`                  | ✅     | native `<input type="datetime-local">`              |
+| `type: string, format: email`                      | ✅     | native `<input type="email">`                       |
+| `type: string, format: uri`                        | ✅     | native `<input type="url">`                         |
+| `type: string, format: password` (custom)          | ✅     | masked text input                                   |
+| `type: string, contentMediaType: application/json` | ✅     | code editor, validated as JSON                      |
+| `type: number` / `integer`                         | ✅     | numeric input with `min`/`max`/`step`               |
+| `type: boolean`                                    | ✅     | checkbox                                            |
+| `type: "null"`                                     | ✅     | fixed null display                                  |
+| `type: array`                                      | ✅     | add/remove rows, item schema recursed               |
+| `type: array, items: { enum }`                     | ✅     | checkbox set (multi-select)                         |
+| `type: array, prefixItems: [...]`                  | ✅     | tuple form — one slot per position                  |
+| `type: object`                                     | ✅     | nested field group                                  |
+| `type: object, additionalProperties: T`            | ✅     | editable key/value rows, value typed by `T`         |
+| `enum: [...]`                                      | ✅     | `<select>` with "— unset —" option if not required  |
+| `const`                                            | ✅     | read-only display                                   |
+| `oneOf` with `const`-discriminator                 | ✅     | tab switcher; discriminator fixes the branch        |
+| `oneOf` / `anyOf` (general)                        | ✅     | tab switcher between branches; user picks           |
+| `allOf`                                            | ✅     | merged schema before rendering (see §5)             |
+| `not`                                              | ⚠️     | rendered as the underlying form with a validator    |
+| `$ref`, `$defs`                                    | ✅     | resolved before rendering (see §4)                  |
+| `if` / `then` / `else`                             | ⚠️     | v1.0: ignored and warn; v1.1: conditional rendering |
+| `dependentSchemas`                                 | ⚠️     | same as above                                       |
+| `dependentRequired`                                | ✅     | required markers update live                        |
+| `pattern`                                          | ✅     | validated on blur with the schema's pattern         |
 
 ## 3. Required vs. optional
 

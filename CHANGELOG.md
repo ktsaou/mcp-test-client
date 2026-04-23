@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Repo foundations for the v1.0 rewrite: `CLAUDE.md`, `TODO-MODERNIZATION.md`,
   `specs/` directory with compliance, schema-rendering, persistence,
   shareable-urls, security, public-servers-catalog, and websocket-transport
@@ -16,8 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SECURITY.md`, `CHANGELOG.md`.
 - The pre-rewrite prototype has been moved to `legacy/` as a reference
   until the new implementation reaches feature parity.
+- Project scaffold: Vite 8, TypeScript 6, React 19, Vitest 4, Playwright,
+  ESLint 9 flat config, Prettier, EditorConfig.
+- `@modelcontextprotocol/sdk` 1.29 pinned as the only MCP runtime dep.
+- GitHub Actions: CI (lint + typecheck + unit + e2e + build + audit) and
+  automated GitHub Pages deploy.
+- Dependabot (weekly npm, monthly actions).
+- Issue + PR templates.
+- Minimal booting React shell with dark-theme CSS-variable system.
 
 ### Changed
+
 - README re-positioned from Netdata-specific to community tool.
 
 ## [0.1.0-legacy] - 2026-04-23

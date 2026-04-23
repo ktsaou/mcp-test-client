@@ -26,10 +26,10 @@ gaps below — cited with file:line.
   of strings / numbers / booleans / enums (as dropdown and checkbox sets) /
   arrays / tuple arrays / objects / `anyOf` with tab switcher /
   `additionalProperties` as editable key/value maps. Tooltips, descriptions, and
-  required-field validation. *Port this to TypeScript + React; do not rewrite
-  from scratch.*
+  required-field validation. _Port this to TypeScript + React; do not rewrite
+  from scratch._
 - **JSON pretty-printer** (`json-pretty-printer.js`, 312 lines): detects nested
-  JSON strings and pretty-prints them recursively; visualizes `\n`. *Port.*
+  JSON strings and pretty-prints them recursively; visualizes `\n`. _Port._
 - **UX concepts to keep**: three send modes (form / raw / schema), "import from
   LLM paste", bearer auth per server, request history tab.
 
@@ -37,18 +37,18 @@ gaps below — cited with file:line.
 
 All references are to `index.html` unless noted:
 
-| # | Issue | Location |
-|---|-------|----------|
-| 1 | Hardcoded `protocolVersion: '2024-11-05'` (two spec versions behind) | `index.html:2518` |
-| 2 | `Accept` header for HTTP is `application/json` only; spec requires also `text/event-stream` | `index.html:2948` |
-| 3 | No `MCP-Session-Id` handling (not sent, not read from init response) | entire transport layer |
-| 4 | No `MCP-Protocol-Version` header on subsequent requests | entire transport layer |
-| 5 | No GET for server→client SSE stream | n/a (not implemented) |
-| 6 | No `Last-Event-ID` resume on reconnect | n/a |
-| 7 | SSE path uses non-standard `?transport=sse` query param (Netdata convention) | `index.html:3118` |
-| 8 | `connectStateless()` is a no-op for HTTP (no real session) | `index.html:2757` |
-| 9 | Hardcoded `clientInfo.name: 'Netdata MCP Test Client'` (branding bleed) | `index.html:2524` |
-| 10 | `<title>Netdata MCP Web Client</title>` | `index.html:6` |
+| #   | Issue                                                                                       | Location               |
+| --- | ------------------------------------------------------------------------------------------- | ---------------------- |
+| 1   | Hardcoded `protocolVersion: '2024-11-05'` (two spec versions behind)                        | `index.html:2518`      |
+| 2   | `Accept` header for HTTP is `application/json` only; spec requires also `text/event-stream` | `index.html:2948`      |
+| 3   | No `MCP-Session-Id` handling (not sent, not read from init response)                        | entire transport layer |
+| 4   | No `MCP-Protocol-Version` header on subsequent requests                                     | entire transport layer |
+| 5   | No GET for server→client SSE stream                                                         | n/a (not implemented)  |
+| 6   | No `Last-Event-ID` resume on reconnect                                                      | n/a                    |
+| 7   | SSE path uses non-standard `?transport=sse` query param (Netdata convention)                | `index.html:3118`      |
+| 8   | `connectStateless()` is a no-op for HTTP (no real session)                                  | `index.html:2757`      |
+| 9   | Hardcoded `clientInfo.name: 'Netdata MCP Test Client'` (branding bleed)                     | `index.html:2524`      |
+| 10  | `<title>Netdata MCP Web Client</title>`                                                     | `index.html:6`         |
 
 ### 2.3 Architectural issues
 
@@ -66,21 +66,21 @@ All references are to `index.html` unless noted:
 
 ## 3. Architecture decisions (locked)
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Build tool | **Vite 5+** | Default modern ESM bundler, matches SDK ESM, fast HMR |
-| Language | **TypeScript 5.6 strict** | Type safety for JSON-RPC messages; onramp for contributors |
-| UI framework | **React 18** | Mainstream (matches Inspector), easy for community PRs |
-| CSS | **Plain CSS + custom properties** | Zero dep, simple theming, no Tailwind/Radix churn |
-| State | **React Context + useReducer** | Zero dep, sufficient at this scale |
-| MCP client | **`@modelcontextprotocol/sdk@^1.29`** | Official, maintained, ships all 3 browser transports |
-| Schema validation | **`ajv@^8` + `ajv-formats`** | JSON Schema 2020-12 support (Inspector stuck on ajv 6 / draft-07) |
-| Unit tests | **Vitest** | Pairs with Vite |
-| E2E tests | **Playwright** | Industry standard for browser apps |
-| Lint/format | **ESLint + Prettier** | Standard |
-| CI/CD | **GitHub Actions** | Native to GitHub Pages deploy |
-| Deploy target | **GitHub Pages** (primary); Cloudflare Pages compatible | Static-hostable anywhere |
-| License | **GPL-3.0-or-later** | Match existing, community-friendly copyleft |
+| Decision          | Choice                                                  | Rationale                                                         |
+| ----------------- | ------------------------------------------------------- | ----------------------------------------------------------------- |
+| Build tool        | **Vite 5+**                                             | Default modern ESM bundler, matches SDK ESM, fast HMR             |
+| Language          | **TypeScript 5.6 strict**                               | Type safety for JSON-RPC messages; onramp for contributors        |
+| UI framework      | **React 18**                                            | Mainstream (matches Inspector), easy for community PRs            |
+| CSS               | **Plain CSS + custom properties**                       | Zero dep, simple theming, no Tailwind/Radix churn                 |
+| State             | **React Context + useReducer**                          | Zero dep, sufficient at this scale                                |
+| MCP client        | **`@modelcontextprotocol/sdk@^1.29`**                   | Official, maintained, ships all 3 browser transports              |
+| Schema validation | **`ajv@^8` + `ajv-formats`**                            | JSON Schema 2020-12 support (Inspector stuck on ajv 6 / draft-07) |
+| Unit tests        | **Vitest**                                              | Pairs with Vite                                                   |
+| E2E tests         | **Playwright**                                          | Industry standard for browser apps                                |
+| Lint/format       | **ESLint + Prettier**                                   | Standard                                                          |
+| CI/CD             | **GitHub Actions**                                      | Native to GitHub Pages deploy                                     |
+| Deploy target     | **GitHub Pages** (primary); Cloudflare Pages compatible | Static-hostable anywhere                                          |
+| License           | **GPL-3.0-or-later**                                    | Match existing, community-friendly copyleft                       |
 
 ### Import rules for the SDK (Vite + tree-shaking)
 
@@ -93,12 +93,12 @@ All references are to `index.html` unless noted:
 
 ### Transport matrix
 
-| Transport | Source | Use when |
-|-----------|--------|----------|
-| Streamable HTTP | SDK `StreamableHTTPClientTransport` | default for HTTP(S) URLs |
-| SSE (legacy) | SDK `SSEClientTransport` | fallback for 2024-11-05 servers |
-| WebSocket | SDK `WebSocketClientTransport` | user explicitly selects `wss://` |
-| stdio | *not supported* | browsers cannot spawn processes |
+| Transport       | Source                              | Use when                         |
+| --------------- | ----------------------------------- | -------------------------------- |
+| Streamable HTTP | SDK `StreamableHTTPClientTransport` | default for HTTP(S) URLs         |
+| SSE (legacy)    | SDK `SSEClientTransport`            | fallback for 2024-11-05 servers  |
+| WebSocket       | SDK `WebSocketClientTransport`      | user explicitly selects `wss://` |
+| stdio           | _not supported_                     | browsers cannot spawn processes  |
 
 We **wrap** each transport with a small decorator that emits the raw JSON-RPC
 to our message log before calling through — see `src/mcp/logging-transport.ts`
@@ -211,14 +211,14 @@ each box as the phase lands.
 
 ## 5. Risks explicitly tracked
 
-| Risk | Mitigation |
-|------|-----------|
-| **CORS**: server doesn't allow our origin → connection silently fails | Detect fetch failure; show actionable error with a link to `docs/cors-explainer.md` |
-| **OAuth** is out of v1.0 scope; some servers require it | Ship bearer+custom-header for v1.0; open tracking issue for v1.1 OAuth PKCE |
-| **SDK 2.0 alpha** lands and changes imports | Pin to v1.x `^1.29`; watch releases; migrate in a dedicated issue |
-| **WebSocket SEP-1288** may get rewritten or rejected | Spec already positions WS as "custom transport, not MCP standard"; SDK handles actual wire protocol; we're shielded |
-| **Schema renderer** receives a wild real-world schema we don't handle | Conformance suite + public issue template for bug reports; fall back to raw JSON editor gracefully |
-| **localStorage quota**: users with hundreds of servers + history | Cap history at 100 entries; warn at 90% quota usage |
+| Risk                                                                  | Mitigation                                                                                                          |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **CORS**: server doesn't allow our origin → connection silently fails | Detect fetch failure; show actionable error with a link to `docs/cors-explainer.md`                                 |
+| **OAuth** is out of v1.0 scope; some servers require it               | Ship bearer+custom-header for v1.0; open tracking issue for v1.1 OAuth PKCE                                         |
+| **SDK 2.0 alpha** lands and changes imports                           | Pin to v1.x `^1.29`; watch releases; migrate in a dedicated issue                                                   |
+| **WebSocket SEP-1288** may get rewritten or rejected                  | Spec already positions WS as "custom transport, not MCP standard"; SDK handles actual wire protocol; we're shielded |
+| **Schema renderer** receives a wild real-world schema we don't handle | Conformance suite + public issue template for bug reports; fall back to raw JSON editor gracefully                  |
+| **localStorage quota**: users with hundreds of servers + history      | Cap history at 100 entries; warn at 90% quota usage                                                                 |
 
 ## 6. Out of scope for v1.0 (tracked for later)
 

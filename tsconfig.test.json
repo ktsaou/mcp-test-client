@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*.test.*",
+    "src/**/*.spec.*",
+    "tests/unit/**/*",
+    "tests/conformance/**/*",
+    "tests/compliance/**/*",
+    "tests/fixtures/**/*"
+  ]
+}

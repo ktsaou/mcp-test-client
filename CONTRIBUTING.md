@@ -54,7 +54,7 @@ checks.
 - [ ] New fields in `public/public-servers.json` respect the JSON Schema in
       `public/public-servers.schema.json`.
 - [ ] No new runtime dependencies unless discussed in the issue first.
-- [ ] Commit messages explain *why*, not just *what*.
+- [ ] Commit messages explain _why_, not just _what_.
 
 ## Code style
 

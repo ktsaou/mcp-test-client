@@ -1,0 +1,175 @@
+/*
+ * Theme system — CSS custom properties.
+ * Dark is the default (see specs/persistence.md §1 and README).
+ *
+ * Activating a theme: set the `data-theme` attribute on <html>:
+ *   <html data-theme="dark">   (default)
+ *   <html data-theme="light">
+ *
+ * `data-theme="system"` defers to the OS preference via the nested
+ * @media rule below. The ThemeProvider in src/state/theme.tsx is the
+ * source of truth for which mode is active.
+ */
+
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surface */
+  --color-bg: #0b0d10;
+  --color-bg-raised: #14171c;
+  --color-bg-sunken: #07080a;
+  --color-border: #252a31;
+  --color-border-subtle: #1a1e24;
+
+  /* Text */
+  --color-text: #e6e9ef;
+  --color-text-muted: #9aa4b2;
+  --color-text-faint: #5a6472;
+
+  /* Accent */
+  --color-accent: #6ea8ff;
+  --color-accent-hover: #8cbcff;
+  --color-accent-muted: #2a3a5a;
+
+  /* Status */
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+
+  /* Syntax highlighting (JSON viewer) */
+  --color-syntax-key: #8cbcff;
+  --color-syntax-string: #a3e4a3;
+  --color-syntax-number: #f0b77c;
+  --color-syntax-boolean: #f87171;
+  --color-syntax-null: #9aa4b2;
+  --color-syntax-punct: #5a6472;
+
+  /* Layout */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.5);
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    ui-monospace, 'SF Mono', Menlo, Monaco, 'Cascadia Mono', 'Roboto Mono', Consolas,
+    'DejaVu Sans Mono', monospace;
+  --font-size-base: 14px;
+  --font-size-sm: 12px;
+  --font-size-lg: 16px;
+  --line-height-base: 1.5;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-bg: #f7f8fa;
+  --color-bg-raised: #ffffff;
+  --color-bg-sunken: #eef1f5;
+  --color-border: #d5dae2;
+  --color-border-subtle: #e7ebf0;
+
+  --color-text: #14171c;
+  --color-text-muted: #5a6472;
+  --color-text-faint: #9aa4b2;
+
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-muted: #cfddff;
+
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  --color-syntax-key: #2563eb;
+  --color-syntax-string: #15803d;
+  --color-syntax-number: #b45309;
+  --color-syntax-boolean: #dc2626;
+  --color-syntax-null: #5a6472;
+  --color-syntax-punct: #9aa4b2;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* Honour system preference when the user has chosen "system". */
+@media (prefers-color-scheme: light) {
+  :root[data-theme='system'] {
+    color-scheme: light;
+
+    --color-bg: #f7f8fa;
+    --color-bg-raised: #ffffff;
+    --color-bg-sunken: #eef1f5;
+    --color-border: #d5dae2;
+    --color-border-subtle: #e7ebf0;
+
+    --color-text: #14171c;
+    --color-text-muted: #5a6472;
+    --color-text-faint: #9aa4b2;
+
+    --color-accent: #2563eb;
+    --color-accent-hover: #1d4ed8;
+    --color-accent-muted: #cfddff;
+
+    --color-success: #16a34a;
+    --color-warning: #d97706;
+    --color-danger: #dc2626;
+    --color-info: #2563eb;
+
+    --color-syntax-key: #2563eb;
+    --color-syntax-string: #15803d;
+    --color-syntax-number: #b45309;
+    --color-syntax-boolean: #dc2626;
+    --color-syntax-null: #5a6472;
+    --color-syntax-punct: #9aa4b2;
+  }
+}
+
+/* Global resets scoped to the app. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

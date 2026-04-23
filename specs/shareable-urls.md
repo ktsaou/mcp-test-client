@@ -28,13 +28,13 @@ https://<host>/#s=<base64url(deflate(state-json))>
 
 ```ts
 interface ShareState {
-  v: 1;                               // format version
-  url: string;                        // server URL
+  v: 1; // format version
+  url: string; // server URL
   t?: 'streamable-http' | 'sse-legacy' | 'websocket'; // transport override
-  tool?: string;                      // selected tool name
-  args?: unknown;                     // tool arguments (pre-filled form)
-  raw?: string;                       // raw JSON-RPC payload override
-  connect?: boolean;                  // auto-connect on load
+  tool?: string; // selected tool name
+  args?: unknown; // tool arguments (pre-filled form)
+  raw?: string; // raw JSON-RPC payload override
+  connect?: boolean; // auto-connect on load
 }
 ```
 

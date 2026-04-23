@@ -30,18 +30,18 @@ servers that users can try with one click.
 
 ### Field reference
 
-| Field       | Required | Notes                                                               |
-|-------------|----------|---------------------------------------------------------------------|
-| `id`        | yes      | slug; stable; used as a URL anchor and localStorage key suffix       |
-| `name`      | yes      | display name                                                         |
-| `url`       | yes      | full URL including scheme                                            |
-| `transport` | yes      | `streamable-http` / `sse-legacy` / `websocket` / `auto`              |
-| `description` | yes    | ≤ 140 chars; no marketing language                                   |
-| `tags`      | optional | free-form, lowercase                                                 |
-| `auth`      | yes      | `"none"` / `"bearer"` / `"oauth"` / `"header"` — tells user what to configure |
-| `docs`      | optional | URL to server docs (for users who want to learn more)                |
-| `addedAt`   | yes      | ISO date                                                             |
-| `status`    | yes      | `"active"` / `"unstable"` / `"retired"`                              |
+| Field         | Required | Notes                                                                         |
+| ------------- | -------- | ----------------------------------------------------------------------------- |
+| `id`          | yes      | slug; stable; used as a URL anchor and localStorage key suffix                |
+| `name`        | yes      | display name                                                                  |
+| `url`         | yes      | full URL including scheme                                                     |
+| `transport`   | yes      | `streamable-http` / `sse-legacy` / `websocket` / `auto`                       |
+| `description` | yes      | ≤ 140 chars; no marketing language                                            |
+| `tags`        | optional | free-form, lowercase                                                          |
+| `auth`        | yes      | `"none"` / `"bearer"` / `"oauth"` / `"header"` — tells user what to configure |
+| `docs`        | optional | URL to server docs (for users who want to learn more)                         |
+| `addedAt`     | yes      | ISO date                                                                      |
+| `status`      | yes      | `"active"` / `"unstable"` / `"retired"`                                       |
 
 A JSON Schema file `public/public-servers.schema.json` enforces this shape;
 CI rejects PRs that add malformed entries.

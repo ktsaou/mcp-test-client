@@ -23,12 +23,12 @@ it's installable, spawns your stdio server, and proxies to a browser UI.
 
 ## Transports
 
-| Transport | Status | URL scheme |
-|-----------|--------|------------|
-| Streamable HTTP (current MCP spec) | ✅ | `https://…` |
-| Server-Sent Events (legacy, pre-2025-03) | ✅ | `https://…` |
-| WebSocket (custom, not in MCP spec — see [`specs/websocket-transport.md`](specs/websocket-transport.md)) | ✅ | `wss://…` |
-| stdio | ❌ browsers cannot spawn processes |
+| Transport                                                                                                | Status                             | URL scheme  |
+| -------------------------------------------------------------------------------------------------------- | ---------------------------------- | ----------- |
+| Streamable HTTP (current MCP spec)                                                                       | ✅                                 | `https://…` |
+| Server-Sent Events (legacy, pre-2025-03)                                                                 | ✅                                 | `https://…` |
+| WebSocket (custom, not in MCP spec — see [`specs/websocket-transport.md`](specs/websocket-transport.md)) | ✅                                 | `wss://…`   |
+| stdio                                                                                                    | ❌ browsers cannot spawn processes |
 
 Mixed content (plain `http://` or `ws://` to non-localhost) is blocked by
 browsers and will not work.

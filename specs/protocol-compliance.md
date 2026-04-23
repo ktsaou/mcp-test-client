@@ -47,32 +47,32 @@ We deliberately declare **no** client capabilities (`sampling`, `roots`,
 
 ### 1.3 Server features we surface
 
-| Feature               | Status | Notes                                                        |
-|-----------------------|--------|--------------------------------------------------------------|
-| `tools/list`          | ✅     | Fully rendered as forms via schema renderer                  |
-| `tools/call`          | ✅     | Result shown; `isError`, `structuredContent` both honoured   |
-| `prompts/list`        | ✅     |                                                              |
-| `prompts/get`         | ✅     | Argument schemas rendered as forms                           |
-| `resources/list`      | ✅     |                                                              |
-| `resources/templates/list` | ✅ |                                                              |
-| `resources/read`      | ✅     | Text + blob contents; MIME-type aware display                |
-| `resources/subscribe` | ✅ *   | (*) Works, but we make it obvious that the session stays open|
-| `resources/unsubscribe` | ✅   |                                                              |
-| `completion/complete` | ⚠️     | Advertised to server, but UI integration is v1.1             |
-| `logging/setLevel`    | ✅     | Level picker in UI                                           |
-| `ping`                | ✅     | Available as a manual button                                 |
+| Feature                    | Status | Notes                                                          |
+| -------------------------- | ------ | -------------------------------------------------------------- |
+| `tools/list`               | ✅     | Fully rendered as forms via schema renderer                    |
+| `tools/call`               | ✅     | Result shown; `isError`, `structuredContent` both honoured     |
+| `prompts/list`             | ✅     |                                                                |
+| `prompts/get`              | ✅     | Argument schemas rendered as forms                             |
+| `resources/list`           | ✅     |                                                                |
+| `resources/templates/list` | ✅     |                                                                |
+| `resources/read`           | ✅     | Text + blob contents; MIME-type aware display                  |
+| `resources/subscribe`      | ✅ \*  | (\*) Works, but we make it obvious that the session stays open |
+| `resources/unsubscribe`    | ✅     |                                                                |
+| `completion/complete`      | ⚠️     | Advertised to server, but UI integration is v1.1               |
+| `logging/setLevel`         | ✅     | Level picker in UI                                             |
+| `ping`                     | ✅     | Available as a manual button                                   |
 
 ### 1.4 Notifications we handle
 
-| Notification                       | Behaviour                                 |
-|------------------------------------|-------------------------------------------|
-| `notifications/tools/list_changed` | Re-run `tools/list` automatically         |
-| `notifications/prompts/list_changed` | Re-run `prompts/list`                   |
-| `notifications/resources/list_changed` | Re-run `resources/list`               |
-| `notifications/resources/updated`  | Flash the subscribed resource + refetch   |
-| `notifications/message` (logging)  | Append to the message log with level tag  |
-| `notifications/progress`           | Show progress bar for the request id      |
-| `notifications/cancelled`          | Mark the in-flight request as cancelled   |
+| Notification                           | Behaviour                                |
+| -------------------------------------- | ---------------------------------------- |
+| `notifications/tools/list_changed`     | Re-run `tools/list` automatically        |
+| `notifications/prompts/list_changed`   | Re-run `prompts/list`                    |
+| `notifications/resources/list_changed` | Re-run `resources/list`                  |
+| `notifications/resources/updated`      | Flash the subscribed resource + refetch  |
+| `notifications/message` (logging)      | Append to the message log with level tag |
+| `notifications/progress`               | Show progress bar for the request id     |
+| `notifications/cancelled`              | Mark the in-flight request as cancelled  |
 
 ## 2. Streamable HTTP (primary transport)
 

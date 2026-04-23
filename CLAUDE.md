@@ -22,7 +22,7 @@ schema forms, shareable URLs, and zero backend.
    GitHub Pages / Cloudflare Pages / any CDN. No backend. Ever.
 2. **No telemetry, no accounts, no tracking.** localStorage + URL state only.
 3. **Mission focus**: every feature must help a user explore a public MCP server.
-   If a feature only helps server authors debug *their own* server, it belongs in
+   If a feature only helps server authors debug _their own_ server, it belongs in
    [MCP Inspector](https://github.com/modelcontextprotocol/inspector), not here.
 4. **Spec compliance**: pinned to the latest MCP spec version
    (see [`specs/protocol-compliance.md`](specs/protocol-compliance.md)).
@@ -59,23 +59,24 @@ and exit. Do not invent work.
 
 ## Work you are expected to do autonomously
 
-| Situation                                | Your action                                     |
-|------------------------------------------|-------------------------------------------------|
-| Bug report / issue filed                 | Triage, label, reproduce, fix, close            |
-| PR opened                                | Review, request changes, merge if clean         |
-| MCP spec updated                         | Bump `specs/protocol-compliance.md`, update SDK, run compliance tests |
-| SDK updated (`@modelcontextprotocol/sdk`)| Update lockfile, run tests, note breaking changes in `CHANGELOG.md` |
-| CI failing on `main`                     | Drop everything and fix                         |
-| Security advisory on a dep               | Patch immediately, open PR                      |
-| Schema renderer fails on a real schema   | Add a regression test + fix                     |
-| Costa says "run" with no further context | Run this checklist; report findings; proceed    |
+| Situation                                 | Your action                                                           |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| Bug report / issue filed                  | Triage, label, reproduce, fix, close                                  |
+| PR opened                                 | Review, request changes, merge if clean                               |
+| MCP spec updated                          | Bump `specs/protocol-compliance.md`, update SDK, run compliance tests |
+| SDK updated (`@modelcontextprotocol/sdk`) | Update lockfile, run tests, note breaking changes in `CHANGELOG.md`   |
+| CI failing on `main`                      | Drop everything and fix                                               |
+| Security advisory on a dep                | Patch immediately, open PR                                            |
+| Schema renderer fails on a real schema    | Add a regression test + fix                                           |
+| Costa says "run" with no further context  | Run this checklist; report findings; proceed                          |
 
 ## Work that needs Costa's input (rare)
 
 Only escalate if any of these are true:
+
 - Hosting/domain decisions (DNS, GitHub org transfer, etc.)
 - Credentials needed (GitHub PAT, deploy tokens — he owns them)
-- Something that could affect *other* Costa/Netdata projects
+- Something that could affect _other_ Costa/Netdata projects
 - A PR that is user-hostile or contradicts the mission and the submitter is pushing back
 
 Never escalate routine technical decisions. You own them.
@@ -97,25 +98,25 @@ inside `src/` and `tests/`.
 
 ## Files you will find
 
-| Path                              | What it is |
-|-----------------------------------|------------|
-| `README.md`                       | End-user facing — keep it short and honest |
-| `CLAUDE.md`                       | This file |
-| `TODO-MODERNIZATION.md`           | Live project plan. Update as phases complete. Delete once v1.0 ships |
-| `CONTRIBUTING.md`                 | How humans contribute |
-| `CODE_OF_CONDUCT.md`              | Standard Contributor Covenant |
-| `SECURITY.md`                     | How to report vulns |
-| `CHANGELOG.md`                    | Keep-a-Changelog format |
-| `specs/`                          | Internal technical specs — the authoritative source for design decisions |
-| `docs/`                           | End-user documentation |
-| `src/`                            | Application source |
-| `tests/`                          | Unit + E2E + fixture mock server |
-| `.github/workflows/`              | CI, deploy, dependency review |
-| `public/public-servers.json`      | Bundled catalog of known public MCP servers |
+| Path                         | What it is                                                               |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| `README.md`                  | End-user facing — keep it short and honest                               |
+| `CLAUDE.md`                  | This file                                                                |
+| `TODO-MODERNIZATION.md`      | Live project plan. Update as phases complete. Delete once v1.0 ships     |
+| `CONTRIBUTING.md`            | How humans contribute                                                    |
+| `CODE_OF_CONDUCT.md`         | Standard Contributor Covenant                                            |
+| `SECURITY.md`                | How to report vulns                                                      |
+| `CHANGELOG.md`               | Keep-a-Changelog format                                                  |
+| `specs/`                     | Internal technical specs — the authoritative source for design decisions |
+| `docs/`                      | End-user documentation                                                   |
+| `src/`                       | Application source                                                       |
+| `tests/`                     | Unit + E2E + fixture mock server                                         |
+| `.github/workflows/`         | CI, deploy, dependency review                                            |
+| `public/public-servers.json` | Bundled catalog of known public MCP servers                              |
 
 ## Commit & PR style
 
-- **Commits**: short imperative subject; body explains *why*.
+- **Commits**: short imperative subject; body explains _why_.
   No AI attribution in the trailer. Costa's name is the sole author of record
   (this is his repo).
 - **PRs**: open when making non-trivial changes even while running autonomously,
@@ -130,6 +131,6 @@ inside `src/` and `tests/`.
 2. Read the current MCP spec: https://modelcontextprotocol.io/specification/latest
 3. Read the official SDK source at
    `https://github.com/modelcontextprotocol/typescript-sdk`.
-4. Write the decision down in the appropriate spec *before* coding.
+4. Write the decision down in the appropriate spec _before_ coding.
 
 You are not alone: the repo is your brain.
