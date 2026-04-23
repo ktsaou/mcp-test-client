@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependabot (weekly npm, monthly actions).
 - Issue + PR templates.
 - Minimal booting React shell with dark-theme CSS-variable system.
+- `src/mcp/` — MCP client integration layer:
+  - `types.ts` — project-local wire types (transport kind, server config, auth, wire events)
+  - `transports.ts` — URL→transport factory over the SDK's three browser-safe transports
+  - `logging-transport.ts` — decorator surfacing every JSON-RPC message to a subscriber
+  - `client.ts` — thin `McpClient` wrapper around the SDK `Client` with our defaults
+  - 25 unit tests covering transport selection, decorator semantics, and connect/init flow
 
 ### Changed
 

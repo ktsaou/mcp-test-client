@@ -78,6 +78,9 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      // Mock implementations need async to match the interface they mimic,
+      // even if the body doesn't actually await anything.
+      '@typescript-eslint/require-await': 'off',
     },
   },
 

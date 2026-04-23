@@ -136,13 +136,13 @@ each box as the phase lands.
 - [ ] Empty `src/main.tsx` + `src/App.tsx` booting to "hello world"
 - [ ] First green CI run
 
-### Phase 2 — MCP client core
+### Phase 2 — MCP client core ✅
 
-- [ ] `src/mcp/client.ts` — thin wrapper around SDK `Client` with our defaults
-- [ ] `src/mcp/logging-transport.ts` — decorator that captures wire messages
-- [ ] `src/mcp/transports.ts` — factory: URL → transport instance
-- [ ] `src/mcp/types.ts` — re-exports and project-specific types
-- [ ] Unit tests for each against a mock transport
+- [x] `src/mcp/types.ts` — re-exports and project-specific types
+- [x] `src/mcp/transports.ts` — factory: URL → transport instance
+- [x] `src/mcp/logging-transport.ts` — decorator that captures wire messages
+- [x] `src/mcp/client.ts` — thin wrapper around SDK `Client` with our defaults
+- [x] Unit tests for each (25 tests green)
 
 ### Phase 3 — Persistence + state
 
