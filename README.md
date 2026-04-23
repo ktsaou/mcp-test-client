@@ -74,6 +74,22 @@ operator has to configure.
 - localStorage persistence: servers, themes, last-used params, canned
   requests. No backend, no sync, no telemetry.
 
+## Reporting bugs and asking for help
+
+If something breaks — a connection fails, a tool returns nothing, a
+schema doesn't render — click **Report issue** in the app's log panel.
+It copies a redacted diagnostic bundle to your clipboard and opens the
+bug-report form. Paste the bundle into the Diagnostics field of the
+issue.
+
+The bundle redacts bearer tokens and header secrets automatically. It
+does **not** redact tool response payloads — review before sharing if
+your server returns sensitive data.
+
+Full details on what the bundle contains, how redaction works, and how
+to grab one from DevTools are in
+[`docs/reporting-bugs.md`](docs/reporting-bugs.md).
+
 ## For contributors
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). Internal design decisions live in

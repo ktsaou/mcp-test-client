@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { useDiagnosticsPublisher } from '../diagnostics/useDiagnosticsPublisher.ts';
 import { ConnectionBar } from './connection-bar.tsx';
 import { Inspector, type Selection } from './inspector.tsx';
 import { LogPanel } from './log-panel.tsx';
@@ -9,6 +10,7 @@ import { ShareUrlLoader } from './share-url-loader.tsx';
 
 export function Layout() {
   const [selection, setSelection] = useState<Selection | null>(null);
+  useDiagnosticsPublisher();
   return (
     <div className="shell">
       <ShareUrlLoader />

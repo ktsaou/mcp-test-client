@@ -78,6 +78,12 @@
   z-index: 1;
 }
 
+.panel-header__actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .panel-body {
   padding: 12px 14px;
   flex: 1;

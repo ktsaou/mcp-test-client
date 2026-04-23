@@ -8,6 +8,17 @@ body:
         Thanks for taking the time to file a bug. Please fill in as much as
         you can — minimal reproductions get fixed faster.
 
+        **Before you submit**, please paste a diagnostic bundle in the
+        "Diagnostics" field at the bottom. The easiest way to get one is to
+        click **Report issue** in the app (it copies the bundle to your
+        clipboard). If that button is unavailable, see
+        [`docs/reporting-bugs.md`](https://github.com/ktsaou/mcp-test-client/blob/master/docs/reporting-bugs.md)
+        for the console fallback.
+
+        The bundle redacts bearer tokens and custom-header secrets
+        automatically. It does **not** redact response payloads — review
+        the JSON for anything sensitive before pasting.
+
   - type: input
     id: server-url
     attributes:
@@ -58,5 +69,18 @@ body:
     attributes:
       label: Browser console errors
       description: Open DevTools → Console. Paste any red errors here.
+    validations:
+      required: false
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics bundle
+      description: |
+        Paste the JSON copied by the app's **Report issue** button, or run
+        `mcpClientDiagnostics()` in DevTools and paste the output. Auth
+        tokens are redacted automatically; response payloads are not —
+        review before submitting if your server returns sensitive data.
+      render: json
     validations:
       required: false
