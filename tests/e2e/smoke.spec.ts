@@ -33,11 +33,7 @@ test('loads, connects to mock server, and sees its tools', async ({ page }) => {
   await page.getByText('echo').first().click();
 
   // Fill the "text" field the tool declares as required.
-  const textInput = page
-    .locator('.shell__panel')
-    .last()
-    .getByRole('textbox')
-    .first();
+  const textInput = page.locator('.shell__panel').last().getByRole('textbox').first();
   await textInput.fill('hi from test');
 
   await page.getByRole('button', { name: 'Send' }).click();
