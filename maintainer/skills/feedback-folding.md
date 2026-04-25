@@ -25,6 +25,11 @@ new guardrail`.
    pre-baked future failures.
 6. **Open / update an issue or DEC for the fix.** Decisions land in
    [`../decisions/`](../decisions/) before code.
+7. **Before specifying a new modal / surface, ask "does the existing
+   UI already handle this state?"** New modals must justify their
+   existence over the existing path. Adding a parallel UX for a state
+   the form / inspector / log already handles makes the new flow feel
+   special and inconsistent. Reuse beats invent.
 
 ## Lessons Learnt
 
@@ -46,3 +51,12 @@ new guardrail`.
   one tracker per piece, and the resolving DEC carries a checklist
   with one row per sub-item. The DEC merges only when every row is
   ticked or explicitly deferred with a date.
+- **2026-04-25 (DEC-015 design) — invented a parallel UX for a state
+  the form already handled.** I drafted a fourth modal for share-link
+  schema mismatch (option (a) ship now / option (b) Ajv-validate +
+  modal). Costa pushed back: the form's existing Ajv 8 validation
+  already handles malformed args from any source, including share
+  links. A "tool parameters changed" modal would make the share-link
+  path look special when it isn't. **Guardrail:** checklist step 7
+  above — before specifying a new modal, list every state and ask
+  whether the existing UI already covers it.

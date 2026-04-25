@@ -98,20 +98,31 @@ Once `inventory.tools` is populated and `status === 'connected'`:
   On _Open as raw_: drop `state.args` into the raw editor with a
   pre-built `tools/call` envelope; let the user adjust before sending.
 
-#### B.4 (Optional) Schema-mismatch check
+#### B.4 Schema mismatch — **no special handling**
 
-Tool exists; arg shape may have evolved. Two paths considered:
+Tool exists; arg shape may have evolved. The form's existing Ajv 8
+validation already handles this for _any_ input — typed by hand,
+loaded from a saved canned request, or pre-filled from a share link.
+The user sees the validation errors inline in the form, exactly the
+same way they do when they type something invalid themselves.
 
-- **(a) Don't check.** Pre-fill what we can; the server returns a
-  JSON-RPC error if validation fails on its side. Cheap; ships now.
-- **(b) Validate `state.args` against the now-current `inputSchema`
-  via Ajv 8** (already in deps). Surface a fourth modal _"Tool
-  parameters changed"_ showing which args don't fit and offering
-  [Open form with the parts that fit] [Open as raw JSON].
+Therefore:
 
-**Decision: (a)** for the v1.1.3 release. The server is the schema
-authority; if real users report the resulting error is confusing,
-escalate to (b).
+- **No fourth modal.** The form is already the schema authority.
+- **No schema in the share URL.** The recipient's currently-connected
+  server defines the truth; the link only ever carries
+  `{url, tool, args}` (plus optional `t` transport hint and `raw`).
+- **No client-side validation gating in the loader.** Pre-fill what
+  was shared; if it doesn't fit, the form does its job.
+
+This deliberately matches the broader principle: the share-link path
+must reuse the same surfaces the rest of the app uses, not invent a
+parallel UX.
+
+**Correction (2026-04-25, after Costa).** The earlier draft of this
+DEC included a "validate args, surface a modal" option. Removed —
+adding a modal for a state the existing UI already handles makes the
+share-link path inconsistent with hand-typed input.
 
 ## Sub-item checklist
 
