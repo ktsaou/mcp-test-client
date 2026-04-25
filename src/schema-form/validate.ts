@@ -1,38 +1,36 @@
 /**
- * Thin wrapper around Ajv 8 (2020-12 dialect) so the form can surface
- * validation errors without leaking Ajv internals into every field
+ * Thin wrapper around `@cfworker/json-schema` so the form can surface
+ * validation errors without leaking validator internals into every field
  * component.
  *
- * We lazy-initialise the Ajv instance and cache compiled validators per
- * schema reference; a new validator is compiled only when the schema
- * object identity changes, which matches how tools/list responses flow
- * (one schema per tool, rarely recompiled).
+ * History: this module previously used Ajv 8 with the 2020-12 dialect.
+ * Ajv compiles validators by generating JavaScript at runtime, which
+ * our deployed Content Security Policy (`script-src 'self'`, no
+ * `'unsafe-eval'`) blocks. Every Ajv compile threw, so the form's
+ * gate degraded to "Schema compile error" for every tool. We now use
+ * `@cfworker/json-schema` (the same library the MCP SDK ships as its
+ * alternative for edge runtimes), which interprets schemas at runtime
+ * with no runtime code generation, no CSP conflict. See DEC-024 for
+ * the full story.
+ *
+ * Validators are cached per schema-object identity (WeakMap) — a new
+ * validator is constructed only when the schema reference changes.
  */
 
-import Ajv2020 from 'ajv/dist/2020.js';
-import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
-import addFormats from 'ajv-formats';
+import { Validator, type OutputUnit } from '@cfworker/json-schema';
 
 import type { JSONSchema } from './types.ts';
 
-let sharedAjv: Ajv2020 | null = null;
-const validatorCache = new WeakMap<object, ValidateFunction>();
+const validatorCache = new WeakMap<object, Validator>();
 
-function getAjv(): Ajv2020 {
-  if (sharedAjv === null) {
-    // `strict: false` — real-world MCP schemas often include extra keywords
-    // (like `examples` in odd places, or draft-07-isms); we don't want the
-    // form to crash on anything Ajv considers "too strict".
-    sharedAjv = new Ajv2020({ allErrors: true, strict: false });
-    addFormats(sharedAjv);
-  }
-  return sharedAjv;
-}
-
-function getValidator(schema: JSONSchema): ValidateFunction {
+function getValidator(schema: JSONSchema): Validator {
   const cached = validatorCache.get(schema);
   if (cached) return cached;
-  const validator = getAjv().compile(schema);
+  // 2020-12 matches the dialect used by Ajv 2020 in the previous
+  // implementation. shortCircuit:false matches Ajv's `allErrors:true` —
+  // surface every failure so the form can render them per-field, not
+  // just the first one.
+  const validator = new Validator(schema, '2020-12', false);
   validatorCache.set(schema, validator);
   return validator;
 }
@@ -44,29 +42,20 @@ export interface ValidationFailure {
 
 /**
  * Validate `value` against `schema`. Returns `null` on success, or a list
- * of `{ path, message }` tuples on failure. Errors from Ajv internals
- * (malformed schema) are caught and reported as a single failure so the
- * form never throws out of a render.
+ * of `{ path, message }` tuples on failure.
  */
 export function validate(schema: JSONSchema, value: unknown): ValidationFailure[] | null {
-  try {
-    const v = getValidator(schema);
-    const ok = v(value);
-    if (ok) return null;
-    return (v.errors ?? []).map(errorToFailure);
-  } catch (e) {
-    return [
-      {
-        path: '',
-        message: `Schema compile error: ${e instanceof Error ? e.message : String(e)}`,
-      },
-    ];
-  }
+  const v = getValidator(schema);
+  const result = v.validate(value);
+  if (result.valid) return null;
+  return result.errors.map(errorToFailure);
 }
 
-function errorToFailure(err: ErrorObject): ValidationFailure {
+function errorToFailure(err: OutputUnit): ValidationFailure {
   return {
-    path: err.instancePath || '/',
-    message: err.message ?? 'validation failed',
+    // cfworker uses RFC 6901 instance pointers (e.g., `/name`); empty
+    // string means the root, which we render as `/`.
+    path: err.instanceLocation || '/',
+    message: err.error || 'validation failed',
   };
 }

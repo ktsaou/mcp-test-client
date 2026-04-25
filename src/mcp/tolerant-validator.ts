@@ -1,22 +1,34 @@
 /**
- * Resilience wrapper around the MCP SDK's `AjvJsonSchemaValidator`.
+ * Resilience wrapper around the MCP SDK's `CfWorkerJsonSchemaValidator`.
  *
  * Why this exists: the SDK 1.29's `Client.listTools()` calls
- * `cacheToolMetadata()` after the response, which iterates every tool and
- * eagerly compiles `tool.outputSchema` via the configured validator. The
- * default `AjvJsonSchemaValidator` does an unguarded `ajv.compile(schema)`
- * — if any single tool's `outputSchema` fails to compile (malformed,
- * unsupported feature, regex too complex for Ajv's code generator, …),
- * the throw propagates up through `cacheToolMetadata` and fails the
- * whole `listTools()` call. One bad tool blocks every tool. See DEC-024.
+ * `cacheToolMetadata()` after the response, which iterates every tool
+ * and eagerly compiles `tool.outputSchema` via the configured validator.
+ * The default validator does an unguarded compile — if any single tool's
+ * `outputSchema` fails (malformed, unsupported feature, …), the throw
+ * propagates up through `cacheToolMetadata` and fails the whole
+ * `listTools()` call. One bad tool blocks every tool. See DEC-024.
  *
- * This wrapper swallows compile errors per-schema, surfaces them via a
- * caller-supplied warning callback, and returns a permissive validator
- * (`valid: true`) so the SDK's eager cache loop continues. Output
- * validation is silently downgraded for the offender — the warning
- * callback is what makes the downgrade visible.
+ * Why `CfWorkerJsonSchemaValidator` instead of the default Ajv-based
+ * one: Ajv compiles by generating JavaScript at runtime, which our
+ * Content Security Policy (`script-src 'self'`, no `'unsafe-eval'`)
+ * blocks. Every Ajv compile failed in production with "Evaluating a
+ * string as JavaScript violates the following Content Security Policy
+ * directive". CfWorker interprets schemas at runtime instead — no
+ * runtime code generation, no CSP conflict. The MCP SDK ships this
+ * provider explicitly for edge runtimes (Cloudflare Workers, also
+ * subject to no-eval policies); browsers with strict CSP fall in the
+ * same bucket.
+ *
+ * This wrapper still swallows compile errors per-schema and surfaces
+ * them via a caller-supplied warning callback, returning a permissive
+ * validator (`valid: true`) so the SDK's eager cache loop continues.
+ * The wrapper is no longer expected to fire often (CfWorker doesn't
+ * compile, it interprets — fewer failure modes), but a malformed
+ * schema can still raise during `new Validator(schema)` setup, and
+ * we want to keep one bad tool from blocking the whole list.
  */
-import { AjvJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/ajv-provider.js';
+import { CfWorkerJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/cfworker-provider.js';
 import type {
   JsonSchemaType,
   JsonSchemaValidator,
@@ -51,7 +63,7 @@ export class TolerantValidator implements JsonSchemaValidatorProvider {
   #onWarn: SchemaWarningSink;
 
   constructor(onWarn: SchemaWarningSink, inner?: JsonSchemaValidatorProvider) {
-    this.#inner = inner ?? new AjvJsonSchemaValidator();
+    this.#inner = inner ?? new CfWorkerJsonSchemaValidator();
     this.#onWarn = onWarn;
   }
 

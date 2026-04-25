@@ -9,6 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.6] - 2026-04-25
+
+The real DEC-024 fix.
+
+### Background
+
+v1.1.3 / 1.1.4 / 1.1.5 wrapped the SDK validator's throws so the
+tools list rendered through them. But every Ajv compile in the
+deployed app was still failing — the actual error message was
+`"Evaluating a string as JavaScript violates the following Content
+Security Policy directive"`. Our `src/index.html` ships
+`script-src 'self'` (no `'unsafe-eval'`), and Ajv compiles validators
+by generating JavaScript at runtime. Result: every `outputSchema`
+silently fell through to a permissive validator, and the form's
+`inputSchema` gate would have surfaced "Schema compile error" if any
+user actually opened a tool form.
+
+### Fixed
+
+- **Replaced Ajv with `@cfworker/json-schema` everywhere.** The MCP
+  SDK ships `CfWorkerJsonSchemaValidator` precisely for environments
+  without `'unsafe-eval'` (Cloudflare Workers and our CSP fall in the
+  same bucket); `@cfworker/json-schema` interprets schemas at
+  validation time instead of generating JavaScript. No CSP conflict.
+  Behaviour is functionally equivalent for the schemas MCP servers
+  ship in practice. Output schemas now actually validate; form input
+  validation now actually runs.
+- **`src/schema-form/validate.ts`** rewritten on the same library.
+  The `validate()` API and `ValidationFailure` shape are unchanged;
+  only the engine swapped.
+
+### Removed
+
+- `ajv` (8.18.0) and `ajv-formats` (3.0.1) dependencies. Replaced
+  by `@cfworker/json-schema` (4.1.1).
+
+### Notes
+
+- Bundle delta: ~5 KB gz (was 247 → 252 KB initial-load gz). Well
+  under DEC-005's 350 KB cap.
+- The `TolerantValidator` wrapper from v1.1.3 stays as defence-in-
+  depth: even though CfWorker rarely throws on `getValidator()` (it
+  defers most checks to `validate()`), a malformed schema can still
+  raise during construction and we keep one bad tool from blocking
+  the whole list.
+- Console diagnostics: with CfWorker, the long Ajv `console.error`
+  function-code dumps are gone — they were Ajv-specific. CfWorker
+  reports failures via the standard `validate()` result, surfaced in
+  the system log via the existing warning sink. The lesson from
+  v1.1.4/v1.1.5 still stands: do not silence diagnostic output;
+  surfaces should improve framing instead. CfWorker just produces
+  less noise to begin with.
+
 ## [1.1.5] - 2026-04-25
 
 Reverts a misjudgement from v1.1.4.

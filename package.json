@@ -1,6 +1,6 @@
 {
   "name": "mcp-test-client",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Zero-install, browser-only test client for public Model Context Protocol (MCP) servers.",
   "license": "GPL-3.0-or-later",
   "type": "module",
@@ -32,14 +32,13 @@
     "clean": "rm -rf dist coverage playwright-report test-results"
   },
   "dependencies": {
+    "@cfworker/json-schema": "^4.1.1",
     "@mantine/core": "^9.1.0",
     "@mantine/hooks": "^9.1.0",
     "@mantine/modals": "^9.1.0",
     "@mantine/notifications": "^9.1.0",
     "@mantine/spotlight": "^9.1.0",
     "@modelcontextprotocol/sdk": "1.29.0",
-    "ajv": "8.18.0",
-    "ajv-formats": "3.0.1",
     "gpt-tokenizer": "^3.4.0",
     "nanoid": "5.1.7",
     "react": "19.2.5",
