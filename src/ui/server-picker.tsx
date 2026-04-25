@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActionIcon,
   Alert,
@@ -22,6 +22,23 @@ import { useConnection } from '../state/connection.tsx';
 import { useServers } from '../state/servers.tsx';
 import type { ServerEntry } from '../persistence/schema.ts';
 import type { TransportKind } from '../mcp/types.ts';
+
+/**
+ * Pre-fill payload for `<ServerModal mode="add">` — used by the
+ * URL-driven add-server flow (DEC-016 #3) so a deep-link from a server
+ * operator's docs lands in the modal with URL / name / transport / auth
+ * already populated.
+ *
+ * Credentials are deliberately NOT in the prefill: tokens never travel
+ * in URLs maintainers publish.
+ */
+interface AddPrefill {
+  url: string;
+  name?: string;
+  transport?: TransportKind | 'auto';
+  authKind?: 'none' | 'bearer' | 'header';
+  authHeaderName?: string;
+}
 
 function PlusIcon() {
   return (
@@ -61,7 +78,67 @@ function TrashIcon() {
 export function ServerPicker() {
   const { servers, activeId, setActive, markUsed, remove } = useServers();
   const { connect } = useConnection();
-  const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; id: string } | null>(null);
+  const [modal, setModal] = useState<
+    { mode: 'add'; prefill?: AddPrefill } | { mode: 'edit'; id: string } | null
+  >(null);
+
+  // DEC-016 #3 — URL-driven add-server. On first paint, parse
+  // `?add=<url>&name=&transport=&auth=&auth_header_name=` from the
+  // query string. If the URL matches a saved server, select + connect
+  // (the user already consented when they saved it). If new, open the
+  // modal pre-filled. Credentials are never read from the URL.
+  const urlParamsConsumedRef = useRef(false);
+  // Capture servers in a ref so the effect doesn't re-fire when the
+  // list mutates (e.g. ServerModal's add() updates servers).
+  const serversRef = useRef(servers);
+  serversRef.current = servers;
+  useEffect(() => {
+    if (urlParamsConsumedRef.current) return;
+    urlParamsConsumedRef.current = true;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const addUrl = params.get('add');
+    if (!addUrl) return;
+    try {
+      new URL(addUrl);
+    } catch {
+      return;
+    }
+    const transportRaw = params.get('transport');
+    const transport: TransportKind | 'auto' | undefined =
+      transportRaw === 'auto' ||
+      transportRaw === 'streamable-http' ||
+      transportRaw === 'sse-legacy' ||
+      transportRaw === 'websocket'
+        ? transportRaw
+        : undefined;
+    const authRaw = params.get('auth');
+    const authKind: 'none' | 'bearer' | 'header' | undefined =
+      authRaw === 'none' || authRaw === 'bearer' || authRaw === 'header' ? authRaw : undefined;
+    const name = params.get('name');
+    const authHeaderName = params.get('auth_header_name');
+
+    const existing = serversRef.current.find((s) => s.url === addUrl);
+    if (existing) {
+      void handleSelectServer(existing);
+    } else {
+      setModal({
+        mode: 'add',
+        prefill: {
+          url: addUrl,
+          ...(name !== null ? { name } : {}),
+          ...(transport !== undefined ? { transport } : {}),
+          ...(authKind !== undefined ? { authKind } : {}),
+          ...(authHeaderName !== null ? { authHeaderName } : {}),
+        },
+      });
+    }
+
+    // Strip the query but preserve the hash (ShareUrlLoader may still
+    // want it).
+    window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Click-to-connect (DEC-016 #5). Selecting a server in the sidebar
@@ -213,36 +290,56 @@ export function ServerPicker() {
 }
 
 interface ServerModalProps {
-  spec: { mode: 'add' } | { mode: 'edit'; id: string };
+  spec: { mode: 'add'; prefill?: AddPrefill } | { mode: 'edit'; id: string };
   onClose: () => void;
 }
 
 function ServerModal({ spec, onClose }: ServerModalProps) {
   const { servers, add, update, setActive } = useServers();
+  const { connect } = useConnection();
   const existing = spec.mode === 'edit' ? servers.find((s) => s.id === spec.id) : null;
+  const prefill = spec.mode === 'add' ? spec.prefill : undefined;
 
-  const [name, setName] = useState(existing?.name ?? '');
-  const [url, setUrl] = useState(existing?.url ?? 'https://');
-  const [transport, setTransport] = useState<TransportKind | 'auto'>(existing?.transport ?? 'auto');
+  const [name, setName] = useState(existing?.name ?? prefill?.name ?? '');
+  const [url, setUrl] = useState(existing?.url ?? prefill?.url ?? 'https://');
+  const [transport, setTransport] = useState<TransportKind | 'auto'>(
+    existing?.transport ?? prefill?.transport ?? 'auto',
+  );
   const [authKind, setAuthKind] = useState<'none' | 'bearer' | 'header'>(
-    existing?.auth?.kind ?? 'none',
+    existing?.auth?.kind ?? prefill?.authKind ?? 'none',
   );
   const [token, setToken] = useState(existing?.auth?.kind === 'bearer' ? existing.auth.token : '');
   const [headerName, setHeaderName] = useState(
-    existing?.auth?.kind === 'header' ? existing.auth.name : '',
+    existing?.auth?.kind === 'header' ? existing.auth.name : (prefill?.authHeaderName ?? ''),
   );
   const [headerValue, setHeaderValue] = useState(
     existing?.auth?.kind === 'header' ? existing.auth.value : '',
   );
   const [error, setError] = useState<string | null>(null);
+  // DEC-016 #4: connecting spinner while the Save handler probes the
+  // server. Persistence is gated on a successful connect — if the
+  // handshake fails, the entry is NOT saved and the user sees the
+  // error inline so they can fix and retry.
+  const [busy, setBusy] = useState(false);
 
-  function handleSave() {
+  // DEC-016 #4: required-auth validation. With auth ≠ none the
+  // credential field must be non-empty before submit.
+  const tokenMissing = authKind === 'bearer' && token.trim().length === 0;
+  const headerNameMissing = authKind === 'header' && headerName.trim().length === 0;
+  const headerValueMissing = authKind === 'header' && headerValue.trim().length === 0;
+  const authIncomplete = tokenMissing || headerNameMissing || headerValueMissing;
+
+  async function handleSave() {
     setError(null);
     const cleanUrl = url.trim();
     try {
       new URL(cleanUrl);
     } catch {
       setError(`Not a valid URL: ${cleanUrl}`);
+      return;
+    }
+    if (authIncomplete) {
+      setError('Auth value required when an auth method is selected.');
       return;
     }
 
@@ -253,20 +350,63 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
           ? { kind: 'bearer', token }
           : { kind: 'header', name: headerName, value: headerValue };
 
-    if (spec.mode === 'add') {
-      const created = add({
-        name: name.trim() || cleanUrl,
-        url: cleanUrl,
-        transport,
-        auth,
-      });
-      setActive(created.id);
-      notifications.show({ message: `Added ${created.name}` });
-    } else {
-      update(spec.id, { name: name.trim() || cleanUrl, url: cleanUrl, transport, auth });
-      notifications.show({ message: `Updated ${name.trim() || cleanUrl}` });
+    // Build a probe-only ServerEntry for connect(). The id /
+    // addedAt / lastUsed values are placeholders — they're only used
+    // by ServerEntry consumers, and we never stash this candidate in
+    // storage. On success we either re-create (add) or update the
+    // real entry below.
+    const candidate: ServerEntry = {
+      id: existing?.id ?? '__candidate__',
+      name: name.trim() || cleanUrl,
+      url: cleanUrl,
+      transport,
+      auth,
+      addedAt: existing?.addedAt ?? Date.now(),
+      lastUsed: existing?.lastUsed ?? null,
+    };
+
+    setBusy(true);
+    // DEC-016 #4 — connect-on-save. We probe the server with a
+    // throwaway client first; if it works, we persist the entry and
+    // promote to the live connection. If it fails, we surface the
+    // error inline and DON'T persist. The reuse of the live
+    // ConnectionContext.connect() handles supersede if the user
+    // clicks Save while another connect is in flight.
+    try {
+      const outcome = await connect(candidate);
+      if (outcome === 'superseded') {
+        // Another connect (e.g. user clicked a sidebar entry while the
+        // modal probe was running) took over. Don't save; close the
+        // modal silently.
+        onClose();
+        return;
+      }
+      // Connect succeeded — now persist.
+      if (spec.mode === 'add') {
+        const created = add({
+          name: candidate.name,
+          url: candidate.url,
+          transport: candidate.transport,
+          auth: candidate.auth,
+        });
+        setActive(created.id);
+        notifications.show({ message: `Added and connected to ${created.name}` });
+      } else {
+        update(spec.id, {
+          name: candidate.name,
+          url: candidate.url,
+          transport: candidate.transport,
+          auth: candidate.auth,
+        });
+        notifications.show({ message: `Updated ${candidate.name}` });
+      }
+      onClose();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(`Connect failed: ${msg}`);
+    } finally {
+      setBusy(false);
     }
-    onClose();
   }
 
   return (
@@ -347,6 +487,8 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
               value={token}
               onChange={(e) => setToken(e.currentTarget.value)}
               placeholder="paste token"
+              required
+              error={tokenMissing ? 'Token required' : undefined}
             />
           ) : null}
 
@@ -357,11 +499,15 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
                 value={headerName}
                 onChange={(e) => setHeaderName(e.currentTarget.value)}
                 placeholder="X-Api-Key"
+                required
+                error={headerNameMissing ? 'Header name required' : undefined}
               />
               <PasswordInput
                 label="Header value"
                 value={headerValue}
                 onChange={(e) => setHeaderValue(e.currentTarget.value)}
+                required
+                error={headerValueMissing ? 'Header value required' : undefined}
               />
             </>
           ) : null}
@@ -382,12 +528,21 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
 
           <Group justify="flex-end" gap="xs">
             <Tooltip label="Discard changes" withinPortal>
-              <Button type="button" variant="default" onClick={onClose}>
+              <Button type="button" variant="default" onClick={onClose} disabled={busy}>
                 Cancel
               </Button>
             </Tooltip>
-            <Tooltip label={spec.mode === 'add' ? 'Add this server' : 'Save changes'} withinPortal>
-              <Button type="submit">Save</Button>
+            <Tooltip
+              label={
+                spec.mode === 'add'
+                  ? 'Save and connect — only persists if the connection succeeds'
+                  : 'Save and reconnect with the new settings'
+              }
+              withinPortal
+            >
+              <Button type="submit" loading={busy} disabled={busy || authIncomplete}>
+                Save and connect
+              </Button>
             </Tooltip>
           </Group>
         </Stack>

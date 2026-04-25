@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.14] - 2026-04-26
+
+Closes the remaining DEC-016 sub-items.
+
+### Added
+
+- **URL-driven add-server modal** (DEC-016 #3). On first paint the
+  app reads `?add=<url>&name=…&transport=…&auth=…&auth_header_name=…`
+  from the query string. If the URL matches a saved server, it is
+  selected and connected (the user already consented when they saved
+  it; no third-party initiation). If the URL is new, the add-server
+  modal opens pre-filled with everything except credentials —
+  tokens never travel in URLs maintainers publish. The query string
+  is stripped after consumption so reloads don't re-apply.
+- **Connect-on-save modal** (DEC-016 #4). The Save button is now
+  "Save and connect": it probes the server with the current config
+  before persisting. On success the entry is saved (or updated, in
+  edit mode) and the modal closes. On failure the entry is **not**
+  persisted and the modal stays open with the connection error
+  inline so the user can fix the URL / token / header name and
+  retry. Required-auth fields are now strictly required: the bearer
+  token / header name / header value inputs show inline "required"
+  errors and the Save button is disabled until they're filled.
+
+### Notes
+
+- DEC-016 is now done; the remaining v1.1.x backlog is DEC-017
+  (catalogs), DEC-018 (per-tool persistence), DEC-019 (Send w/o
+  validation), DEC-020 (inflight indicator), DEC-021 (export/import),
+  DEC-022 (chrome polish + docs viewer), DEC-023 (LLM chat),
+  DEC-015 (share-link reproduction).
+- 227 unit tests pass; lint, typecheck, build clean.
+
 ## [1.1.13] - 2026-04-25
 
 Two follow-ups Costa flagged after using v1.1.12 against a slow
