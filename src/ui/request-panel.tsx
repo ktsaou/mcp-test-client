@@ -219,7 +219,14 @@ export function RequestPanel({ selection }: Props) {
             <div className="muted" style={{ fontSize: 'var(--font-size-sm)', marginBottom: 6 }}>
               Last result
             </div>
-            <JsonView value={lastResult} />
+            <JsonView
+              value={lastResult}
+              copyButton
+              downloadButton
+              downloadFilename={
+                selection ? `mcp-${selection.kind}-${selection.name}` : 'mcp-result'
+              }
+            />
           </div>
         ) : null}
       </div>

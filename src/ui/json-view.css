@@ -1,10 +1,31 @@
+.json-view-wrap {
+  position: relative;
+}
+
+.json-view-actions {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.json-view-wrap:hover .json-view-actions,
+.json-view-wrap:focus-within .json-view-actions {
+  opacity: 1;
+}
+
 .json-view {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
-  line-height: 1.45;
+  line-height: 1.5;
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
+  tab-size: 2;
 }
 
 .json-key {
@@ -24,4 +45,29 @@
 }
 .json-punct {
   color: var(--color-syntax-punct);
+}
+
+/* Marker shown at the end of every visualised newline inside a string,
+   right before the actual line break. Subtle by default. */
+.json-newline-marker {
+  display: inline-block;
+  margin: 0 2px;
+  padding: 0 4px;
+  font-size: 0.85em;
+  border-radius: 3px;
+  color: var(--color-info);
+  background-color: color-mix(in srgb, var(--color-info) 18%, transparent);
+  user-select: none;
+}
+
+/* Badge shown before a string whose contents are themselves recognised JSON. */
+.json-nested-marker {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 6px;
+  font-size: 0.85em;
+  border-radius: 3px;
+  color: var(--color-info);
+  background-color: color-mix(in srgb, var(--color-info) 18%, transparent);
+  user-select: none;
 }

@@ -64,13 +64,17 @@ function LogRow({ entry }: { entry: LogEntry }) {
 
   const dir = entry.direction === 'outgoing' ? 'out' : 'in';
   const dirGlyph = entry.direction === 'outgoing' ? '→' : '←';
+  const filenameStem =
+    'method' in entry.message && typeof entry.message.method === 'string'
+      ? `mcp-${dir}-${entry.message.method.replace(/[^a-z0-9._-]+/gi, '_')}`
+      : `mcp-${dir}`;
 
   return (
     <div className="log-entry">
       <span className="log-entry__ts">{ts}</span>
       <span className={`log-entry__dir log-entry__dir--${dir}`}>{dirGlyph}</span>
       <div className="log-entry__body">
-        <JsonView value={entry.message} />
+        <JsonView value={entry.message} copyButton downloadButton downloadFilename={filenameStem} />
       </div>
     </div>
   );
