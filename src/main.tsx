@@ -2,6 +2,13 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
 import { snapshotBundle } from './diagnostics/current.ts';
+
+// Mantine styles must come before our overrides so theme.css / shell.css
+// can lean on Mantine CSS variables and selectively override them.
+import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
+import '@mantine/spotlight/styles.css';
+
 import './ui/theme.css';
 import './ui/shell.css';
 import './ui/json-view.css';

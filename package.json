@@ -31,12 +31,18 @@
     "clean": "rm -rf dist coverage playwright-report test-results"
   },
   "dependencies": {
+    "@mantine/core": "^9.1.0",
+    "@mantine/hooks": "^9.1.0",
+    "@mantine/modals": "^9.1.0",
+    "@mantine/notifications": "^9.1.0",
+    "@mantine/spotlight": "^9.1.0",
     "@modelcontextprotocol/sdk": "1.29.0",
     "ajv": "8.18.0",
     "ajv-formats": "3.0.1",
     "nanoid": "5.1.7",
     "react": "19.2.5",
     "react-dom": "19.2.5",
+    "react-resizable-panels": "^4.10.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
@@ -57,6 +63,8 @@
     "globals": "^17.5.0",
     "happy-dom": "^20.9.0",
     "jsdom": "^29.0.2",
+    "postcss-preset-mantine": "^1.18.0",
+    "postcss-simple-vars": "^7.0.1",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.0",

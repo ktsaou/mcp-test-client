@@ -29,7 +29,7 @@ export default tseslint.config(
       globals: { ...globals.browser, ...globals.es2023 },
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['eslint.config.mjs', 'tests/setup/*.ts'],
+          allowDefaultProject: ['eslint.config.mjs', 'postcss.config.cjs', 'tests/setup/*.ts'],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -87,9 +87,15 @@ export default tseslint.config(
   },
 
   {
-    files: ['*.config.{ts,mjs,js}', '*.config.*.{ts,mjs,js}', 'eslint.config.mjs'],
+    files: [
+      '*.config.{ts,mjs,js,cjs}',
+      '*.config.*.{ts,mjs,js,cjs}',
+      'eslint.config.mjs',
+      'postcss.config.cjs',
+    ],
     languageOptions: {
       globals: { ...globals.node },
+      sourceType: 'commonjs',
     },
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
