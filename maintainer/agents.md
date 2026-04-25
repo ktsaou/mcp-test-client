@@ -111,10 +111,17 @@ public/public-servers.json, otherwise the mock at the URL I'll provide.
 
 Test scopes (mandatory; added 2026-04-25):
 
-- iPhone-size viewport (390×844)
-- Share-link reload in a fresh incognito tab
-- Bearer-token auth flow
-- 200+ messages in the log (scroll perf)
+- iPhone-size viewport (390×844). Verify §3 flow does not break.
+- Share-link reload in a fresh incognito tab. **Explicitly verify
+  what reconstructs: server, selected tool, method, AND argument
+  values must all come back. Anything less is a falsifier on
+  values.md's "share a reproducible tool call" promise.**
+- Bearer-token auth flow — verify the token round-trips into the
+  Authorization header on the network tab.
+- 200+ messages in the log (scroll perf and JS heap growth).
+- Modal a11y end-to-end: Esc closes, focus is trapped, AND **Enter
+  on the primary input submits**. The third one is easy to miss;
+  verify it explicitly with a screenshot of submit-on-enter working.
 
 Deliverables (Markdown report):
 
