@@ -37,12 +37,30 @@ The critic must test these scopes by default (added 2026-04-25):
 - **Alignment under squeeze.** For any list-of-rows surface (today: the
   log), resize its container to 280 / 320 / 360 / 400 px and confirm
   the **right-edge action icons share the same X offset across every
-  row** (collect `getBoundingClientRect().right` on each per-row icon;
-  the set must contain a single value, ±0.5 px). When content competes
-  with the action icons for horizontal space, the **content folds**
-  (truncates with ellipsis or progressively hides chips), the
-  **buttons do not move**. This is the surface a critic walking
-  visually misses repeatedly — make the measurement explicit.
+  row**. Measurement recipe (so different critics report consistent
+  results, not naive `Set` of floats):
+
+  ```js
+  const rights = Array.from(document.querySelectorAll('.log-row [aria-label="copy as JSON"]')).map(
+    (b) => b.getBoundingClientRect().right,
+  );
+  const buckets = new Set(rights.map((v) => Math.round(v * 2) / 2));
+  // PASS iff buckets.size === 1 (sub-pixel rounding tolerated)
+  ```
+
+  When content competes with the action icons for horizontal space, the
+  **content folds** (truncates with ellipsis or progressively hides
+  chips), the **buttons do not move**.
+
+  When the implementation uses a discrete fold-level signal (today:
+  `data-chip-level` 0/1/2/3 on `[data-log-panel-root]`), report the
+  signal at each tested width and verify it **only goes up** as the
+  panel narrows (no skipped levels, no oscillation). That catches a
+  future regression where, say, level jumps 0 → 2 (skipping 1) and the
+  drop priority gets reordered silently.
+
+  This is the surface a critic walking visually misses repeatedly — make
+  the measurement explicit and report the numbers in the verdict.
 
 ## Lessons Learnt
 
@@ -81,3 +99,22 @@ The critic must test these scopes by default (added 2026-04-25):
   **Guardrail:** the new "alignment under squeeze" mandatory scope
   above. Every list-of-rows surface gets the icon-X-offset
   measurement at 280–400 px; a single distinct value is required.
+- **2026-04-25 (v1.1.2 critic feedback) — alignment falsifier was
+  measurement-fragile.** The first version of the scope said "the set
+  of `.right` values must contain a single value (±0.5 px)" but used
+  a naive `new Set(rights)`. With sub-pixel rounding from a
+  percentage-based layout, that Set could legitimately have multiple
+  near-identical floats and a future critic would record a false
+  positive. The v1.1.2 critic flagged it. **Guardrail:** the recipe
+  above buckets to half-pixels (`Math.round(v * 2) / 2`) before the
+  Set-size check — different critics measuring the same UI now
+  produce comparable verdicts.
+- **2026-04-25 (v1.1.2 critic feedback) — chip-drop ordering was
+  visual-only.** The original scope said "verify by resizing 600 →
+  280 px and watching which chips disappear at each step", which
+  depends on visual judgment. The v1.1.2 implementation exposes
+  `data-chip-level` (0/1/2/3) on `[data-log-panel-root]` — a far
+  more reliable signal. **Guardrail:** for any squeeze-driven
+  visibility decision, the implementation should expose a discrete
+  fold-level attribute and the critic should measure it directly,
+  asserting monotonicity as the panel narrows.

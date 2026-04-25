@@ -47,6 +47,28 @@ step broke — _no server appeared in the sidebar_, _server appeared
 but Connect failed_, _connected but no tool selected_, _tool
 selected but form didn't pre-fill_. **Status: blocked on repro.**
 
+**New clue (2026-04-25, v1.1.2 critic).** While verifying the v1.1.2
+alignment fix, the UX critic ran the share-link round-trip as a
+regression check and observed: after pasting the share URL and
+reloading, the **sidebar showed the previously-clicked entry as
+`data-active=true`** while the request panel correctly drove the
+shared server's tool. That is a sidebar-selection / active-server
+divergence — the connection context picked up the inbox correctly
+but the sidebar UI did not switch its highlighted row to match. If
+the divergence also affects the inventory-fetch path (i.e. the
+sidebar row's "active" state controls which server's inventory the
+sidebar fetches), the share-link recipient would see the new
+server's tools render correctly _once_, but any subsequent
+sidebar-driven action (click, disconnect, re-connect) would target
+the wrong server. **Likely the Part-A bug.** Need to verify by
+opening a share-link in a browser that already has _other_ servers
+saved, then clicking around — the sidebar highlight desync should
+reproduce.
+
+When Part A repro lands, the fix is probably to drive sidebar
+`activeId` from the same single source the connection context uses,
+not from the click handler alone.
+
 ### Part B — the UX flow: precondition modals
 
 Independent of the bug; even if the loader is technically working,
