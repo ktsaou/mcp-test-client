@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Badge, Box, NavLink, ScrollArea, Tabs, Text } from '@mantine/core';
 
 import { useConnection } from '../state/connection.tsx';
+import { useSelection } from '../state/selection.tsx';
 
 type Tab = 'tools' | 'prompts' | 'resources' | 'templates';
 
@@ -11,11 +12,6 @@ export interface Selection {
   payload: unknown;
 }
 
-interface Props {
-  selection: Selection | null;
-  onSelect: (selection: Selection) => void;
-}
-
 const TAB_LABELS: Record<Tab, string> = {
   tools: 'Tools',
   prompts: 'Prompts',
@@ -23,8 +19,9 @@ const TAB_LABELS: Record<Tab, string> = {
   templates: 'Templates',
 };
 
-export function Inspector({ selection, onSelect }: Props) {
+export function Inspector() {
   const { inventory, status } = useConnection();
+  const { selection, setSelection } = useSelection();
   const [tab, setTab] = useState<Tab>('tools');
 
   const asStr = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback);
@@ -121,7 +118,9 @@ export function Inspector({ selection, onSelect }: Props) {
                   <NavLink
                     key={entry.name}
                     active={isActive}
-                    onClick={() => onSelect({ kind: tab, name: entry.name, payload: entry.item })}
+                    onClick={() =>
+                      setSelection({ kind: tab, name: entry.name, payload: entry.item })
+                    }
                     label={
                       <Text size="sm" fw={500}>
                         {entry.name}

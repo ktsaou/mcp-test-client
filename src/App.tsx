@@ -4,6 +4,7 @@ import { Notifications } from '@mantine/notifications';
 
 import { ConnectionProvider } from './state/connection.tsx';
 import { LogProvider } from './state/log.tsx';
+import { SelectionProvider } from './state/selection.tsx';
 import { ServersProvider } from './state/servers.tsx';
 import { ThemeProvider, useTheme } from './state/theme.tsx';
 import { appTheme } from './ui/mantine-theme.ts';
@@ -36,7 +37,9 @@ export function App() {
         <ServersProvider>
           <LogProvider>
             <ConnectionProvider>
-              <Layout />
+              <SelectionProvider>
+                <Layout />
+              </SelectionProvider>
             </ConnectionProvider>
           </LogProvider>
         </ServersProvider>

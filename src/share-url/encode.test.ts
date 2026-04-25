@@ -24,6 +24,33 @@ describe('shareable URL encoder', () => {
     expect(decoded).toEqual(state);
   });
 
+  // The {server, tool, args} triple is the share-link contract per
+  // values.md: "share a reproducible tool call". This test pins the
+  // round-trip on a representative payload so a regression in either side
+  // (encode or decode) trips immediately.
+  it('round-trips {server, tool, args}', async () => {
+    const state: ShareState = {
+      v: 1,
+      url: 'https://shared.example/mcp',
+      tool: 'add',
+      args: { a: 2, b: 3 },
+    };
+    const encoded = await encodeShareState(state);
+    const decoded = await decodeShareState(encoded);
+    expect(decoded).toEqual(state);
+  });
+
+  it('round-trips a raw editor payload', async () => {
+    const state: ShareState = {
+      v: 1,
+      url: 'https://shared.example/mcp',
+      tool: 'add',
+      raw: '{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "method": "tools/call",\n  "params": { "name": "add", "arguments": { "a": 2, "b": 3 } }\n}',
+    };
+    const decoded = await decodeShareState(await encodeShareState(state));
+    expect(decoded).toEqual(state);
+  });
+
   it('accepts a leading #', async () => {
     const state: ShareState = { v: 1, url: 'https://example.com/mcp' };
     const encoded = '#' + (await encodeShareState(state));

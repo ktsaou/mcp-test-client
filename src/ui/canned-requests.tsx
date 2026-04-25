@@ -194,40 +194,45 @@ function SaveAsModal({ existing, onClose, onSave }: SaveAsModalProps) {
 
   return (
     <Modal opened onClose={onClose} title="Save request as" size="md">
-      <Stack gap="sm">
-        <TextInput
-          label="Name"
-          placeholder="e.g. add 2 and 3"
-          value={name}
-          onChange={(e) => setName(e.currentTarget.value)}
-          onBlur={() => setTouched(true)}
-          error={errorMsg}
-          data-autofocus
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              submit();
-            }
-          }}
-        />
-        {overwrites ? (
-          <Alert color="yellow" variant="light">
-            A saved request named “{trimmed}” already exists — saving will overwrite it.
-          </Alert>
-        ) : null}
-        <Group justify="flex-end" gap="xs">
-          <Tooltip label="Discard" withinPortal>
-            <Button variant="default" onClick={onClose}>
-              Cancel
-            </Button>
-          </Tooltip>
-          <Tooltip label="Save under this name" withinPortal>
-            <Button onClick={submit} disabled={isEmpty}>
-              Save
-            </Button>
-          </Tooltip>
-        </Group>
-      </Stack>
+      {/*
+        Form-level submit so Enter from any field saves; matches Add Server.
+        The previous TextInput-local onKeyDown is gone for consistency.
+      */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <Stack gap="sm">
+          <TextInput
+            label="Name"
+            placeholder="e.g. add 2 and 3"
+            value={name}
+            onChange={(e) => setName(e.currentTarget.value)}
+            onBlur={() => setTouched(true)}
+            error={errorMsg}
+            data-autofocus
+          />
+          {overwrites ? (
+            <Alert color="yellow" variant="light">
+              A saved request named “{trimmed}” already exists — saving will overwrite it.
+            </Alert>
+          ) : null}
+          <Group justify="flex-end" gap="xs">
+            <Tooltip label="Discard" withinPortal>
+              <Button type="button" variant="default" onClick={onClose}>
+                Cancel
+              </Button>
+            </Tooltip>
+            <Tooltip label="Save under this name" withinPortal>
+              <Button type="submit" disabled={isEmpty}>
+                Save
+              </Button>
+            </Tooltip>
+          </Group>
+        </Stack>
+      </form>
     </Modal>
   );
 }

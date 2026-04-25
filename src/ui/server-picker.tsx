@@ -238,110 +238,122 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
       title={spec.mode === 'add' ? 'Add MCP server' : 'Edit server'}
       size="lg"
     >
-      <Stack gap="sm">
-        <TextInput
-          label="Name"
-          value={name}
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Friendly name (optional)"
-        />
-
-        <TextInput
-          label="URL"
-          value={url}
-          onChange={(e) => setUrl(e.currentTarget.value)}
-          placeholder="https://example.com/mcp or wss://…"
-          required
-        />
-
-        <Select
-          label="Transport"
-          value={transport}
-          onChange={(v) => {
-            if (
-              v === 'auto' ||
-              v === 'streamable-http' ||
-              v === 'sse-legacy' ||
-              v === 'websocket'
-            ) {
-              setTransport(v);
-            }
-          }}
-          data={[
-            { value: 'auto', label: 'Auto (by URL scheme)' },
-            { value: 'streamable-http', label: 'Streamable HTTP (current MCP spec)' },
-            { value: 'sse-legacy', label: 'SSE (legacy)' },
-            { value: 'websocket', label: 'WebSocket (custom)' },
-          ]}
-          allowDeselect={false}
-        />
-
-        <Select
-          label="Authentication"
-          value={authKind}
-          onChange={(v) => {
-            if (v === 'none' || v === 'bearer' || v === 'header') {
-              setAuthKind(v);
-            }
-          }}
-          data={[
-            { value: 'none', label: 'None' },
-            { value: 'bearer', label: 'Bearer token' },
-            { value: 'header', label: 'Custom header' },
-          ]}
-          allowDeselect={false}
-        />
-
-        {authKind === 'bearer' ? (
-          <PasswordInput
-            label="Bearer token"
-            value={token}
-            onChange={(e) => setToken(e.currentTarget.value)}
-            placeholder="paste token"
+      {/*
+        Wrapping the body in a <form> wires Enter-to-submit from any focused
+        input through the Save button (type="submit") without trapping Enter
+        in custom onKeyDown handlers — and keeps Esc on the Modal listener.
+      */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSave();
+        }}
+      >
+        <Stack gap="sm">
+          <TextInput
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.currentTarget.value)}
+            placeholder="Friendly name (optional)"
           />
-        ) : null}
 
-        {authKind === 'header' ? (
-          <>
-            <TextInput
-              label="Header name"
-              value={headerName}
-              onChange={(e) => setHeaderName(e.currentTarget.value)}
-              placeholder="X-Api-Key"
-            />
+          <TextInput
+            label="URL"
+            value={url}
+            onChange={(e) => setUrl(e.currentTarget.value)}
+            placeholder="https://example.com/mcp or wss://…"
+            required
+          />
+
+          <Select
+            label="Transport"
+            value={transport}
+            onChange={(v) => {
+              if (
+                v === 'auto' ||
+                v === 'streamable-http' ||
+                v === 'sse-legacy' ||
+                v === 'websocket'
+              ) {
+                setTransport(v);
+              }
+            }}
+            data={[
+              { value: 'auto', label: 'Auto (by URL scheme)' },
+              { value: 'streamable-http', label: 'Streamable HTTP (current MCP spec)' },
+              { value: 'sse-legacy', label: 'SSE (legacy)' },
+              { value: 'websocket', label: 'WebSocket (custom)' },
+            ]}
+            allowDeselect={false}
+          />
+
+          <Select
+            label="Authentication"
+            value={authKind}
+            onChange={(v) => {
+              if (v === 'none' || v === 'bearer' || v === 'header') {
+                setAuthKind(v);
+              }
+            }}
+            data={[
+              { value: 'none', label: 'None' },
+              { value: 'bearer', label: 'Bearer token' },
+              { value: 'header', label: 'Custom header' },
+            ]}
+            allowDeselect={false}
+          />
+
+          {authKind === 'bearer' ? (
             <PasswordInput
-              label="Header value"
-              value={headerValue}
-              onChange={(e) => setHeaderValue(e.currentTarget.value)}
+              label="Bearer token"
+              value={token}
+              onChange={(e) => setToken(e.currentTarget.value)}
+              placeholder="paste token"
             />
-          </>
-        ) : null}
+          ) : null}
 
-        {error !== null ? (
-          <Alert color="red" variant="light">
-            {error}
-          </Alert>
-        ) : null}
+          {authKind === 'header' ? (
+            <>
+              <TextInput
+                label="Header name"
+                value={headerName}
+                onChange={(e) => setHeaderName(e.currentTarget.value)}
+                placeholder="X-Api-Key"
+              />
+              <PasswordInput
+                label="Header value"
+                value={headerValue}
+                onChange={(e) => setHeaderValue(e.currentTarget.value)}
+              />
+            </>
+          ) : null}
 
-        <Text size="xs" c="dimmed">
-          Stored in your browser only. See{' '}
-          <Anchor href="specs/security.md" target="_blank" rel="noreferrer" size="xs">
-            security notes
-          </Anchor>
-          .
-        </Text>
+          {error !== null ? (
+            <Alert color="red" variant="light">
+              {error}
+            </Alert>
+          ) : null}
 
-        <Group justify="flex-end" gap="xs">
-          <Tooltip label="Discard changes" withinPortal>
-            <Button variant="default" onClick={onClose}>
-              Cancel
-            </Button>
-          </Tooltip>
-          <Tooltip label={spec.mode === 'add' ? 'Add this server' : 'Save changes'} withinPortal>
-            <Button onClick={handleSave}>Save</Button>
-          </Tooltip>
-        </Group>
-      </Stack>
+          <Text size="xs" c="dimmed">
+            Stored in your browser only. See{' '}
+            <Anchor href="specs/security.md" target="_blank" rel="noreferrer" size="xs">
+              security notes
+            </Anchor>
+            .
+          </Text>
+
+          <Group justify="flex-end" gap="xs">
+            <Tooltip label="Discard changes" withinPortal>
+              <Button type="button" variant="default" onClick={onClose}>
+                Cancel
+              </Button>
+            </Tooltip>
+            <Tooltip label={spec.mode === 'add' ? 'Add this server' : 'Save changes'} withinPortal>
+              <Button type="submit">Save</Button>
+            </Tooltip>
+          </Group>
+        </Stack>
+      </form>
     </Modal>
   );
 }

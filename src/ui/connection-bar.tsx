@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
@@ -5,7 +6,15 @@ import { useServers } from '../state/servers.tsx';
 import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 
-export function ConnectionBar() {
+interface ConnectionBarProps {
+  /**
+   * Optional element rendered at the leading edge of the bar, before the
+   * brand. Used by the mobile layout to host the sidebar drawer hamburger.
+   */
+  leftSlot?: ReactNode;
+}
+
+export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
   const { active, markUsed } = useServers();
   const { status, connect, disconnect } = useConnection();
 
@@ -54,6 +63,7 @@ export function ConnectionBar() {
         flexShrink: 0,
       }}
     >
+      {leftSlot}
       <Text fw={600} size="md" style={{ letterSpacing: '0.02em' }}>
         MCP Test Client
       </Text>

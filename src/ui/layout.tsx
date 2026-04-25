@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { AppShell } from '@mantine/core';
+import { ActionIcon, AppShell, Box, Drawer, Tabs, Tooltip } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 
 import { useDiagnosticsPublisher } from '../diagnostics/useDiagnosticsPublisher.ts';
 import { ConnectionBar } from './connection-bar.tsx';
-import { Inspector, type Selection } from './inspector.tsx';
+import { Inspector } from './inspector.tsx';
 import { LogPanel } from './log-panel.tsx';
 import { RequestPanel } from './request-panel.tsx';
 import { ServerPicker } from './server-picker.tsx';
@@ -14,7 +15,16 @@ import { usePersistedLayout } from './use-panel-size.ts';
 /** Viewport width at which the log panel moves from bottom row to right column. */
 const WIDE_LAYOUT_BREAKPOINT_PX = 1400;
 
+/**
+ * Below this width we drop the resizable panel layout entirely and switch
+ * to a single-pane stacked layout: sidebar in a Drawer, main area as Tabs
+ * (Inventory / Request / Log).
+ */
+const MOBILE_LAYOUT_BREAKPOINT_PX = 768;
+
 const HEADER_HEIGHT = 56;
+
+type MobileTab = 'inventory' | 'request' | 'log';
 
 function useWideLayout(): boolean {
   const [wide, setWide] = useState<boolean>(() =>
@@ -33,25 +43,67 @@ function useWideLayout(): boolean {
   return wide;
 }
 
+function HamburgerIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+      <path
+        d="M2 4h12M2 8h12M2 12h12"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function Layout() {
-  const [selection, setSelection] = useState<Selection | null>(null);
   useDiagnosticsPublisher();
 
   const wide = useWideLayout();
+  // useMediaQuery returns undefined on first render before the listener wires
+  // up; treat undefined as "not mobile" so the desktop layout is the SSR /
+  // first-paint default and the resizer state never bleeds into the mobile
+  // path on first paint.
+  const isMobile = useMediaQuery(`(max-width: ${MOBILE_LAYOUT_BREAKPOINT_PX - 1}px)`) ?? false;
 
-  // Three independent layouts, persisted under mcptc:ui.layout.* keys.
-  // The wide vs narrow layouts get separate persistence so swapping back and
-  // forth doesn't clobber the user's preferred sizes for either.
+  // Persisted desktop layouts are keyed under their existing `outer-wide` /
+  // `outer-narrow` / `top-narrow` / `main-split` features. The mobile mode
+  // does not use react-resizable-panels at all, so its sizes never reach
+  // localStorage and cannot pollute the desktop sessions (and vice versa).
   const [outerWide, setOuterWide] = usePersistedLayout('outer-wide');
   const [outerNarrow, setOuterNarrow] = usePersistedLayout('outer-narrow');
   const [topNarrow, setTopNarrow] = usePersistedLayout('top-narrow');
   const [mainSplit, setMainSplit] = usePersistedLayout('main-split');
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileTab>('inventory');
+
+  // If the user resizes from mobile back to desktop, close the drawer so
+  // its overlay doesn't block the now-visible sidebar.
+  useEffect(() => {
+    if (!isMobile && drawerOpen) setDrawerOpen(false);
+  }, [isMobile, drawerOpen]);
+
   return (
     <AppShell header={{ height: HEADER_HEIGHT }} padding={0}>
       <AppShell.Header withBorder={false}>
         <ShareUrlLoader />
-        <ConnectionBar />
+        <ConnectionBar
+          leftSlot={
+            isMobile ? (
+              <Tooltip label="Open server list" withinPortal>
+                <ActionIcon
+                  variant="subtle"
+                  size="lg"
+                  aria-label="Open server list"
+                  onClick={() => setDrawerOpen(true)}
+                >
+                  <HamburgerIcon />
+                </ActionIcon>
+              </Tooltip>
+            ) : null
+          }
+        />
       </AppShell.Header>
 
       <AppShell.Main
@@ -63,7 +115,14 @@ export function Layout() {
           overflow: 'hidden',
         }}
       >
-        {wide ? (
+        {isMobile ? (
+          <MobileLayout
+            tab={mobileTab}
+            onTabChange={setMobileTab}
+            drawerOpen={drawerOpen}
+            onDrawerClose={() => setDrawerOpen(false)}
+          />
+        ) : wide ? (
           <Group
             orientation="horizontal"
             defaultLayout={outerWide}
@@ -75,12 +134,7 @@ export function Layout() {
             </Panel>
             <ResizableSeparator orientation="horizontal" />
             <Panel id="main" defaultSize="55%" minSize="30%">
-              <MainSplit
-                selection={selection}
-                onSelect={setSelection}
-                layout={mainSplit}
-                onLayoutChanged={setMainSplit}
-              />
+              <MainSplit layout={mainSplit} onLayoutChanged={setMainSplit} />
             </Panel>
             <ResizableSeparator orientation="horizontal" />
             <Panel id="log" defaultSize="25%" minSize="12%" maxSize="50%">
@@ -106,12 +160,7 @@ export function Layout() {
                 </Panel>
                 <ResizableSeparator orientation="horizontal" />
                 <Panel id="main" defaultSize="75%" minSize="30%">
-                  <MainSplit
-                    selection={selection}
-                    onSelect={setSelection}
-                    layout={mainSplit}
-                    onLayoutChanged={setMainSplit}
-                  />
+                  <MainSplit layout={mainSplit} onLayoutChanged={setMainSplit} />
                 </Panel>
               </Group>
             </Panel>
@@ -127,13 +176,11 @@ export function Layout() {
 }
 
 interface MainSplitProps {
-  selection: Selection | null;
-  onSelect: (s: Selection) => void;
   layout: Record<string, number> | undefined;
   onLayoutChanged: (layout: Record<string, number>) => void;
 }
 
-function MainSplit({ selection, onSelect, layout, onLayoutChanged }: MainSplitProps) {
+function MainSplit({ layout, onLayoutChanged }: MainSplitProps) {
   return (
     <Group
       orientation="horizontal"
@@ -142,13 +189,81 @@ function MainSplit({ selection, onSelect, layout, onLayoutChanged }: MainSplitPr
       style={{ height: '100%', width: '100%' }}
     >
       <Panel id="inspector" defaultSize="40%" minSize="20%">
-        <Inspector selection={selection} onSelect={onSelect} />
+        <Inspector />
       </Panel>
       <ResizableSeparator orientation="horizontal" />
       <Panel id="request" defaultSize="60%" minSize="30%">
-        <RequestPanel selection={selection} />
+        <RequestPanel />
       </Panel>
     </Group>
+  );
+}
+
+interface MobileLayoutProps {
+  tab: MobileTab;
+  onTabChange: (tab: MobileTab) => void;
+  drawerOpen: boolean;
+  onDrawerClose: () => void;
+}
+
+function MobileLayout({ tab, onTabChange, drawerOpen, onDrawerClose }: MobileLayoutProps) {
+  return (
+    <>
+      <Drawer
+        opened={drawerOpen}
+        onClose={onDrawerClose}
+        title="Servers"
+        position="left"
+        size="85%"
+        padding={0}
+        styles={{ body: { padding: 0, height: '100%' } }}
+      >
+        <Box style={{ height: '100%' }} onClick={onDrawerClose}>
+          <ServerPicker />
+        </Box>
+      </Drawer>
+
+      <Tabs
+        value={tab}
+        onChange={(v) => {
+          if (v === 'inventory' || v === 'request' || v === 'log') onTabChange(v);
+        }}
+        keepMounted
+        variant="default"
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+      >
+        <Tabs.List style={{ flexShrink: 0 }}>
+          <Tabs.Tab value="inventory">Inventory</Tabs.Tab>
+          <Tabs.Tab value="request">Request</Tabs.Tab>
+          <Tabs.Tab value="log">Log</Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel
+          value="inventory"
+          style={{ flex: 1, minHeight: 0, display: tab === 'inventory' ? 'flex' : 'none' }}
+        >
+          <Box style={{ flex: 1, minHeight: 0, width: '100%' }}>
+            <Inspector />
+          </Box>
+        </Tabs.Panel>
+        <Tabs.Panel
+          value="request"
+          style={{ flex: 1, minHeight: 0, display: tab === 'request' ? 'flex' : 'none' }}
+        >
+          <Box style={{ flex: 1, minHeight: 0, width: '100%' }}>
+            <RequestPanel />
+          </Box>
+        </Tabs.Panel>
+        <Tabs.Panel
+          value="log"
+          style={{ flex: 1, minHeight: 0, display: tab === 'log' ? 'flex' : 'none' }}
+        >
+          <Box style={{ flex: 1, minHeight: 0, width: '100%' }}>
+            <LogPanel />
+          </Box>
+        </Tabs.Panel>
+      </Tabs>
+    </>
   );
 }
 

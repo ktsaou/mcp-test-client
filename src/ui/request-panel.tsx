@@ -15,15 +15,12 @@ import { notifications } from '@mantine/notifications';
 
 import { useConnection } from '../state/connection.tsx';
 import { useLog } from '../state/log.tsx';
+import { useSelection } from '../state/selection.tsx';
 import { JsonView } from './json-view.tsx';
 import { SchemaForm, type JSONSchema } from '../schema-form/index.ts';
 import { CannedRequests } from './canned-requests.tsx';
 import { ShareButton } from './share-button.tsx';
 import type { Selection } from './inspector.tsx';
-
-interface Props {
-  selection: Selection | null;
-}
 
 type Mode = 'form' | 'raw';
 
@@ -97,9 +94,10 @@ function selectionDescription(selection: Selection | null): string | undefined {
   return typeof desc === 'string' ? desc : undefined;
 }
 
-export function RequestPanel({ selection }: Props) {
+export function RequestPanel() {
   const { client, status } = useConnection();
   const log = useLog();
+  const { selection, consumeInbox } = useSelection();
   const [text, setText] = useState('');
   const [formValue, setFormValue] = useState<unknown>({});
   const [mode, setMode] = useState<Mode>('form');
@@ -111,13 +109,29 @@ export function RequestPanel({ selection }: Props) {
   const formSchema = useMemo(() => formSchemaFor(selection), [selection]);
   const description = useMemo(() => selectionDescription(selection), [selection]);
 
+  // Reset transient panel state whenever the selection changes. If a share
+  // URL inbox carries args/raw matching this selection, apply them now and
+  // clear the inbox so the user's later edits are not overwritten.
   useEffect(() => {
     if (template) setText(template);
     setFormValue({});
     setMode(formSchema ? 'form' : 'raw');
     setLastResult(null);
     setError(null);
-  }, [template, formSchema]);
+
+    if (!selection || selection.kind !== 'tools') return;
+    const inbox = consumeInbox();
+    if (!inbox || inbox.tool !== selection.name) return;
+    if (inbox.raw !== undefined) {
+      setText(inbox.raw);
+      setMode('raw');
+      return;
+    }
+    if (inbox.args !== undefined && formSchema) {
+      setFormValue(inbox.args);
+      setMode('form');
+    }
+  }, [template, formSchema, selection, consumeInbox]);
 
   async function sendFormCall() {
     if (!selection || selection.kind !== 'tools' || !client) return;
