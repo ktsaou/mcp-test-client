@@ -69,7 +69,7 @@ jobs:
           path: playwright-report/
 
   build:
-    name: Build
+    name: Build + bundle budget
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -80,6 +80,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # DEC-005: fail the build if dist/ exceeds 350 KB gzipped.
+      - run: npm run check:bundle
       - uses: actions/upload-artifact@v4
         with:
           name: dist

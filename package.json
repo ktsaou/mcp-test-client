@@ -28,6 +28,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps",
+    "check:bundle": "node scripts/bundle-budget.mjs",
     "clean": "rm -rf dist coverage playwright-report test-results"
   },
   "dependencies": {
