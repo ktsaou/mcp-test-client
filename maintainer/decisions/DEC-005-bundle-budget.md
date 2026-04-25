@@ -24,3 +24,18 @@ appended here.
 **Advisor sign-off.** Self-applied (process decision).
 
 **Status.** Active. Wiring lands in the same PR as the Mantine migration.
+
+**Amendment (2026-04-25, v1.1.1).** The script was generalised to
+distinguish **initial-load** assets (counted against the 350 KB cap) from
+**lazy / on-demand chunks** (reported separately, never against the cap).
+Faithful to this DEC's stated intent — "page-load slowness" — and what the
+user actually pays at first paint. The user-facing budget number is
+unchanged (350 KB gz); the input set narrowed to what actually loads on
+the initial HTML.
+
+Concretely: `scripts/bundle-budget.mjs` now parses `dist/index.html` for
+the `<script>` and `<link rel=stylesheet>` references, treats those as
+initial-load, and prints the rest under "Lazy / on-demand chunks". The
+[DEC-009](DEC-009-response-metrics.md) tokenizer (~1008 KB gz `o200k_base`
+table, dynamic-imported on first response expand) is the canonical lazy
+chunk this protects against double-counting.

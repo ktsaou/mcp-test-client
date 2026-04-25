@@ -36,10 +36,16 @@ For tokens:
 
 - _Heuristic: chars / 4._ Cheap, no dep, accurate to ±25 %. Honest if
   labelled "approx".
-- _`gpt-tokenizer` package, cl100k_base or o200k_base._ Real BPE; ~70 KB
-  raw / ~25 KB gzipped. Browser-friendly, no native binding, no WASM.
-  Adds ~25 KB gz to the bundle (the [DEC-005](DEC-005-bundle-budget.md)
-  budget has 84 KB headroom at v1.1; comfortable).
+- _`gpt-tokenizer` package, cl100k_base or o200k_base._ Real BPE; the
+  package's tokenize/detokenize code itself is small. **Note (corrected
+  during v1.1.1 implementation 2026-04-25):** the original wrote ~25 KB
+  gzipped here; that estimate was wrong. The `o200k_base` BPE table
+  alone is **~2.0 MB raw / ~1008 KB gz** — intrinsic to a 200 K-vocab
+  tokenizer, not a packaging issue. Browser-friendly (no WASM), but
+  loading it eagerly would blow the [DEC-005](DEC-005-bundle-budget.md)
+  budget instantly. The implementation uses `import('gpt-tokenizer/encoding/o200k_base')`
+  on first expand; initial bundle is unaffected, lazy chunk is paid
+  only when the user expands their first response row.
 - _`tiktoken` (WASM)._ Most accurate but ships ~600 KB WASM. Fails our
   bundle budget instantly. Reject.
 
