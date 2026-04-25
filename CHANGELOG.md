@@ -9,6 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.5] - 2026-04-25
+
+Reverts a misjudgement from v1.1.4.
+
+### Reverted
+
+- **Ajv's pre-throw `console.error` output is back.** v1.1.4 muted it
+  on the theory that it was scary noise. Costa flagged that this was
+  the wrong call: the dump is the **full generated validator source**
+  pointing at exactly the keyword Ajv choked on. For a developer
+  debugging an MCP server's schema, that is gold — silencing it
+  removed the most actionable diagnostic on the floor. The
+  v1.1.4 silencing is gone; Ajv's default logger writes to the
+  console as it always did.
+
+### Changed
+
+- **System-log warning now says "tool still usable".** The per-schema
+  warning is now phrased
+  `output schema compile failed (…): … — tool still usable; output
+validation disabled. Full Ajv detail in browser console.` That
+  addresses the v1.1.3 perception bug — "looks broken when it isn't"
+  — by changing the framing in the log, not by suppressing the
+  underlying console output.
+
+### Notes
+
+- The catch-and-warn behaviour from v1.1.3 / v1.1.4 is unchanged. One
+  un-compilable `outputSchema` still does not block the tools list;
+  the offending tool is still rendered with output validation
+  silently downgraded.
+- Lesson folded into `maintainer/skills/feedback-folding.md`: do not
+  conflate "user is confused by output" with "output is useless".
+  Diagnostic data goes to the console; user-facing framing goes in
+  the system log; both audiences served.
+
 ## [1.1.4] - 2026-04-25
 
 A follow-up to v1.1.3: the resilience wrapper from DEC-024 was already

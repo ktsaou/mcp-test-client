@@ -16,8 +16,6 @@
  * validation is silently downgraded for the offender — the warning
  * callback is what makes the downgrade visible.
  */
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
 import { AjvJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/ajv-provider.js';
 import type {
   JsonSchemaType,
@@ -38,41 +36,22 @@ export type SchemaWarningSink = (warning: SchemaCompileWarning) => void;
  * Validator provider that delegates to the SDK's default Ajv-based
  * validator and catches compile errors. On error: emits a warning to the
  * provided sink and returns a no-op validator that accepts any input.
- */
-/**
- * Build an Ajv instance with the SDK's default settings PLUS `logger: false`.
  *
- * Why: when Ajv's `compile()` fails, it calls `this.logger.error(...)` with
- * the (very long) generated function-code source BEFORE throwing. The default
- * logger is `console`, so a single un-compilable schema dumps a screenful of
- * scary stack traces into the user's console — even though our wrapper
- * already catches the throw and surfaces a clean per-schema warning to the
- * system-log. The user sees noise that looks like a hard failure when the
- * app is actually behaving correctly.
- *
- * Setting `logger: false` makes Ajv's logger no-ops (`{ log, warn, error }`
- * all become functions that swallow). Our wrapper still catches the throw
- * and emits its own structured warning via `onSchemaWarning`, so no
- * information is lost — only the redundant raw dump is suppressed.
+ * Diagnostics on console.error: Ajv's `compile()` calls
+ * `this.logger.error("Error compiling schema, function code:", source)`
+ * before throwing. We deliberately do NOT silence that output — it is
+ * exactly the diagnostic a developer needs when their MCP server's
+ * schema fails our validator: the full generated function code points
+ * straight at the broken keyword. v1.1.4 muted it; v1.1.5 restored it
+ * after the muting hid information Costa needed during a real debug
+ * session.
  */
-function buildSilentAjv() {
-  const ajv = new Ajv({
-    strict: false,
-    validateFormats: true,
-    validateSchema: false,
-    allErrors: true,
-    logger: false,
-  });
-  addFormats(ajv);
-  return ajv;
-}
-
 export class TolerantValidator implements JsonSchemaValidatorProvider {
   #inner: JsonSchemaValidatorProvider;
   #onWarn: SchemaWarningSink;
 
   constructor(onWarn: SchemaWarningSink, inner?: JsonSchemaValidatorProvider) {
-    this.#inner = inner ?? new AjvJsonSchemaValidator(buildSilentAjv());
+    this.#inner = inner ?? new AjvJsonSchemaValidator();
     this.#onWarn = onWarn;
   }
 

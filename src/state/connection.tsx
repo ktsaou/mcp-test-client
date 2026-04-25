@@ -90,9 +90,16 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
         onSchemaWarning: ({ message, schema }) => {
           // The SDK doesn't tell the validator which tool the schema
           // belongs to, so we surface a concise summary the user can
-          // grep against the tools/list response. See DEC-024.
+          // grep against the tools/list response, plus the explicit
+          // "tool still usable" framing so users don't think the whole
+          // listing is broken. The full Ajv source + stack also lands
+          // on console.error — we deliberately leave that channel
+          // alone (DEC-024).
           const summary = describeSchema(schema);
-          log.appendSystem('warn', `output schema compile failed (${summary}): ${message}`);
+          log.appendSystem(
+            'warn',
+            `output schema compile failed (${summary}): ${message} — tool still usable; output validation disabled. Full Ajv detail in browser console.`,
+          );
         },
       });
 

@@ -84,3 +84,20 @@ new guardrail`.
   the connection bar carries `v<version> · <git-sha>` with a build-
   timestamp tooltip. New surfaces (web, CLI, server) should adopt the
   same pattern.
+
+- **2026-04-25 (after v1.1.4 / before v1.1.5) — silenced diagnostic
+  output to fix a perception bug.** v1.1.4 muted Ajv's pre-throw
+  `console.error` because v1.1.3's user said "does not work" while
+  staring at it. Costa called this out the moment he tried to debug
+  a real schema in the connected MCP server: the muted output was
+  **the full generated validator code pointing at the broken
+  keyword** — exactly the diagnostic he needed. Reverted in v1.1.5.
+  **Guardrail:** do not conflate "user is confused by output" with
+  "output is useless". When a user reports confusion alongside
+  diagnostic data, the fix is almost always **clearer framing** (a
+  better message in the user-facing surface, a "this is okay"
+  affordance, a "what does this mean?" link) — not silencing the
+  underlying signal. Diagnostic data goes to the developer's
+  channel (browser console, server logs); user-facing framing goes
+  to the user's channel (system log, toast, status pill); both
+  audiences served, neither sacrificed.
