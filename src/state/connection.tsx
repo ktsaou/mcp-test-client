@@ -33,7 +33,7 @@ const emptyInventory: Inventory = {
   resourceTemplates: [],
 };
 
-interface ConnectionContextValue {
+export interface ConnectionContextValue {
   status: ConnectionStatus;
   inventory: Inventory;
   /** The bound MCP client when connected; null otherwise. */
@@ -42,7 +42,7 @@ interface ConnectionContextValue {
   disconnect: () => Promise<void>;
 }
 
-const ConnectionContext = createContext<ConnectionContextValue | null>(null);
+export const ConnectionContext = createContext<ConnectionContextValue | null>(null);
 
 export function ConnectionProvider({ children }: { children: ReactNode }) {
   const log = useLog();

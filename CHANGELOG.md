@@ -9,6 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.7] - 2026-04-25
+
+Inspector usability: Costa connected to a server with 61 tools and
+flagged that there's no way to scan, sort, or filter them. Two small
+UX wins.
+
+### Added
+
+- **Alphabetical sort by name** for every inventory list — tools,
+  prompts, resources, templates. Case-insensitive locale compare with
+  natural-number sort (so `tool-2` precedes `tool-10`). The sort is
+  applied client-side in the Inspector, regardless of the order the
+  server returned. Deterministic ordering means the user can build
+  muscle memory: "I know `prompt-foo` is between `pre-bar` and
+  `printf-baz` and I can find it by feel without reading every label."
+- **Search box** on every inventory tab (placeholder
+  `Search <kind> by name or description`). Case-insensitive substring
+  match across both name and description. Clear-button (`×`) appears
+  in the input's right-section when the query is non-empty.
+
+### Notes
+
+- The search query is shared across tabs. The user can refine a search
+  on Tools and switch to Prompts to see if the same query matches there
+  without re-typing.
+- Tab counts continue to reflect the **full** inventory, not the
+  filtered subset — so the user can see at a glance whether other tabs
+  would have matches without switching.
+- New "no matches" empty state shows when the query filters everything
+  out, distinct from "Server exposed no <kind>" so the user knows the
+  difference between "search too narrow" and "actually empty".
+- Bundle delta: ~0.3 KB gz (was 252.5 → 252.8 KB initial-load gz).
+  Well under DEC-005's 350 KB cap.
+- Inspector test coverage doubled (5 → 10 tests). New tests cover:
+  alphabetical order, name-match, description-match, no-matches empty
+  state, search-box hidden on empty tab, badge counts unaffected by
+  filter.
+
 ## [1.1.6] - 2026-04-25
 
 The real DEC-024 fix.

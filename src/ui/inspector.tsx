@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Badge, Box, NavLink, ScrollArea, Tabs, Text } from '@mantine/core';
+import { useMemo, useState } from 'react';
+import { ActionIcon, Badge, Box, NavLink, ScrollArea, Tabs, Text, TextInput } from '@mantine/core';
 
 import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
 import { useSelection } from '../state/selection.tsx';
@@ -24,35 +24,72 @@ export function Inspector() {
   const { inventory, status } = useConnection();
   const { selection, setSelection } = useSelection();
   const [tab, setTab] = useState<Tab>('tools');
+  // One search query shared across tabs. The user is usually focused on
+  // one kind at a time; persisting across tab switches lets them refine
+  // a single search instead of losing it on every tab change.
+  const [query, setQuery] = useState('');
 
   const asStr = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback);
 
   const asOptStr = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
 
-  const lists: Record<Tab, Array<{ name: string; description?: string; item: unknown }>> = {
-    tools: (inventory.tools as Array<Record<string, unknown>>).map((t) => ({
-      name: asStr(t['name'], '(unnamed)'),
-      description: asOptStr(t['description']),
-      item: t,
-    })),
-    prompts: (inventory.prompts as Array<Record<string, unknown>>).map((p) => ({
-      name: asStr(p['name'], '(unnamed)'),
-      description: asOptStr(p['description']),
-      item: p,
-    })),
-    resources: (inventory.resources as Array<Record<string, unknown>>).map((r) => ({
-      name: asStr(r['name'], asStr(r['uri'], '(unnamed)')),
-      description: asOptStr(r['description']),
-      item: r,
-    })),
-    templates: (inventory.resourceTemplates as Array<Record<string, unknown>>).map((t) => ({
-      name: asStr(t['name'], asStr(t['uriTemplate'], '(unnamed)')),
-      description: asOptStr(t['description']),
-      item: t,
-    })),
-  };
+  // Sort each list alphabetically by name (case-insensitive locale compare)
+  // before any filtering so the rendered order is deterministic regardless
+  // of the order the server returned. useMemo keys on inventory identity.
+  const lists = useMemo<
+    Record<Tab, Array<{ name: string; description?: string; item: unknown }>>
+  >(() => {
+    const sortByName = <T extends { name: string }>(arr: T[]): T[] =>
+      [...arr].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }),
+      );
+    return {
+      tools: sortByName(
+        (inventory.tools as Array<Record<string, unknown>>).map((t) => ({
+          name: asStr(t['name'], '(unnamed)'),
+          description: asOptStr(t['description']),
+          item: t,
+        })),
+      ),
+      prompts: sortByName(
+        (inventory.prompts as Array<Record<string, unknown>>).map((p) => ({
+          name: asStr(p['name'], '(unnamed)'),
+          description: asOptStr(p['description']),
+          item: p,
+        })),
+      ),
+      resources: sortByName(
+        (inventory.resources as Array<Record<string, unknown>>).map((r) => ({
+          name: asStr(r['name'], asStr(r['uri'], '(unnamed)')),
+          description: asOptStr(r['description']),
+          item: r,
+        })),
+      ),
+      templates: sortByName(
+        (inventory.resourceTemplates as Array<Record<string, unknown>>).map((t) => ({
+          name: asStr(t['name'], asStr(t['uriTemplate'], '(unnamed)')),
+          description: asOptStr(t['description']),
+          item: t,
+        })),
+      ),
+    };
+  }, [inventory]);
 
-  const current = lists[tab];
+  // Filter the active tab by the search query (matches name OR description,
+  // case-insensitive substring). Empty query ⇒ no filter. We filter at the
+  // active-tab level so the per-tab counts in the header reflect the full
+  // inventory, not the filtered subset — that way the user can see at a
+  // glance whether other tabs have matches without having to switch.
+  const current = useMemo(() => {
+    const list = lists[tab];
+    const q = query.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        (e.description !== undefined && e.description.toLowerCase().includes(q)),
+    );
+  }, [lists, tab, query]);
 
   return (
     <Box
@@ -97,47 +134,93 @@ export function Inspector() {
           ))}
         </Tabs.List>
 
-        <Box style={{ flex: 1, minHeight: 0 }}>
+        <Box style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {status.state !== 'connected' ? (
             <InventoryEmptyState status={status} />
-          ) : current.length === 0 ? (
-            <EmptyState title={`Server exposed no ${tab}.`} />
           ) : (
-            <ScrollArea style={{ height: '100%' }}>
-              {current.map((entry) => {
-                const isActive =
-                  selection !== null && selection.kind === tab && selection.name === entry.name;
-                return (
-                  <NavLink
-                    key={entry.name}
-                    active={isActive}
-                    onClick={() =>
-                      setSelection({ kind: tab, name: entry.name, payload: entry.item })
-                    }
-                    label={
-                      <Text size="sm" fw={500}>
-                        {entry.name}
-                      </Text>
-                    }
-                    description={
-                      entry.description ? (
-                        <Text
+            <>
+              {/* Search box appears only when the unfiltered list has at least
+                  one entry. Hiding it on a truly-empty tab keeps the empty
+                  state quiet. */}
+              {lists[tab].length > 0 ? (
+                <Box
+                  style={{
+                    flexShrink: 0,
+                    paddingInline: 'var(--mantine-spacing-sm)',
+                    paddingBlock: 6,
+                  }}
+                >
+                  <TextInput
+                    value={query}
+                    onChange={(e) => setQuery(e.currentTarget.value)}
+                    placeholder={`Search ${TAB_LABELS[tab].toLowerCase()} by name or description`}
+                    size="xs"
+                    aria-label={`Search ${TAB_LABELS[tab].toLowerCase()}`}
+                    rightSection={
+                      query ? (
+                        <ActionIcon
+                          variant="subtle"
                           size="xs"
-                          c="dimmed"
-                          style={{
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                            lineHeight: 1.4,
-                          }}
+                          aria-label="Clear search"
+                          onClick={() => setQuery('')}
                         >
-                          {entry.description}
-                        </Text>
+                          ×
+                        </ActionIcon>
                       ) : null
                     }
                   />
-                );
-              })}
-            </ScrollArea>
+                </Box>
+              ) : null}
+
+              <Box style={{ flex: 1, minHeight: 0 }}>
+                {lists[tab].length === 0 ? (
+                  <EmptyState title={`Server exposed no ${tab}.`} />
+                ) : current.length === 0 ? (
+                  <EmptyState
+                    title={`No ${tab} match "${query.trim()}".`}
+                    hint="Try a shorter query or clear the search."
+                  />
+                ) : (
+                  <ScrollArea style={{ height: '100%' }}>
+                    {current.map((entry) => {
+                      const isActive =
+                        selection !== null &&
+                        selection.kind === tab &&
+                        selection.name === entry.name;
+                      return (
+                        <NavLink
+                          key={entry.name}
+                          active={isActive}
+                          onClick={() =>
+                            setSelection({ kind: tab, name: entry.name, payload: entry.item })
+                          }
+                          label={
+                            <Text size="sm" fw={500}>
+                              {entry.name}
+                            </Text>
+                          }
+                          description={
+                            entry.description ? (
+                              <Text
+                                size="xs"
+                                c="dimmed"
+                                style={{
+                                  whiteSpace: 'pre-wrap',
+                                  wordBreak: 'break-word',
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                {entry.description}
+                              </Text>
+                            ) : null
+                          }
+                        />
+                      );
+                    })}
+                  </ScrollArea>
+                )}
+              </Box>
+            </>
           )}
         </Box>
       </Tabs>
