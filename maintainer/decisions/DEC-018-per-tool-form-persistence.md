@@ -10,7 +10,7 @@ on unmount. Significant friction for any flow that hops tools.
 - [ ] **#6 — persist form state per tool, per server.** Storage key
       `mcptc:tool-state.<server-id>.<tool-name>` (already reserved
       in `specs/persistence.md`). Stores `{ formValue, rawText, mode,
-    lastResult }`.
+lastResult }`.
 - [ ] **#6 — restore on tool select.** When the request panel
       receives a new selection, hydrate from storage if a value
       exists; otherwise seed from the share-inbox if the recipient

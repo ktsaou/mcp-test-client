@@ -16,7 +16,7 @@ Costa's items #1 and #2:
 
 - [ ] **#1 — GitHub icon in header.** A small `<ActionIcon>` linking
       to `https://github.com/ktsaou/mcp-test-client`. `target="_blank"
-    rel="noopener noreferrer"`. Tooltip "View source on GitHub".
+rel="noopener noreferrer"`. Tooltip "View source on GitHub".
       Inline SVG (no new icon dep).
 - [ ] **#2 — in-app docs viewer.** A `<ActionIcon>` opening a Mantine
       `Modal` size="xl" or a `Drawer` that hosts a `<DocsViewer>`

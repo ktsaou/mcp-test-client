@@ -12,8 +12,8 @@ machine. They start over.
 - [ ] **#12 — Export.** A "Download settings" button (in a settings
       menu opened from the AppShell header, or directly in the
       sidebar). Builds a JSON object `{ version: 1, exportedAt:
-    ISO-string, data: { ...all mcptc:* keys, including credentials,
-    flagged } }` and triggers a browser download.
+ISO-string, data: { ...all mcptc:* keys, including credentials,
+flagged } }` and triggers a browser download.
 - [ ] **#12 — Import.** A matching "Upload settings" affordance.
       Accepts a JSON file, validates `version === 1`, shows a confirm
       modal listing what will be replaced (servers, canned requests,
