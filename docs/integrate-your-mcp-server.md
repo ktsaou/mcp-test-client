@@ -21,12 +21,12 @@ Save and that's it.
 
 Add any of these to make the modal land in the right state:
 
-| Param | Purpose | Example |
-| ----- | ------- | ------- |
-| `name` | Friendly name shown in the sidebar. Defaults to the URL host if omitted. | `&name=Acme%20MCP` |
-| `transport` | One of `auto`, `streamable-http`, `sse-legacy`, `websocket`. Defaults to `auto` (the client picks based on the URL scheme + a probe). | `&transport=streamable-http` |
-| `auth` | One of `none`, `bearer`, `header`. Picks the auth UI in the modal. The visitor still types the credential. | `&auth=bearer` |
-| `auth_header_name` | When `auth=header`, pre-fill the header name (e.g. `X-Api-Key`). | `&auth_header_name=X-Api-Key` |
+| Param              | Purpose                                                                                                                               | Example                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `name`             | Friendly name shown in the sidebar. Defaults to the URL host if omitted.                                                              | `&name=Acme%20MCP`            |
+| `transport`        | One of `auto`, `streamable-http`, `sse-legacy`, `websocket`. Defaults to `auto` (the client picks based on the URL scheme + a probe). | `&transport=streamable-http`  |
+| `auth`             | One of `none`, `bearer`, `header`. Picks the auth UI in the modal. The visitor still types the credential.                            | `&auth=bearer`                |
+| `auth_header_name` | When `auth=header`, pre-fill the header name (e.g. `X-Api-Key`).                                                                      | `&auth_header_name=X-Api-Key` |
 
 Credentials are **never** read from the URL. There is no `auth_value`
 parameter and there will not be: tokens must not travel in URLs you
