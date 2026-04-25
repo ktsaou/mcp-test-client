@@ -157,8 +157,17 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
           void client.disconnect().catch(() => undefined);
           return 'superseded';
         }
+        // Stash the client now (so cancellation can disconnect it), but
+        // KEEP status='connecting' through inventory load. Costa
+        // (v1.1.12 follow-up): "show CONNECTING and SPINNER while the
+        // connection is in place, and switch them to CONNECTED and
+        // DISCONNECT together with the success toast". Until v1.1.12
+        // we flipped to 'connected' right after the initialize
+        // handshake, which produced a misleading window where the
+        // status badge said Connected but the Inspector showed no
+        // tools (because tools/list, prompts/list, etc. were still
+        // mid-flight on a slow server).
         clientRef.current = client;
-        setStatus({ state: 'connected' });
         log.appendSystem('info', 'Connected. Fetching inventory…');
         await refreshInventory(client);
         if (connectEpochRef.current !== myEpoch) {
@@ -169,6 +178,10 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
           void client.disconnect().catch(() => undefined);
           return 'superseded';
         }
+        // Inventory is now loaded. Flip the badge to 'connected' and
+        // return the outcome — the caller fires its success toast on
+        // the same React tick.
+        setStatus({ state: 'connected' });
         log.appendSystem('info', 'Ready.');
         return 'connected';
       } catch (err) {

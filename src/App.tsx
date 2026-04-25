@@ -1,14 +1,34 @@
+import { useEffect } from 'react';
 import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 
 import { ConnectionProvider } from './state/connection.tsx';
 import { LogProvider } from './state/log.tsx';
-import { SelectionProvider } from './state/selection.tsx';
-import { ServersProvider } from './state/servers.tsx';
+import { SelectionProvider, useSelection } from './state/selection.tsx';
+import { ServersProvider, useServers } from './state/servers.tsx';
 import { ThemeProvider, useTheme } from './state/theme.tsx';
 import { appTheme } from './ui/mantine-theme.ts';
 import { Layout } from './ui/layout.tsx';
+
+/**
+ * Clears the selection (and therefore the request panel's form) whenever
+ * the active server changes. Without this, switching from server A to
+ * server B left A's tool selected → the form rendered against A's tool
+ * schema while B's inventory loaded, which Costa flagged as confusing
+ * ("why don't I see any tools? why is the old form still here?").
+ *
+ * Renders nothing — pure side-effect. Mounted inside both providers so
+ * it can read `useServers().activeId` and call `useSelection().setSelection`.
+ */
+function ClearSelectionOnServerSwitch() {
+  const { activeId } = useServers();
+  const { setSelection } = useSelection();
+  useEffect(() => {
+    setSelection(null);
+  }, [activeId, setSelection]);
+  return null;
+}
 
 /**
  * Bridges our `ThemeProvider` (which knows the user's preference: dark /
@@ -47,6 +67,7 @@ export function App() {
           <LogProvider>
             <ConnectionProvider>
               <SelectionProvider>
+                <ClearSelectionOnServerSwitch />
                 <Layout />
               </SelectionProvider>
             </ConnectionProvider>

@@ -9,6 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.13] - 2026-04-25
+
+Two follow-ups Costa flagged after using v1.1.12 against a slow
+server. Both come down to "the user has no clear signal that work is
+in progress, so an empty Inspector reads as 'broken' instead of
+'still loading'".
+
+### Fixed
+
+- **Status badge stays `Connecting` until the inventory is loaded.**
+  Until v1.1.12 the badge flipped to `Connected` after just the
+  initialize handshake, while `tools/list` / `prompts/list` /
+  `resources/list` were still mid-flight. On a slow server (e.g.
+  llm.netdata.cloud takes ~95 s for the four inventory calls) the
+  user saw `Connected` + empty Inspector and reasonably assumed the
+  app was broken. The status flip now happens alongside the
+  `Ready.` log entry and the success toast — three signals in
+  lockstep. The Connect-button spinner stays spinning across the
+  whole window. Costa: _"show CONNECTING and SPINNER while the
+  connection is in place, and switch them to CONNECTED and
+  DISCONNECT together with the success toast"_.
+- **Form clears when the active server changes.** Switching from
+  server A (with tool A1 selected and the form filled) to server B
+  used to leave A1's form on screen while B's inventory loaded — a
+  second, sneakier source of "is anything happening?" confusion. A
+  small `<ClearSelectionOnServerSwitch>` bridge in `App.tsx` calls
+  `setSelection(null)` whenever `useServers().activeId` changes, so
+  the request panel empties immediately on the click. The
+  share-link loader's later `setSelection` (which fires only after
+  the inventory contains the saved tool) is unaffected because it
+  runs in a different effect that depends on `inventory` and
+  `status`.
+
+### Notes
+
+- Bundle delta: 0 (state-machine + one tiny effect component).
+- 227 unit tests pass; lint, typecheck, build clean.
+- The full DEC-020 inflight-request indicator (an animated icon
+  with a popover that lists pending requests + a Cancel button) is
+  still slated for v1.2.2. v1.1.13 only covers the connect-time
+  case.
+
 ## [1.1.12] - 2026-04-25
 
 Three coupled bugs Costa flagged after watching a slow MCP server
