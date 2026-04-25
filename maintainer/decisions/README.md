@@ -30,7 +30,7 @@ changed.
 | [DEC-021](DEC-021-settings-portability.md)                 | v1.2.2: settings portability (export / import)                     | 2026-04-25           | Open      | JSON round-trip of `mcptc:*` keys; "Include credentials [✓]" checkbox on export.              |
 | [DEC-022](DEC-022-app-chrome-polish.md)                    | v1.2.2: GitHub icon + in-app docs viewer                           | 2026-04-25           | Open      | Full markdown + Mermaid (lazy); seed list + new "integrate your MCP server" doc.              |
 | [DEC-023](DEC-023-llm-chat-test-this-mcp.md)               | v1.3.0: "Test this MCP" with an LLM chat                           | 2026-04-25           | Open      | Browser-direct LLM + MCP tool-call bridge; CORS feasibility confirmed; six design calls open. |
-| [DEC-024](DEC-024-output-schema-compile-resilience.md)     | v1.1.3: output-schema compile resilience                           | 2026-04-25           | Open      | One bad `outputSchema` blocks the whole tools list. Wrap SDK validator + upstream patch.      |
+| [DEC-024](DEC-024-output-schema-compile-resilience.md)     | v1.1.3: output-schema compile resilience                           | 2026-04-25           | Closed    | Shipped as v1.1.3; TolerantValidator wrapper + system-log warning. Upstream PR TBD.           |
 
 ## Format spec for new entries
 
