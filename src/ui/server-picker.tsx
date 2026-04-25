@@ -424,7 +424,7 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          handleSave();
+          void handleSave();
         }}
       >
         <Stack gap="sm">
