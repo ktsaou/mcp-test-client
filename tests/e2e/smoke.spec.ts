@@ -23,7 +23,11 @@ test('loads, connects to mock server, and sees its tools', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Connect' }).click();
 
-  await expect(page.locator('.pill--ok', { hasText: 'Connected' })).toBeVisible({
+  // Connection status renders as a Mantine Badge with text "Connected" once
+  // the handshake completes. Earlier the chrome used a hand-rolled
+  // `.pill--ok` class; the Mantine migration removed it. Match by text in
+  // the header region, which is stable across migrations.
+  await expect(page.getByText('Connected', { exact: true })).toBeVisible({
     timeout: 15_000,
   });
 
