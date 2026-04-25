@@ -6,10 +6,43 @@
  * and the other layout state persistence already scoped to that prefix.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { appStore } from '../state/store-instance.ts';
 import { uiKey } from '../persistence/schema.ts';
+
+/**
+ * Read/write a `react-resizable-panels` `Layout` (panel-id → flexGrow map)
+ * from `mcptc:ui.layout.<feature>`. Used by the AppShell-level resizable
+ * splits so the user's chosen sizes survive reloads.
+ *
+ * Returns a `[layout, onLayoutChanged]` tuple suitable for direct binding
+ * to a `<Group defaultLayout={layout} onLayoutChanged={onLayoutChanged}>`.
+ */
+export function usePersistedLayout(
+  feature: string,
+): [Layout | undefined, (layout: Layout) => void] {
+  const storageKey = uiKey(`layout.${feature}`);
+  // Read once on mount; the Layout map is what RRP expects.
+  const initial = useRef<Layout | undefined>(undefined);
+  if (initial.current === undefined) {
+    const stored = appStore.read<Layout>(storageKey);
+    initial.current =
+      stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : undefined;
+  }
+
+  const onLayoutChanged = useCallback(
+    (layout: Layout) => {
+      appStore.write(storageKey, layout);
+    },
+    [storageKey],
+  );
+
+  return [initial.current, onLayoutChanged];
+}
+
+/** Map of panel id → flex-grow value, matching `react-resizable-panels`. */
+export type Layout = Record<string, number>;
 
 export interface PanelSizeBounds {
   min: number;

@@ -18,16 +18,16 @@ re-improvising the brief every time.
 
 ## When to use which
 
-| Situation                                    | Agent                                            |
-| -------------------------------------------- | ------------------------------------------------ |
-| Decision touches a user-visible surface      | UX critic (mandatory before merge — see DEC-002) |
-| Decision touches MCP wire format / lifecycle | Spec purist                                      |
-| New interactive component                    | Accessibility auditor                            |
-| Big refactor / re-skin                       | Code reviewer (after worker delivers)            |
-| Bug suspected in some area                   | Repro author                                     |
-| Migration / port / scaffold                  | Worker: Developer                                |
-| Test gap                                     | Worker: Test author                              |
-| Doc gap or spec drift                        | Worker: Doc writer                               |
+| Situation                                    | Agent                                                                                         |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Decision touches a user-visible surface      | UX critic (mandatory before merge — see [DEC-002](decisions/DEC-002-ux-advisor-mandatory.md)) |
+| Decision touches MCP wire format / lifecycle | Spec purist                                                                                   |
+| New interactive component                    | Accessibility auditor                                                                         |
+| Big refactor / re-skin                       | Code reviewer (after worker delivers)                                                         |
+| Bug suspected in some area                   | Repro author                                                                                  |
+| Migration / port / scaffold                  | Worker: Developer                                                                             |
+| Test gap                                     | Worker: Test author                                                                           |
+| Doc gap or spec drift                        | Worker: Doc writer                                                                            |
 
 ## Workers
 
@@ -39,7 +39,8 @@ mcp-test-client, an open-source browser-only MCP test client. You work on
 the task described below; you do not invent scope.
 
 Working directory: /home/costa/src/mcp-test-client.git
-Read first: CLAUDE.md, maintainer/product.md, the relevant specs/ file(s).
+Read first: CLAUDE.md, maintainer/values.md, maintainer/product/, the
+relevant specs/ file(s).
 
 Task: <one-paragraph goal>
 
@@ -99,20 +100,29 @@ Project: mcp-test-client at https://ktsaou.github.io/mcp-test-client/
 (or local URL if I provide one).
 
 Read first:
-- maintainer/product.md (the quality bar in §4 is the standard you grade
-  against)
-- maintainer/feedback.md (recent user reports — flag if any are still
-  visible in the deploy)
+- maintainer/product/quality-bar.md (the standard you grade against)
+- maintainer/product/60-second-flow.md (the canonical user journey)
+- the latest entry under maintainer/log/ (recent user reports — flag if
+  any are still visible in the deploy)
 
-Walk through the §3 60-second flow as if you'd just landed on the page from a
+Walk through the 60-second flow as if you'd just landed on the page from a
 HN link. Use a real public MCP server URL if you can find one in
 public/public-servers.json, otherwise the mock at the URL I'll provide.
 
+Test scopes (mandatory; added 2026-04-25):
+
+- iPhone-size viewport (390×844)
+- Share-link reload in a fresh incognito tab
+- Bearer-token auth flow
+- 200+ messages in the log (scroll perf)
+
 Deliverables (Markdown report):
 
-1. **Did the §3 flow work?** Bullet each of the six steps. Pass / fail / rough.
-2. **Quality-bar table** — one row per §4 item, one of [pass | partial |
-   fail], one-sentence evidence.
+1. **Did the 60-second flow work?** Bullet each of the six steps. Pass /
+   fail / rough.
+2. **Quality-bar table** — one row per item in
+   maintainer/product/quality-bar.md, one of [pass | partial | fail],
+   one-sentence evidence.
 3. **Top 5 most painful issues**, ranked by user impact.
 4. **Top 3 things that already feel good** — so I don't accidentally
    regress them.
@@ -159,8 +169,9 @@ announcements for state changes.
 Deliverable: numbered list of issues with severity (block / nice-to-have)
 and the smallest fix per issue.
 
-Falsifier: a keyboard-only or SR-only user cannot complete the §3 flow
-in product.md, and you didn't catch it.
+Falsifier: a keyboard-only or SR-only user cannot complete the
+60-second flow in maintainer/product/60-second-flow.md, and you didn't
+catch it.
 ```
 
 ### Advisor: Code reviewer
@@ -169,7 +180,7 @@ in product.md, and you didn't catch it.
 Review the diff at <range> as a senior engineer joining the project.
 
 Read first: CLAUDE.md, the relevant specs/ file(s), the relevant
-maintainer/decisions.md entry (if any).
+maintainer/decisions/DEC-NNN-*.md entry (if any).
 
 Look for: bugs, type holes, dead code, scope creep, missing tests,
 hidden state, perf regressions, accidental Node-only imports, security

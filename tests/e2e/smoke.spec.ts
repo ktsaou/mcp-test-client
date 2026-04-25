@@ -12,10 +12,12 @@ test.beforeEach(async ({ page }) => {
 test('loads, connects to mock server, and sees its tools', async ({ page }) => {
   await expect(page.getByText('MCP Test Client')).toBeVisible();
 
-  await page.getByRole('button', { name: /\+ Add/ }).click();
-  await page.getByLabel('URL', { exact: true }).fill(MOCK_MCP_URL);
-  await page.getByLabel('Name', { exact: true }).fill('Mock');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Add' }).click();
+  // Mantine renders required-field labels as "URL *", so match by placeholder
+  // which is stable.
+  await page.getByPlaceholder('https://example.com/mcp or wss://…').fill(MOCK_MCP_URL);
+  await page.getByPlaceholder('Friendly name (optional)').fill('Mock');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
 
   await expect(page.getByText('Mock').first()).toBeVisible();
 
@@ -32,8 +34,9 @@ test('loads, connects to mock server, and sees its tools', async ({ page }) => {
   // Click echo → the schema-driven form appears.
   await page.getByText('echo').first().click();
 
-  // Fill the "text" field the tool declares as required.
-  const textInput = page.locator('.shell__panel').last().getByRole('textbox').first();
+  // Fill the "text" field the tool declares as required. The request panel
+  // is the last main panel — find the first textbox inside it.
+  const textInput = page.locator('#request[data-panel]').getByRole('textbox').first();
   await textInput.fill('hi from test');
 
   await page.getByRole('button', { name: 'Send' }).click();

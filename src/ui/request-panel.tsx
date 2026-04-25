@@ -1,4 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Group,
+  ScrollArea,
+  SegmentedControl,
+  Stack,
+  Text,
+  Textarea,
+  Tooltip,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
 import { useConnection } from '../state/connection.tsx';
 import { useLog } from '../state/log.tsx';
@@ -77,6 +90,13 @@ function formSchemaFor(selection: Selection | null): JSONSchema | null {
   return null;
 }
 
+function selectionDescription(selection: Selection | null): string | undefined {
+  if (!selection) return undefined;
+  const item = selection.payload as Record<string, unknown>;
+  const desc = item['description'];
+  return typeof desc === 'string' ? desc : undefined;
+}
+
 export function RequestPanel({ selection }: Props) {
   const { client, status } = useConnection();
   const log = useLog();
@@ -89,6 +109,7 @@ export function RequestPanel({ selection }: Props) {
 
   const template = useMemo(() => templateFor(selection), [selection]);
   const formSchema = useMemo(() => formSchemaFor(selection), [selection]);
+  const description = useMemo(() => selectionDescription(selection), [selection]);
 
   useEffect(() => {
     if (template) setText(template);
@@ -153,83 +174,153 @@ export function RequestPanel({ selection }: Props) {
   const send = canSendForm ? sendFormCall : sendRaw;
 
   return (
-    <div className="shell__panel">
-      <div className="panel-header">
-        <span>
-          Request
-          {selection ? (
-            <span className="muted">
-              {' '}
-              — {selection.kind}/{selection.name}
-            </span>
-          ) : null}
-        </span>
+    <Box
+      h="100%"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--mantine-color-body)',
+        overflow: 'hidden',
+      }}
+    >
+      <Group
+        justify="space-between"
+        wrap="nowrap"
+        gap="xs"
+        px="md"
+        py={8}
+        style={{
+          borderBottom: '1px solid var(--mantine-color-default-border)',
+          flexShrink: 0,
+        }}
+      >
+        <Box style={{ minWidth: 0, flex: 1 }}>
+          <Text size="xs" tt="uppercase" c="dimmed" fw={600} style={{ letterSpacing: '0.05em' }}>
+            Request
+            {selection ? (
+              <Text component="span" c="dimmed" tt="none" fw={400}>
+                {' — '}
+                {selection.kind}/{selection.name}
+              </Text>
+            ) : null}
+          </Text>
+        </Box>
 
         {formSchema ? (
-          <div className="row row--tight">
-            <button
-              className={'btn btn--ghost' + (mode === 'form' ? ' btn--primary' : '')}
-              type="button"
-              onClick={() => setMode('form')}
-            >
-              Form
-            </button>
-            <button
-              className={'btn btn--ghost' + (mode === 'raw' ? ' btn--primary' : '')}
-              type="button"
-              onClick={() => setMode('raw')}
-            >
-              Raw
-            </button>
-          </div>
+          <SegmentedControl
+            size="xs"
+            value={mode}
+            onChange={(v) => {
+              if (v === 'form' || v === 'raw') setMode(v);
+            }}
+            data={[
+              { value: 'form', label: 'Form' },
+              { value: 'raw', label: 'Raw' },
+            ]}
+          />
         ) : null}
 
         <CannedRequests selection={selection} formValue={formValue} onLoad={setFormValue} />
 
         <ShareButton selection={selection} formValue={formValue} rawText={text} mode={mode} />
 
-        <button
-          className="btn btn--primary"
-          type="button"
-          onClick={() => {
-            void send();
-          }}
-          disabled={disabled}
+        <Tooltip
+          label={
+            disabled
+              ? status.state !== 'connected'
+                ? 'Connect to a server first'
+                : 'Sending…'
+              : 'Send the request to the server'
+          }
+          withinPortal
         >
-          {sending ? 'Sending…' : 'Send'}
-        </button>
-      </div>
-      <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {canSendForm && formSchema ? (
-          <SchemaForm schema={formSchema} value={formValue} onChange={setFormValue} />
-        ) : (
-          <textarea
-            className="textarea"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={'{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "method": "…",\n  "params": { }\n}'}
-            spellCheck={false}
-          />
-        )}
+          <Button
+            size="sm"
+            onClick={() => {
+              void send();
+            }}
+            disabled={disabled}
+            loading={sending}
+          >
+            Send
+          </Button>
+        </Tooltip>
+      </Group>
 
-        {error !== null ? <div className="pill pill--error">{error}</div> : null}
+      <ScrollArea style={{ flex: 1, minHeight: 0 }}>
+        <Stack gap="md" p="md">
+          {description ? (
+            <Box
+              p="sm"
+              style={{
+                background: 'var(--mantine-color-default-hover)',
+                borderRadius: 'var(--mantine-radius-sm)',
+                border: '1px solid var(--mantine-color-default-border)',
+              }}
+            >
+              <Text size="xs" c="dimmed" tt="uppercase" fw={600} mb={4}>
+                Description
+              </Text>
+              <Text
+                size="sm"
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  lineHeight: 1.55,
+                }}
+              >
+                {description}
+              </Text>
+            </Box>
+          ) : null}
 
-        {lastResult !== null ? (
-          <div>
-            <div className="muted" style={{ fontSize: 'var(--font-size-sm)', marginBottom: 6 }}>
-              Last result
-            </div>
-            <JsonView
-              value={lastResult}
-              copyButton
-              downloadButton
-              downloadFilename={
-                selection ? `mcp-${selection.kind}-${selection.name}` : 'mcp-result'
+          {canSendForm && formSchema ? (
+            <SchemaForm schema={formSchema} value={formValue} onChange={setFormValue} />
+          ) : (
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.currentTarget.value)}
+              placeholder={
+                '{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "method": "…",\n  "params": { }\n}'
               }
+              spellCheck={false}
+              autosize
+              minRows={8}
+              maxRows={20}
+              styles={{
+                input: {
+                  fontFamily: 'var(--mantine-font-family-monospace)',
+                  fontSize: 'var(--mantine-font-size-sm)',
+                },
+              }}
             />
-          </div>
-        ) : null}
-      </div>
-    </div>
+          )}
+
+          {error !== null ? (
+            <Alert color="red" variant="light">
+              {error}
+            </Alert>
+          ) : null}
+
+          {lastResult !== null ? (
+            <Box>
+              <Text size="xs" c="dimmed" tt="uppercase" fw={600} mb={6}>
+                Last result
+              </Text>
+              <JsonView
+                value={lastResult}
+                copyButton
+                downloadButton
+                downloadFilename={
+                  selection ? `mcp-${selection.kind}-${selection.name}` : 'mcp-result'
+                }
+                onCopied={() => notifications.show({ message: 'Result copied as JSON' })}
+                onDownloaded={() => notifications.show({ message: 'Result saved' })}
+              />
+            </Box>
+          ) : null}
+        </Stack>
+      </ScrollArea>
+    </Box>
   );
 }

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Button, Tooltip } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
 import { encodeShareState, type ShareState } from '../share-url/encode.ts';
 import { useServers } from '../state/servers.tsx';
@@ -47,23 +49,30 @@ export function ShareButton({ selection, formValue, rawText, mode }: Props) {
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
+      notifications.show({ message: 'Shareable link copied to clipboard' });
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Fallback: show the link; user can copy manually.
-      window.prompt('Copy link:', link);
+      notifications.show({
+        color: 'red',
+        title: 'Could not copy',
+        message: 'Clipboard access denied. The link is shown in the browser address bar instead.',
+      });
+      // Best-effort fallback so the user can still grab the link.
+      window.history.replaceState(null, '', link);
     }
   }
 
   return (
-    <button
-      className="btn btn--ghost"
-      type="button"
-      onClick={() => {
-        void handleCopy();
-      }}
-      title="Copy a link that opens this request on another browser"
-    >
-      {copied ? '✓ Copied' : 'Share'}
-    </button>
+    <Tooltip label="Copy a link that opens this request on another browser" withinPortal>
+      <Button
+        variant="default"
+        size="compact-sm"
+        onClick={() => {
+          void handleCopy();
+        }}
+      >
+        {copied ? '✓ Copied' : 'Share'}
+      </Button>
+    </Tooltip>
   );
 }

@@ -1,404 +1,27 @@
 /*
- * Shell layout + shared widget styles. All colours come from CSS custom
- * properties declared in theme.css.
+ * Residual shell-level styles.
  *
- * The layout adapts to viewport width:
- *   - narrow  (< 1400px): log is a row at the bottom, resizable vertically.
- *   - wide    (>= 1400px): log is a column on the right, resizable horizontally.
+ * Most legacy primitives (`.btn*`, `.pill*`, `.modal*`, `.field*`, `.input`,
+ * `.textarea`, `.select`, `.shell*`, `.resizer*`, `.item*`,
+ * `.panel-header*`, `.panel-body`, `.row*`, `.spacer`) are gone — they were
+ * replaced by Mantine v9 components (`Button`, `Badge`, `Modal`,
+ * `TextInput`, `Select`, `AppShell`, `Tabs`, `NavLink`, `Group`, …) plus
+ * `react-resizable-panels` for the splits. See
+ * `maintainer/decisions.md` DEC-001 / DEC-004.
  *
- * Panel sizes live in CSS custom properties set by React via inline style:
- *   --log-size           pixel size of the log panel (height or width, by layout)
- *   --sidebar-size       pixel width of the sidebar
+ * What stays here:
+ *
+ *   - `.log-entry*` — log row layout. Uses tokens from theme.css. Tied to
+ *     the per-row JSON view in `log-panel.tsx`.
+ *   - `.muted` — used by the schema-form BooleanField. The schema-form
+ *     migration is a separate pass (out of scope for the current PR).
  */
-
-.shell {
-  /* Defaults; React overrides via inline --log-size / --sidebar-size. */
-  --log-size: 240px;
-  --sidebar-size: 280px;
-  --resizer-thickness: 4px;
-
-  display: grid;
-  grid-template-columns: var(--sidebar-size) 1fr;
-  grid-template-rows:
-    48px /* header */
-    1fr /* main */
-    var(--resizer-thickness) /* resizer */
-    var(--log-size); /* log */
-  grid-template-areas:
-    'header  header'
-    'sidebar main'
-    'resizer resizer'
-    'log     log';
-  height: 100vh;
-  gap: 0;
-  background-color: var(--color-bg);
-}
-
-@media (min-width: 1400px) {
-  .shell {
-    grid-template-columns:
-      var(--sidebar-size)
-      1fr
-      var(--resizer-thickness)
-      var(--log-size);
-    grid-template-rows: 48px 1fr;
-    grid-template-areas:
-      'header  header header  header'
-      'sidebar main   resizer log';
-  }
-}
-
-.shell__header {
-  grid-area: header;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  gap: 12px;
-  background-color: var(--color-bg-titlebar);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.shell__brand {
-  font-weight: 600;
-  color: var(--color-text);
-  letter-spacing: 0.02em;
-}
-
-.shell__sidebar {
-  grid-area: sidebar;
-  background-color: var(--color-bg-raised);
-  overflow: auto;
-  border-right: 1px solid var(--color-border);
-}
-
-.shell__main {
-  grid-area: main;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background-color: var(--color-border);
-  overflow: hidden;
-}
-
-.shell__panel {
-  background-color: var(--color-bg);
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.shell__log {
-  grid-area: log;
-  background-color: var(--color-bg-sunken);
-  overflow: auto;
-  border-top: 1px solid var(--color-border);
-}
-
-@media (min-width: 1400px) {
-  .shell__log {
-    border-top: none;
-    border-left: 1px solid var(--color-border);
-  }
-}
-
-/* Resizer — thin draggable strip between main and log. */
-.resizer {
-  grid-area: resizer;
-  background-color: var(--color-border);
-  transition: background-color 0.12s;
-}
-
-.resizer:hover,
-.resizer:focus-visible {
-  background-color: var(--color-accent);
-  outline: none;
-}
-
-.resizer--horizontal {
-  cursor: row-resize;
-  height: 100%;
-  width: 100%;
-}
-
-.resizer--vertical {
-  cursor: col-resize;
-  height: 100%;
-  width: 100%;
-}
-
-/* In narrow layout the resizer is horizontal (log below); in wide, vertical. */
-@media (max-width: 1399.98px) {
-  .resizer {
-    cursor: row-resize;
-  }
-}
-@media (min-width: 1400px) {
-  .resizer {
-    cursor: col-resize;
-  }
-}
-
-/* Generic small components */
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  position: sticky;
-  top: 0;
-  background-color: var(--color-bg-raised);
-  z-index: 1;
-}
-
-.panel-header__actions {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.panel-body {
-  padding: 12px 14px;
-  flex: 1;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  font-size: var(--font-size-sm);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg-raised);
-  color: var(--color-text);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition:
-    background-color 0.08s,
-    border-color 0.08s;
-}
-
-.btn:hover {
-  background-color: var(--color-bg-titlebar);
-  border-color: var(--color-border);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn--primary {
-  background-color: var(--color-accent-muted);
-  color: var(--color-text-on-accent);
-  border-color: var(--color-accent-muted);
-}
-
-.btn--primary:hover {
-  background-color: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
-}
-
-.btn--danger {
-  color: var(--color-danger);
-  border-color: var(--color-danger);
-}
-
-.btn--ghost {
-  background-color: transparent;
-  border-color: transparent;
-  color: var(--color-text-muted);
-}
-
-.btn--ghost:hover {
-  color: var(--color-text);
-  background-color: var(--color-bg-raised);
-  border-color: transparent;
-}
-
-.input,
-.textarea,
-.select {
-  width: 100%;
-  padding: 4px 8px;
-  font-size: var(--font-size-base);
-  background-color: var(--color-input-bg);
-  border: 1px solid var(--color-input-border);
-  color: var(--color-text);
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-}
-
-.textarea {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  resize: vertical;
-  min-height: 140px;
-}
-
-.input:focus,
-.textarea:focus,
-.select:focus {
-  outline: 1px solid var(--color-input-focus);
-  outline-offset: -1px;
-  border-color: var(--color-input-focus);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.row--tight {
-  gap: 4px;
-}
-
-.row--wrap {
-  flex-wrap: wrap;
-}
-
-.spacer {
-  flex: 1;
-}
 
 .muted {
   color: var(--color-text-muted);
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 8px;
-  font-size: var(--font-size-sm);
-  border: 1px solid var(--color-border);
-  border-radius: 99px;
-  color: var(--color-text-muted);
-}
-
-.pill--ok {
-  color: var(--color-success);
-  border-color: var(--color-success);
-}
-
-.pill--warn {
-  color: var(--color-warning);
-  border-color: var(--color-warning);
-}
-
-.pill--error {
-  color: var(--color-danger);
-  border-color: var(--color-danger);
-}
-
-.pill--info {
-  color: var(--color-info);
-  border-color: var(--color-info);
-}
-
-/* Dialog / modal */
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: grid;
-  place-items: center;
-  z-index: 1000;
-}
-
-.modal {
-  background-color: var(--color-bg-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 20px;
-  width: min(520px, 90vw);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.modal--wide {
-  width: min(860px, 92vw);
-  max-height: 86vh;
-}
-
-.modal h2 {
-  margin: 0;
-  font-size: var(--font-size-lg);
-}
-
-.diagnostics-textarea {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  min-height: 320px;
-  max-height: 60vh;
-  resize: vertical;
-  white-space: pre;
-  overflow: auto;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.field > span,
-.field > label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-}
-
-/* Item list */
-
-.item-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--color-border-subtle);
-  font-size: var(--font-size-sm);
-  color: var(--color-text);
-}
-
-.item:hover {
-  background-color: var(--color-bg);
-}
-
-.item--active {
-  background-color: var(--color-accent-muted);
-}
-
-.item__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.item__meta {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-faint);
-  flex-shrink: 0;
-}
-
-/* Log panel */
+/* Log panel rows */
 
 .log-entry {
   padding: 3px 14px;
@@ -445,4 +68,23 @@
 }
 .log-entry--error {
   color: var(--color-danger);
+}
+
+/*
+ * Resizable separator hover/active. The DOM element comes from
+ * `react-resizable-panels`'s `<Separator>`; we set the colour and the
+ * data-attribute hover for keyboard focus.
+ */
+.resizable-separator[data-separator] {
+  flex-basis: 4px;
+  flex-shrink: 0;
+  flex-grow: 0;
+  background: var(--color-border);
+  transition: background-color 0.12s;
+}
+
+.resizable-separator[data-separator]:hover,
+.resizable-separator[data-separator]:focus-visible,
+.resizable-separator[data-separator][data-resize-handle-active] {
+  background: var(--color-accent);
 }

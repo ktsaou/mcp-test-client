@@ -1,7 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
+import { MantineProvider } from '@mantine/core';
+import type { ReactNode } from 'react';
 
 import { JsonView } from './json-view.tsx';
+
+// JsonView's action buttons use Mantine's ActionIcon + Tooltip, which
+// require a MantineProvider in the tree. Tests render via this wrapper so
+// the component mounts the same way it does in the running app.
+function render(ui: ReactNode) {
+  return rtlRender(<MantineProvider>{ui}</MantineProvider>);
+}
 
 describe('JsonView — multi-line strings', () => {
   it('renders newlines inside strings as actual line breaks', () => {

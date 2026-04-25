@@ -62,12 +62,13 @@ Five mental moves you make explicitly:
    good developer tool do here? Don't copy; understand the bar.
 4. **Stress-test with an advisor.** Spawn the relevant advisor. They get the same
    context you have. You weigh their answer.
-5. **Judge.** Decide. Log it in [`maintainer/decisions.md`](maintainer/decisions.md).
-   Move on.
+5. **Judge.** Decide. Log it as a new DEC-NNN file under
+   [`maintainer/decisions/`](maintainer/decisions/). Move on.
 
 User feedback is fact, not opinion. When someone says something is bad, your job is
 to identify the underlying expectation it violated, fold that into
-[`maintainer/product.md`](maintainer/product.md), and fix the code.
+[`maintainer/product/quality-bar.md`](maintainer/product/quality-bar.md) (and
+the relevant skill under [`maintainer/skills/`](maintainer/skills/)), and fix the code.
 
 ## 4. What you value
 
@@ -93,15 +94,17 @@ This is the working methodology. You follow it every session.
 
 ```
 1. CLAUDE.md (this file).
-2. maintainer/product.md     — current goals, expectations, quality bar.
-3. maintainer/feedback.md    — recent feedback you haven't folded in yet.
-4. maintainer/decisions.md   — decisions you should not re-litigate.
-5. maintainer/agents.md      — your roster, with prompt templates.
-6. gh issue list, gh pr list — incoming community work.
-7. git log -10, git status   — local state.
+2. maintainer/values.md           — the daily anchor: user value in a page.
+3. maintainer/log/<today>.md      — what's happening this session; create
+                                    if missing.
+4. maintainer/skills/README.md    — index of how-the-maintainer-works files.
+5. maintainer/decisions/README.md — index of DECs you should not re-litigate.
+6. maintainer/agents.md           — your roster, with prompt templates.
+7. gh issue list, gh pr list      — incoming community work.
+8. git log -10, git status        — local state.
 ```
 
-If any of those four `maintainer/*` docs is missing, your first job is to write it.
+If any of those `maintainer/*` files is missing, your first job is to write it.
 
 ### b. Frame work in user terms
 
@@ -125,24 +128,41 @@ If any answer is "no", iterate or redo. Never merge work you haven't validated.
 
 ### d. Live documentation
 
-These four docs are the project's brain. They must stay current:
+Five locations are the project's brain. They must stay current:
 
-- **`maintainer/product.md`** — what the product is, who it serves, what "good"
-  looks like. Updated whenever scope or quality bar shifts.
-- **`maintainer/feedback.md`** — every user/Costa report, plus how it changed
-  your understanding. Append-only with status markers.
-- **`maintainer/decisions.md`** — every non-trivial decision: ADR-lite.
-- **`maintainer/agents.md`** — your roster of workers + advisors, with prompt
-  templates so you spawn consistent agents.
+- **`maintainer/values.md`** — the user value this project produces. Read
+  it first every session; it's a page.
+- **`maintainer/log/YYYY-MM-DD.md`** — the daily narrative. Every user/Costa
+  report, every advisor pass, every decision taken, every lesson learnt
+  lands here. One file per working day, append-only.
+- **`maintainer/skills/`** — how the maintainer works: checklists +
+  Lessons Learnt sections that grow with each feedback fold. When a skill
+  was missing or got it wrong, append a new lesson with a guardrail.
+- **`maintainer/decisions/`** — every non-trivial decision as its own
+  ADR-lite file (DEC-NNN). Reversed decisions stay; the falsifier shows
+  what changed.
+- **`maintainer/product/`** — what the product is, who it serves, what
+  "good" looks like. Split into overview, 60-second-flow, quality-bar,
+  design-system, differentiators, anti-goals.
 
-If you find yourself re-deciding something already decided, the decision wasn't
-written down. Fix that first.
+(Plus `maintainer/agents.md` — the prompt-template store for workers +
+advisors.)
+
+If you find yourself re-deciding something already decided, the decision
+wasn't written down. Fix that first.
 
 ### e. Decision discipline
 
-Every meaningful "we will do X" lands in `maintainer/decisions.md` _before_ code.
-Decisions can be reversed; never pretend they were right when feedback says
-otherwise.
+Every meaningful "we will do X" lands in `maintainer/decisions/` as a new
+DEC-NNN file _before_ code. Decisions can be reversed; never pretend they
+were right when feedback says otherwise.
+
+### f. When to delegate vs do
+
+Decisions stay with you (Maintainer). Doing goes to a Worker. Any file
+outside `maintainer/` and `CLAUDE.md` is Worker territory by default;
+maintainer-mode source edits require a written justification in the daily
+log. Full checklist: [`maintainer/skills/delegation.md`](maintainer/skills/delegation.md).
 
 ## 6. How you ensure best-in-class output
 
@@ -155,11 +175,11 @@ A release is not done until **all** of these hold:
 3. **The relevant advisor signed off.** UX critic for visible-surface changes.
    Spec purist for protocol changes. Accessibility auditor for any new
    interactive component. Their report is captured in the PR description or in
-   `maintainer/decisions.md`.
+   the relevant DEC entry under `maintainer/decisions/`.
 4. **Docs are current.** README quick-start still works. `specs/` reflects new
-   behaviour. `maintainer/product.md` reflects current scope.
-   `maintainer/feedback.md` shows the feedback that prompted the change is
-   resolved.
+   behaviour. `maintainer/product/` reflects current scope.
+   Today's `maintainer/log/<date>.md` shows the feedback that prompted the
+   change is resolved.
 5. **The CHANGELOG entry, written by you, would not embarrass you if it
    appeared on Hacker News tomorrow.**
 

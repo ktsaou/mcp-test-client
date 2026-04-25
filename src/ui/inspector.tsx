@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Badge, Box, NavLink, ScrollArea, Tabs, Text } from '@mantine/core';
 
 import { useConnection } from '../state/connection.tsx';
 
@@ -14,6 +15,13 @@ interface Props {
   selection: Selection | null;
   onSelect: (selection: Selection) => void;
 }
+
+const TAB_LABELS: Record<Tab, string> = {
+  tools: 'Tools',
+  prompts: 'Prompts',
+  resources: 'Resources',
+  templates: 'Templates',
+};
 
 export function Inspector({ selection, onSelect }: Props) {
   const { inventory, status } = useConnection();
@@ -49,49 +57,98 @@ export function Inspector({ selection, onSelect }: Props) {
   const current = lists[tab];
 
   return (
-    <div className="shell__panel">
-      <div className="panel-header">
-        <div className="row">
-          {(['tools', 'prompts', 'resources', 'templates'] as const).map((t) => (
-            <button
+    <Box
+      h="100%"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--mantine-color-body)',
+        overflow: 'hidden',
+      }}
+    >
+      <Tabs
+        value={tab}
+        onChange={(v) => {
+          if (v === 'tools' || v === 'prompts' || v === 'resources' || v === 'templates') {
+            setTab(v);
+          }
+        }}
+        variant="default"
+        keepMounted={false}
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+      >
+        <Tabs.List
+          style={{
+            flexShrink: 0,
+            paddingInline: 'var(--mantine-spacing-sm)',
+            paddingTop: 6,
+          }}
+        >
+          {(Object.keys(TAB_LABELS) as Tab[]).map((t) => (
+            <Tabs.Tab
               key={t}
-              className={'btn btn--ghost' + (tab === t ? ' btn--primary' : '')}
-              type="button"
-              onClick={() => setTab(t)}
+              value={t}
+              rightSection={
+                <Badge size="xs" variant="light" radius="sm">
+                  {lists[t].length}
+                </Badge>
+              }
             >
-              {t} ({lists[t].length})
-            </button>
+              {TAB_LABELS[t]}
+            </Tabs.Tab>
           ))}
-        </div>
-      </div>
-      <div>
-        {status.state !== 'connected' ? (
-          <div className="panel-body muted">Connect to a server to see its inventory.</div>
-        ) : current.length === 0 ? (
-          <div className="panel-body muted">Server exposes no {tab}.</div>
-        ) : (
-          <ul className="item-list">
-            {current.map((entry) => {
-              const isActive =
-                selection !== null && selection.kind === tab && selection.name === entry.name;
-              return (
-                <li
-                  key={entry.name}
-                  className={'item' + (isActive ? ' item--active' : '')}
-                  onClick={() => onSelect({ kind: tab, name: entry.name, payload: entry.item })}
-                >
-                  <div className="item__name">
-                    <div>{entry.name}</div>
-                    {entry.description ? (
-                      <div className="item__meta">{entry.description}</div>
-                    ) : null}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    </div>
+        </Tabs.List>
+
+        <Box style={{ flex: 1, minHeight: 0 }}>
+          {status.state !== 'connected' ? (
+            <Box p="md">
+              <Text size="sm" c="dimmed">
+                Connect to a server to see its inventory.
+              </Text>
+            </Box>
+          ) : current.length === 0 ? (
+            <Box p="md">
+              <Text size="sm" c="dimmed">
+                Server exposes no {tab}.
+              </Text>
+            </Box>
+          ) : (
+            <ScrollArea style={{ height: '100%' }}>
+              {current.map((entry) => {
+                const isActive =
+                  selection !== null && selection.kind === tab && selection.name === entry.name;
+                return (
+                  <NavLink
+                    key={entry.name}
+                    active={isActive}
+                    onClick={() => onSelect({ kind: tab, name: entry.name, payload: entry.item })}
+                    label={
+                      <Text size="sm" fw={500}>
+                        {entry.name}
+                      </Text>
+                    }
+                    description={
+                      entry.description ? (
+                        <Text
+                          size="xs"
+                          c="dimmed"
+                          style={{
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {entry.description}
+                        </Text>
+                      ) : null
+                    }
+                  />
+                );
+              })}
+            </ScrollArea>
+          )}
+        </Box>
+      </Tabs>
+    </Box>
   );
 }

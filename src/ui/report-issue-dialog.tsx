@@ -9,6 +9,8 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Button, Code, Group, Modal, Stack, Text, Textarea, Tooltip } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
 import { bundleToJson } from '../diagnostics/build.ts';
 import { snapshotBundle } from '../diagnostics/current.ts';
@@ -28,16 +30,11 @@ export function ReportIssueDialog({ onClose }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
 
-  // Focus the textarea on mount and escape-to-close.
+  // Focus the textarea on mount.
   useEffect(() => {
     textareaRef.current?.focus();
     textareaRef.current?.select();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, []);
 
   function onCopy() {
     if (!json) return;
@@ -45,13 +42,18 @@ export function ReportIssueDialog({ onClose }: Props) {
       .writeText(json)
       .then(() => {
         setCopyStatus('copied');
+        notifications.show({ message: 'Diagnostic bundle copied' });
         window.setTimeout(() => setCopyStatus('idle'), 2000);
       })
       .catch(() => {
         setCopyStatus('error');
-        // Fall back: reselect the textarea so the user can Cmd/Ctrl+C manually.
         textareaRef.current?.focus();
         textareaRef.current?.select();
+        notifications.show({
+          color: 'red',
+          title: 'Could not copy',
+          message: 'Select the text in the dialog and use Cmd/Ctrl+C.',
+        });
         window.setTimeout(() => setCopyStatus('idle'), 4000);
       });
   }
@@ -69,6 +71,7 @@ export function ReportIssueDialog({ onClose }: Props) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    notifications.show({ message: `Saved ${filename}` });
   }
 
   function onOpenIssue() {
@@ -83,70 +86,78 @@ export function ReportIssueDialog({ onClose }: Props) {
         : 'Copy JSON';
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
-      <div
-        className="modal modal--wide"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="report-issue-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 id="report-issue-title">Report issue</h2>
+    <Modal opened onClose={onClose} title="Report issue" size="xl">
+      {bundle ? (
+        <Stack gap="sm">
+          <Text size="sm" c="dimmed">
+            This is a redacted snapshot of your current session. Bearer tokens and custom-header
+            secrets are replaced with length + preview.{' '}
+            <Text component="strong" inherit fw={600}>
+              Tool response payloads are not redacted
+            </Text>{' '}
+            — review the <Code>log</Code> array before sharing if your server returns anything
+            sensitive.
+          </Text>
 
-        {bundle ? (
-          <>
-            <p className="muted">
-              This is a redacted snapshot of your current session. Bearer tokens and custom-header
-              secrets are replaced with length + preview.{' '}
-              <strong>Tool response payloads are not redacted</strong> — review the <code>log</code>{' '}
-              array before sharing if your server returns anything sensitive.
-            </p>
+          <Textarea
+            ref={textareaRef}
+            readOnly
+            value={json}
+            spellCheck={false}
+            aria-label="Diagnostic bundle JSON"
+            autosize
+            minRows={12}
+            maxRows={20}
+            styles={{
+              input: {
+                fontFamily: 'var(--mantine-font-family-monospace)',
+                fontSize: 'var(--mantine-font-size-xs)',
+                whiteSpace: 'pre',
+                overflow: 'auto',
+              },
+            }}
+          />
 
-            <textarea
-              ref={textareaRef}
-              className="textarea diagnostics-textarea"
-              readOnly
-              value={json}
-              spellCheck={false}
-              aria-label="Diagnostic bundle JSON"
-            />
-
-            <div className="row">
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={onCopy}
-                aria-live="polite"
-              >
-                {copyLabel}
-              </button>
-              <button type="button" className="btn" onClick={onDownload}>
-                Download .json
-              </button>
-              <button type="button" className="btn" onClick={onOpenIssue}>
-                Open GitHub issue →
-              </button>
-              <span className="spacer" />
-              <button type="button" className="btn btn--ghost" onClick={onClose}>
+          <Group justify="space-between">
+            <Group gap="xs">
+              <Tooltip label="Copy the diagnostic JSON to clipboard" withinPortal>
+                <Button onClick={onCopy} aria-live="polite">
+                  {copyLabel}
+                </Button>
+              </Tooltip>
+              <Tooltip label="Save the diagnostic JSON as a file" withinPortal>
+                <Button variant="default" onClick={onDownload}>
+                  Download .json
+                </Button>
+              </Tooltip>
+              <Tooltip label="Open the GitHub bug-report form in a new tab" withinPortal>
+                <Button variant="default" onClick={onOpenIssue}>
+                  Open GitHub issue →
+                </Button>
+              </Tooltip>
+            </Group>
+            <Tooltip label="Close this dialog" withinPortal>
+              <Button variant="subtle" onClick={onClose}>
                 Close
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p>No diagnostic bundle is available yet.</p>
-            <p className="muted">
-              The app may still be initialising. Try again after you&apos;ve connected to a server.
-            </p>
-            <div className="row">
-              <span className="spacer" />
-              <button type="button" className="btn" onClick={onClose}>
+              </Button>
+            </Tooltip>
+          </Group>
+        </Stack>
+      ) : (
+        <Stack gap="sm">
+          <Text>No diagnostic bundle is available yet.</Text>
+          <Text size="sm" c="dimmed">
+            The app may still be initialising. Try again after you&apos;ve connected to a server.
+          </Text>
+          <Group justify="flex-end">
+            <Tooltip label="Close this dialog" withinPortal>
+              <Button variant="default" onClick={onClose}>
                 Close
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+              </Button>
+            </Tooltip>
+          </Group>
+        </Stack>
+      )}
+    </Modal>
   );
 }

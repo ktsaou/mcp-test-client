@@ -1,66 +1,176 @@
 import { useState } from 'react';
+import {
+  ActionIcon,
+  Alert,
+  Anchor,
+  Box,
+  Button,
+  Group,
+  Modal,
+  NavLink,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+  PasswordInput,
+  Tooltip,
+} from '@mantine/core';
+import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
 
 import { useServers } from '../state/servers.tsx';
 import type { ServerEntry } from '../persistence/schema.ts';
 import type { TransportKind } from '../mcp/types.ts';
 
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+      <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+      <path
+        d="M11.5 2.5 13.5 4.5 5 13H3v-2L11.5 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+      <path
+        d="M3 4h10M6 4V2.5h4V4M4.5 4l.5 9h6l.5-9M7 7v4M9 7v4"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function ServerPicker() {
   const { servers, activeId, setActive, remove } = useServers();
   const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; id: string } | null>(null);
 
+  function confirmDelete(s: ServerEntry) {
+    modals.openConfirmModal({
+      title: 'Delete server?',
+      children: (
+        <Text size="sm">
+          Delete <strong>{s.name || s.url}</strong>? This removes its saved entry from your browser.
+        </Text>
+      ),
+      labels: { confirm: 'Delete', cancel: 'Cancel' },
+      confirmProps: { color: 'red' },
+      onConfirm: () => {
+        remove(s.id);
+        notifications.show({ message: `Removed ${s.name || s.url}` });
+      },
+    });
+  }
+
   return (
-    <aside className="shell__sidebar">
-      <div className="panel-header">
-        <span>Servers</span>
-        <button className="btn btn--ghost" type="button" onClick={() => setModal({ mode: 'add' })}>
-          + Add
-        </button>
-      </div>
-      {servers.length === 0 ? (
-        <div className="panel-body muted">
-          <p>No servers yet. Click &ldquo;Add&rdquo; to connect to an MCP server.</p>
-        </div>
-      ) : (
-        <ul className="item-list">
-          {servers.map((s) => (
-            <li
-              key={s.id}
-              className={'item' + (s.id === activeId ? ' item--active' : '')}
-              onClick={() => setActive(s.id)}
-            >
-              <div className="item__name">
-                <div>{s.name || s.url}</div>
-                <div className="item__meta">{s.url}</div>
-              </div>
-              <button
-                className="btn btn--ghost"
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setModal({ mode: 'edit', id: s.id });
-                }}
-                title="Edit"
-              >
-                ✎
-              </button>
-              <button
-                className="btn btn--ghost"
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (confirm(`Delete ${s.name || s.url}?`)) remove(s.id);
-                }}
-                title="Delete"
-              >
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+    <Box
+      component="aside"
+      h="100%"
+      style={{
+        background: 'var(--mantine-color-body)',
+        borderRight: '1px solid var(--mantine-color-default-border)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      <Group
+        justify="space-between"
+        px="md"
+        py="xs"
+        style={{
+          borderBottom: '1px solid var(--mantine-color-default-border)',
+          flexShrink: 0,
+        }}
+      >
+        <Text size="xs" tt="uppercase" c="dimmed" fw={600} style={{ letterSpacing: '0.05em' }}>
+          Servers
+        </Text>
+        <Tooltip label="Add a new MCP server" withinPortal>
+          <Button
+            size="compact-sm"
+            variant="light"
+            leftSection={<PlusIcon />}
+            onClick={() => setModal({ mode: 'add' })}
+          >
+            Add
+          </Button>
+        </Tooltip>
+      </Group>
+
+      <Box style={{ flex: 1, overflowY: 'auto' }}>
+        {servers.length === 0 ? (
+          <Stack p="md" gap="xs">
+            <Text size="sm" c="dimmed">
+              No servers yet. Click &ldquo;Add&rdquo; to connect to an MCP server.
+            </Text>
+          </Stack>
+        ) : (
+          <Box>
+            {servers.map((s) => (
+              <NavLink
+                key={s.id}
+                active={s.id === activeId}
+                onClick={() => setActive(s.id)}
+                label={
+                  <Text size="sm" truncate="end">
+                    {s.name || s.url}
+                  </Text>
+                }
+                description={
+                  <Text size="xs" c="dimmed" truncate="end">
+                    {s.url}
+                  </Text>
+                }
+                rightSection={
+                  <Group gap={4} wrap="nowrap" onClick={(e) => e.stopPropagation()}>
+                    <Tooltip label="Edit server" withinPortal>
+                      <ActionIcon
+                        size="sm"
+                        variant="subtle"
+                        aria-label="Edit server"
+                        onClick={() => setModal({ mode: 'edit', id: s.id })}
+                      >
+                        <PencilIcon />
+                      </ActionIcon>
+                    </Tooltip>
+                    <Tooltip label="Delete server" withinPortal>
+                      <ActionIcon
+                        size="sm"
+                        variant="subtle"
+                        color="red"
+                        aria-label="Delete server"
+                        onClick={() => confirmDelete(s)}
+                      >
+                        <TrashIcon />
+                      </ActionIcon>
+                    </Tooltip>
+                  </Group>
+                }
+              />
+            ))}
+          </Box>
+        )}
+      </Box>
 
       {modal !== null ? <ServerModal spec={modal} onClose={() => setModal(null)} /> : null}
-    </aside>
+    </Box>
   );
 }
 
@@ -113,129 +223,125 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
         auth,
       });
       setActive(created.id);
+      notifications.show({ message: `Added ${created.name}` });
     } else {
       update(spec.id, { name: name.trim() || cleanUrl, url: cleanUrl, transport, auth });
+      notifications.show({ message: `Updated ${name.trim() || cleanUrl}` });
     }
     onClose();
   }
 
   return (
-    <div
-      className="modal-backdrop"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <Modal
+      opened
+      onClose={onClose}
+      title={spec.mode === 'add' ? 'Add MCP server' : 'Edit server'}
+      size="lg"
     >
-      <div className="modal" role="dialog" aria-label="Server details">
-        <h2>{spec.mode === 'add' ? 'Add MCP server' : 'Edit server'}</h2>
+      <Stack gap="sm">
+        <TextInput
+          label="Name"
+          value={name}
+          onChange={(e) => setName(e.currentTarget.value)}
+          placeholder="Friendly name (optional)"
+        />
 
-        <label className="field">
-          <span>Name</span>
-          <input
-            className="input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Friendly name (optional)"
-          />
-        </label>
+        <TextInput
+          label="URL"
+          value={url}
+          onChange={(e) => setUrl(e.currentTarget.value)}
+          placeholder="https://example.com/mcp or wss://…"
+          required
+        />
 
-        <label className="field">
-          <span>URL</span>
-          <input
-            className="input"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com/mcp or wss://…"
-          />
-        </label>
+        <Select
+          label="Transport"
+          value={transport}
+          onChange={(v) => {
+            if (
+              v === 'auto' ||
+              v === 'streamable-http' ||
+              v === 'sse-legacy' ||
+              v === 'websocket'
+            ) {
+              setTransport(v);
+            }
+          }}
+          data={[
+            { value: 'auto', label: 'Auto (by URL scheme)' },
+            { value: 'streamable-http', label: 'Streamable HTTP (current MCP spec)' },
+            { value: 'sse-legacy', label: 'SSE (legacy)' },
+            { value: 'websocket', label: 'WebSocket (custom)' },
+          ]}
+          allowDeselect={false}
+        />
 
-        <label className="field">
-          <span>Transport</span>
-          <select
-            className="select"
-            value={transport}
-            onChange={(e) => setTransport(e.target.value as TransportKind | 'auto')}
-          >
-            <option value="auto">Auto (by URL scheme)</option>
-            <option value="streamable-http">Streamable HTTP (current MCP spec)</option>
-            <option value="sse-legacy">SSE (legacy)</option>
-            <option value="websocket">WebSocket (custom)</option>
-          </select>
-        </label>
-
-        <label className="field">
-          <span>Authentication</span>
-          <select
-            className="select"
-            value={authKind}
-            onChange={(e) => setAuthKind(e.target.value as 'none' | 'bearer' | 'header')}
-          >
-            <option value="none">None</option>
-            <option value="bearer">Bearer token</option>
-            <option value="header">Custom header</option>
-          </select>
-        </label>
+        <Select
+          label="Authentication"
+          value={authKind}
+          onChange={(v) => {
+            if (v === 'none' || v === 'bearer' || v === 'header') {
+              setAuthKind(v);
+            }
+          }}
+          data={[
+            { value: 'none', label: 'None' },
+            { value: 'bearer', label: 'Bearer token' },
+            { value: 'header', label: 'Custom header' },
+          ]}
+          allowDeselect={false}
+        />
 
         {authKind === 'bearer' ? (
-          <label className="field">
-            <span>Bearer token</span>
-            <input
-              className="input"
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="paste token"
-            />
-          </label>
+          <PasswordInput
+            label="Bearer token"
+            value={token}
+            onChange={(e) => setToken(e.currentTarget.value)}
+            placeholder="paste token"
+          />
         ) : null}
 
         {authKind === 'header' ? (
           <>
-            <label className="field">
-              <span>Header name</span>
-              <input
-                className="input"
-                value={headerName}
-                onChange={(e) => setHeaderName(e.target.value)}
-                placeholder="X-Api-Key"
-              />
-            </label>
-            <label className="field">
-              <span>Header value</span>
-              <input
-                className="input"
-                type="password"
-                value={headerValue}
-                onChange={(e) => setHeaderValue(e.target.value)}
-              />
-            </label>
+            <TextInput
+              label="Header name"
+              value={headerName}
+              onChange={(e) => setHeaderName(e.currentTarget.value)}
+              placeholder="X-Api-Key"
+            />
+            <PasswordInput
+              label="Header value"
+              value={headerValue}
+              onChange={(e) => setHeaderValue(e.currentTarget.value)}
+            />
           </>
         ) : null}
 
-        {error !== null ? <div className="pill pill--error">{error}</div> : null}
+        {error !== null ? (
+          <Alert color="red" variant="light">
+            {error}
+          </Alert>
+        ) : null}
 
-        <div className="row">
-          <span className="muted" style={{ fontSize: 'var(--font-size-sm)' }}>
-            Stored in your browser only. See{' '}
-            <a
-              href="specs/security.md"
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: 'var(--color-accent)' }}
-            >
-              security notes
-            </a>
-            .
-          </span>
-          <div className="spacer" />
-          <button className="btn" type="button" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn btn--primary" type="button" onClick={handleSave}>
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
+        <Text size="xs" c="dimmed">
+          Stored in your browser only. See{' '}
+          <Anchor href="specs/security.md" target="_blank" rel="noreferrer" size="xs">
+            security notes
+          </Anchor>
+          .
+        </Text>
+
+        <Group justify="flex-end" gap="xs">
+          <Tooltip label="Discard changes" withinPortal>
+            <Button variant="default" onClick={onClose}>
+              Cancel
+            </Button>
+          </Tooltip>
+          <Tooltip label={spec.mode === 'add' ? 'Add this server' : 'Save changes'} withinPortal>
+            <Button onClick={handleSave}>Save</Button>
+          </Tooltip>
+        </Group>
+      </Stack>
+    </Modal>
   );
 }

@@ -29,7 +29,12 @@ export default tseslint.config(
       globals: { ...globals.browser, ...globals.es2023 },
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['eslint.config.mjs', 'postcss.config.cjs', 'tests/setup/*.ts'],
+          allowDefaultProject: [
+            'eslint.config.mjs',
+            'postcss.config.cjs',
+            'tests/setup/*.ts',
+            'scripts/*.mjs',
+          ],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -92,6 +97,7 @@ export default tseslint.config(
       '*.config.*.{ts,mjs,js,cjs}',
       'eslint.config.mjs',
       'postcss.config.cjs',
+      'scripts/*.mjs',
     ],
     languageOptions: {
       globals: { ...globals.node },
@@ -102,6 +108,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
     },
   },
 );

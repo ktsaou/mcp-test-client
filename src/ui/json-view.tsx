@@ -24,6 +24,7 @@
  */
 
 import { Fragment, useCallback, useState, type ReactNode } from 'react';
+import { ActionIcon, Tooltip } from '@mantine/core';
 
 const MAX_DEPTH = 100;
 const INDENT = '  ';
@@ -45,6 +46,47 @@ export interface JsonViewProps {
   downloadFilename?: string;
   /** Optional ARIA label so multiple views on a page are distinguishable. */
   ariaLabel?: string;
+  /** Notified after a successful copy — used by callers to surface a toast. */
+  onCopied?: () => void;
+  /** Notified after a successful download. */
+  onDownloaded?: () => void;
+}
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+      <rect x="5.5" y="5.5" width="8" height="8" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M3 10.5V3a.5.5 0 0 1 .5-.5H11" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+      <path
+        d="m3 8.5 3.2 3 6.8-7"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SaveIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+      <path
+        d="M8 2v8m0 0L5 7.5M8 10l3-2.5M2.5 12.5h11"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 export function JsonView({
@@ -54,6 +96,8 @@ export function JsonView({
   downloadButton,
   downloadFilename,
   ariaLabel,
+  onCopied,
+  onDownloaded,
 }: JsonViewProps) {
   const [copied, setCopied] = useState(false);
 
@@ -63,12 +107,15 @@ export function JsonView({
       .writeText(json)
       .then(() => {
         setCopied(true);
+        onCopied?.();
         setTimeout(() => setCopied(false), 1500);
       })
       .catch(() => {
+        // No clipboard access — keep behaviour minimal; the toast layer in the
+        // caller will surface the failure if it cares.
         window.prompt('Copy JSON:', json);
       });
-  }, [value]);
+  }, [value, onCopied]);
 
   const handleDownload = useCallback(() => {
     const json = JSON.stringify(value, null, 2);
@@ -82,7 +129,8 @@ export function JsonView({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [value, downloadFilename]);
+    onDownloaded?.();
+  }, [value, downloadFilename, onDownloaded]);
 
   const showActions = Boolean(copyButton || downloadButton);
 
@@ -91,26 +139,23 @@ export function JsonView({
       {showActions ? (
         <div className="json-view-actions">
           {copyButton ? (
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={handleCopy}
-              title="Copy as JSON to clipboard"
-              aria-label="Copy as JSON"
-            >
-              {copied ? '✓ copied' : 'copy'}
-            </button>
+            <Tooltip label={copied ? 'Copied' : 'Copy as JSON to clipboard'} withinPortal>
+              <ActionIcon size="sm" variant="subtle" onClick={handleCopy} aria-label="copy as JSON">
+                {copied ? <CheckIcon /> : <CopyIcon />}
+              </ActionIcon>
+            </Tooltip>
           ) : null}
           {downloadButton ? (
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={handleDownload}
-              title="Save as .json file"
-              aria-label="Save as JSON file"
-            >
-              save
-            </button>
+            <Tooltip label="Save as .json file" withinPortal>
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                onClick={handleDownload}
+                aria-label="save as JSON file"
+              >
+                <SaveIcon />
+              </ActionIcon>
+            </Tooltip>
           ) : null}
         </div>
       ) : null}

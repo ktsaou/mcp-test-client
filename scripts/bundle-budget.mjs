@@ -12,7 +12,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { join } from 'node:path';
-import process from 'node:process';
 
 const BUDGET_KB = 350;
 const DIST_ASSETS = 'dist/assets';
