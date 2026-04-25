@@ -131,6 +131,16 @@ Test scopes (mandatory; added 2026-04-25):
 - Modal a11y end-to-end: Esc closes, focus is trapped, AND **Enter
   on the primary input submits**. The third one is easy to miss;
   verify it explicitly with a screenshot of submit-on-enter working.
+- **Alignment under squeeze.** For any list-of-rows surface
+  (currently: the log panel), resize its container to 280 / 320 /
+  360 / 400 px and confirm the **right-edge action icons share the
+  same X offset across every row**: collect
+  `Array.from(document.querySelectorAll('<row-action-selector>')).map(b => b.getBoundingClientRect().right)`
+  and assert the resulting set has exactly one distinct value
+  (±0.5 px for sub-pixel rounding). Content (titles, metric chips)
+  must fold first — buttons do not move. This is a surface a critic
+  walking visually misses repeatedly; make the measurement explicit
+  and report the actual numbers in the verdict.
 
 Deliverables (Markdown report):
 

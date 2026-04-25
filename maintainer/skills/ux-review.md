@@ -34,6 +34,15 @@ The critic must test these scopes by default (added 2026-04-25):
 - **Modal a11y end-to-end:** Esc closes, focus is trapped, **and
   Enter on the primary input submits**. The third one is easy to
   miss; verify it explicitly.
+- **Alignment under squeeze.** For any list-of-rows surface (today: the
+  log), resize its container to 280 / 320 / 360 / 400 px and confirm
+  the **right-edge action icons share the same X offset across every
+  row** (collect `getBoundingClientRect().right` on each per-row icon;
+  the set must contain a single value, ±0.5 px). When content competes
+  with the action icons for horizontal space, the **content folds**
+  (truncates with ellipsis or progressively hides chips), the
+  **buttons do not move**. This is the surface a critic walking
+  visually misses repeatedly — make the measurement explicit.
 
 ## Lessons Learnt
 
@@ -63,3 +72,12 @@ The critic must test these scopes by default (added 2026-04-25):
   tab strip. **Guardrail:** mobile-scope now demands verifying the
   header at 360 / 390 / 414 px in both Idle and Connected, and that
   no header element overlays the panel area.
+- **2026-04-25 (after v1.1.1 prod ship) — log-row alignment under
+  squeeze.** Three critic passes walked the log panel and never
+  resized it narrow enough to surface the layout bug Costa flagged:
+  metric chips push the copy/save buttons off-screen at narrow
+  column widths, breaking the per-row right-edge alignment. Same
+  pattern as the mobile-header miss, on a different surface.
+  **Guardrail:** the new "alignment under squeeze" mandatory scope
+  above. Every list-of-rows surface gets the icon-X-offset
+  measurement at 280–400 px; a single distinct value is required.

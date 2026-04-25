@@ -27,6 +27,13 @@ This is the standard. "Done" means yes to all of these.
   **These actions are always visible**, not hover-only — a user who
   doesn't know the affordance is there must still see it. Filter by
   direction.
+- **Action icons stay aligned under squeeze.** In any list-of-rows
+  surface, the right-edge action icons share the **same X offset
+  across every row** regardless of headline length, chip count, or
+  panel width. Content (titles, metric chips) folds first when there
+  isn't enough room — **buttons do not move and do not slide off
+  the panel**. A user scanning a column of icons must actually find
+  a column.
 - **Tool descriptions are first-class.** They get prominent space in the
   request panel, not a 1-line truncation.
 - **Saving and naming things uses real modals**, not `window.prompt()`.
