@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.4] - 2026-04-25
+
+A follow-up to v1.1.3: the resilience wrapper from DEC-024 was already
+catching the throws and the tools list _was_ rendering, but Ajv's
+internal logger was dumping the failed function-code to `console.error`
+**before** the throw — which made it look like the app was broken even
+when it wasn't. Plus, Costa flagged that there's no visible way to tell
+which version of the app is loaded.
+
+### Fixed
+
+- **Silenced Ajv's pre-throw console spam.** The MCP SDK's default
+  `AjvJsonSchemaValidator` uses an Ajv configured with the default
+  console logger; on a compile failure it calls
+  `logger.error("Error compiling schema, function code:", source)`
+  before throwing. Our wrapper already catches the throw and surfaces a
+  clean per-schema warning to the system log, so the raw dump is just
+  noise. We now construct our own Ajv with `logger: false` and feed it
+  to `AjvJsonSchemaValidator`, suppressing the dump while keeping every
+  other Ajv behaviour identical.
+
+### Added
+
+- **Visible version stamp in the header** — small dimmed text next to
+  the brand: `v1.1.4 · <git-sha>`, with a tooltip showing the build
+  ISO timestamp. Removes any ambiguity about whether a deploy is
+  current. The version + git short SHA + build time are injected at
+  build time via Vite `define`. CI's `GITHUB_SHA` is preferred so the
+  built artefact carries the exact commit it was built from.
+- **MCP client identity carries the real version.** The SDK's
+  `initialize` handshake now reports `version: 1.1.4` (was hardcoded
+  `1.0.0-dev`). Server-side observability tools that record client
+  versions will see the correct value.
+
+### Notes
+
+- v1.1.3's wrapper was correct; its only flaw was UX. The behavior
+  change in this release is "stop scaring the user" — no logic
+  changes to the tools-list flow.
+- Bundle delta: negligible (~5 KB gz from inline Ajv import + version
+  stamps). Initial-load gz stays at ~248 KB, well under DEC-005's
+  350 KB cap.
+
 ## [1.1.3] - 2026-04-25
 
 A bug-fix release for a connect-failure case Costa hit on a real

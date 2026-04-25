@@ -10,6 +10,10 @@ declare module '*.svg' {
 
 /** Injected by Vite at build time from package.json version. */
 declare const __APP_VERSION__: string;
+/** Injected by Vite at build time: short git SHA of the build. */
+declare const __GIT_SHA__: string;
+/** Injected by Vite at build time: ISO 8601 build timestamp. */
+declare const __BUILD_TIME__: string;
 
 interface Window {
   /**

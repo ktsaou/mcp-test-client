@@ -17,10 +17,15 @@ import { TolerantValidator, type SchemaWarningSink } from './tolerant-validator.
 import type { ServerConfig, WireEventSink } from './types.ts';
 import { createTransport } from './transports.ts';
 
+/** Build-time version stamp from package.json (Vite `define`). */
+declare const __APP_VERSION__: string;
+const RUNTIME_VERSION =
+  typeof __APP_VERSION__ === 'string' && __APP_VERSION__.length > 0 ? __APP_VERSION__ : 'dev';
+
 /** Our single client identity. */
 const CLIENT_INFO = {
   name: 'mcp-test-client',
-  version: '1.0.0-dev',
+  version: RUNTIME_VERSION,
 } as const;
 
 export interface McpClientOptions {

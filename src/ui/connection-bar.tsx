@@ -7,6 +7,20 @@ import { useServers } from '../state/servers.tsx';
 import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 
+// Build-time stamps so users can verify which version they're running.
+// Costa flagged the need after a deployment-vs-code mismatch in v1.1.3.
+// `declare` lines mirror the project's existing pattern in
+// src/diagnostics/build.ts — global.d.ts isn't part of every tsconfig
+// project ref, so each consumer redeclares.
+declare const __APP_VERSION__: string;
+declare const __GIT_SHA__: string;
+declare const __BUILD_TIME__: string;
+const APP_VERSION =
+  typeof __APP_VERSION__ === 'string' && __APP_VERSION__.length > 0 ? __APP_VERSION__ : 'dev';
+const GIT_SHA = typeof __GIT_SHA__ === 'string' && __GIT_SHA__.length > 0 ? __GIT_SHA__ : 'unknown';
+const BUILD_TIME =
+  typeof __BUILD_TIME__ === 'string' && __BUILD_TIME__.length > 0 ? __BUILD_TIME__ : 'unknown';
+
 interface ConnectionBarProps {
   /**
    * Optional element rendered at the leading edge of the bar, before the
@@ -87,9 +101,16 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
         <Box style={{ flex: 1, minWidth: 0 }} />
       ) : (
         <>
-          <Text fw={600} size="md" style={{ letterSpacing: '0.02em' }}>
-            MCP Test Client
-          </Text>
+          <Group gap={6} wrap="nowrap" align="baseline">
+            <Text fw={600} size="md" style={{ letterSpacing: '0.02em' }}>
+              MCP Test Client
+            </Text>
+            <Tooltip label={`Built ${BUILD_TIME} from ${GIT_SHA}`} withinPortal>
+              <Text size="xs" c="dimmed" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                v{APP_VERSION} · {GIT_SHA}
+              </Text>
+            </Tooltip>
+          </Group>
 
           <Box style={{ flex: 1, minWidth: 0 }}>
             {active ? (
