@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ActionIcon,
   Alert,
   Box,
   Button,
   Group,
+  Menu,
   ScrollArea,
   SegmentedControl,
   Stack,
@@ -23,7 +25,7 @@ import {
   writeLastSelection,
 } from '../state/tool-state-persistence.ts';
 import { JsonView } from './json-view.tsx';
-import { SchemaForm, type JSONSchema } from '../schema-form/index.ts';
+import { SchemaForm, type JSONSchema, validate } from '../schema-form/index.ts';
 import { CannedRequests } from './canned-requests.tsx';
 import { ShareButton } from './share-button.tsx';
 import { MetricsChips, type ResponseMetrics, type TokenState } from './metrics-chips.tsx';
@@ -212,11 +214,18 @@ export function RequestPanel() {
       .catch(() => setLastTokens('na'));
   }
 
-  async function sendFormCall() {
+  async function sendFormCall(opts: { skipValidation?: boolean } = {}) {
     if (!selection || selection.kind !== 'tools' || !client) return;
     setError(null);
     setLastResult(null);
     setLastDurationMs(null);
+    if (opts.skipValidation) {
+      // DEC-019: log the bypass so a future reader of the wire trace
+      // can tell the request was knowingly malformed. The wire entry
+      // itself looks normal — the system-log entry sits above it as
+      // the audit trail.
+      log.appendSystem('warn', `tools/call · ${selection.name} — sent without validation`);
+    }
     setSending(true);
     const startedAt = performance.now();
     try {
@@ -266,9 +275,28 @@ export function RequestPanel() {
     }
   }
 
-  const disabled = status.state !== 'connected' || sending;
   const canSendForm = mode === 'form' && formSchema !== null;
-  const send = canSendForm ? sendFormCall : sendRaw;
+
+  // DEC-019: form-mode validation gate. When the form value doesn't
+  // match the tool's inputSchema, block the default Send action and
+  // surface the failure count on the button. The bypass is the
+  // chevron menu's "Send without validation".
+  const formErrors = useMemo(() => {
+    if (!canSendForm || !formSchema) return null;
+    return validate(formSchema, formValue);
+  }, [canSendForm, formSchema, formValue]);
+  const formInvalid = formErrors !== null && formErrors.length > 0;
+
+  const disabledByConn = status.state !== 'connected' || sending;
+  const disabled = disabledByConn || (canSendForm && formInvalid);
+
+  function send() {
+    if (canSendForm) {
+      void sendFormCall();
+    } else {
+      void sendRaw();
+    }
+  }
 
   return (
     <Box
@@ -328,30 +356,77 @@ export function RequestPanel() {
 
         <ShareButton selection={selection} formValue={formValue} rawText={text} mode={mode} />
 
-        <Tooltip
-          label={
-            disabled
-              ? status.state !== 'connected'
-                ? 'Connect to a server first'
-                : 'Sending…'
-              : 'Send the request to the server'
-          }
-          withinPortal
-        >
-          <Button
-            size="sm"
-            onClick={() => {
-              void send();
-            }}
-            disabled={disabled}
-            loading={sending}
-            // Pin the primary action so neither label nor button shrinks
-            // when the saved-requests dropdown widens the toolbar.
-            style={{ flexShrink: 0, minWidth: 64 }}
+        {/*
+          DEC-019: split-button primary action. Default Send is gated by
+          form validation (Ajv via cfworker) when in form mode. The
+          chevron reveals "Send without validation" — a deliberate
+          per-click bypass for MCP server developers who want to test
+          how their server handles malformed input. Bypass is never
+          persisted: every send is an explicit choice.
+        */}
+        <Group gap={0} wrap="nowrap" style={{ flexShrink: 0 }} aria-label="Send request">
+          <Tooltip
+            label={
+              disabledByConn
+                ? status.state !== 'connected'
+                  ? 'Connect to a server first'
+                  : 'Sending…'
+                : formInvalid
+                  ? `${formErrors?.length ?? 0} validation error(s) — fix or use the chevron to bypass`
+                  : 'Send the request to the server'
+            }
+            withinPortal
           >
-            Send
-          </Button>
-        </Tooltip>
+            <Button
+              size="sm"
+              onClick={send}
+              disabled={disabled}
+              loading={sending}
+              style={{
+                flexShrink: 0,
+                minWidth: 64,
+                borderTopRightRadius: canSendForm ? 0 : undefined,
+                borderBottomRightRadius: canSendForm ? 0 : undefined,
+              }}
+            >
+              Send
+            </Button>
+          </Tooltip>
+          {canSendForm ? (
+            <Menu position="bottom-end" withinPortal trigger="click">
+              <Menu.Target>
+                <ActionIcon
+                  size="lg"
+                  variant="filled"
+                  color="cyan"
+                  disabled={disabledByConn}
+                  aria-label="More send options"
+                  style={{
+                    flexShrink: 0,
+                    borderTopLeftRadius: 0,
+                    borderBottomLeftRadius: 0,
+                    borderLeft: '1px solid rgba(255,255,255,0.18)',
+                  }}
+                >
+                  ▾
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  onClick={() => {
+                    void sendFormCall({ skipValidation: true });
+                  }}
+                  disabled={disabledByConn}
+                >
+                  Send without validation
+                </Menu.Item>
+                <Menu.Item disabled style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                  Bypass the input-schema check for this send only
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          ) : null}
+        </Group>
       </Group>
 
       <ScrollArea style={{ flex: 1, minHeight: 0 }}>

@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.16] - 2026-04-26
+
+DEC-019 — Send button validation gate + bypass split-button.
+
+### Added
+
+- **Form validation gate.** In form mode, the Send button is now
+  gated on the tool's `inputSchema` (cfworker, draft 2020-12). If
+  the form value doesn't validate, the button is disabled and the
+  tooltip surfaces the failure count. Until v1.1.15 the form
+  always sent; nothing was checked on the way out.
+- **"Send without validation" bypass.** A chevron next to Send
+  reveals a single menu item for the deliberate per-click bypass.
+  MCP server developers who want to pressure-test how their server
+  handles malformed input can use this without disabling the gate
+  for normal users. Every bypass writes a `warn`-level system-log
+  entry — `tools/call · <name> — sent without validation` — so the
+  trace shows the request was knowingly malformed.
+
+### Notes
+
+- Bypass state is per-send only — never persisted, never sticky.
+  Costa's call: every bypass is an explicit choice.
+- The chevron only appears in form mode (raw mode has no schema to
+  bypass).
+- 227 unit tests pass; lint, typecheck, build clean.
+
 ## [1.1.15] - 2026-04-26
 
 DEC-018 — per-tool form-state persistence with auto-restore on
