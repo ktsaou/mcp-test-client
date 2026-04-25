@@ -20,6 +20,9 @@ import { JsonView } from './json-view.tsx';
 import { SchemaForm, type JSONSchema } from '../schema-form/index.ts';
 import { CannedRequests } from './canned-requests.tsx';
 import { ShareButton } from './share-button.tsx';
+import { MetricsChips, type ResponseMetrics, type TokenState } from './metrics-chips.tsx';
+import { jsonByteLength } from './log-pairing.ts';
+import { estimateTokens } from './log-tokens.ts';
 import type { Selection } from './inspector.tsx';
 
 type Mode = 'form' | 'raw';
@@ -102,6 +105,8 @@ export function RequestPanel() {
   const [formValue, setFormValue] = useState<unknown>({});
   const [mode, setMode] = useState<Mode>('form');
   const [lastResult, setLastResult] = useState<unknown>(null);
+  const [lastDurationMs, setLastDurationMs] = useState<number | null>(null);
+  const [lastTokens, setLastTokens] = useState<TokenState>('pending');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -117,6 +122,8 @@ export function RequestPanel() {
     setFormValue({});
     setMode(formSchema ? 'form' : 'raw');
     setLastResult(null);
+    setLastDurationMs(null);
+    setLastTokens('pending');
     setError(null);
 
     if (!selection || selection.kind !== 'tools') return;
@@ -133,16 +140,29 @@ export function RequestPanel() {
     }
   }, [template, formSchema, selection, consumeInbox]);
 
+  function recordResultMetrics(result: unknown, startedAt: number) {
+    setLastDurationMs(performance.now() - startedAt);
+    setLastResult(result);
+    setLastTokens('pending');
+    // Tokenisation is async (gpt-tokenizer is dynamic-imported on first use).
+    // The chip shows `… ~tok` until this resolves.
+    estimateTokens(result)
+      .then((n) => setLastTokens(n))
+      .catch(() => setLastTokens('na'));
+  }
+
   async function sendFormCall() {
     if (!selection || selection.kind !== 'tools' || !client) return;
     setError(null);
     setLastResult(null);
+    setLastDurationMs(null);
     setSending(true);
+    const startedAt = performance.now();
     try {
       const args =
         formValue && typeof formValue === 'object' ? (formValue as Record<string, unknown>) : {};
       const result = await client.callTool(selection.name, args);
-      setLastResult(result);
+      recordResultMetrics(result, startedAt);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
@@ -155,6 +175,7 @@ export function RequestPanel() {
   async function sendRaw() {
     setError(null);
     setLastResult(null);
+    setLastDurationMs(null);
     let parsed: { method: string; params?: Record<string, unknown> };
     try {
       parsed = JSON.parse(text) as { method: string; params?: Record<string, unknown> };
@@ -171,9 +192,10 @@ export function RequestPanel() {
       return;
     }
     setSending(true);
+    const startedAt = performance.now();
     try {
       const result: unknown = await client.request(parsed.method, parsed.params);
-      setLastResult(result);
+      recordResultMetrics(result, startedAt);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
@@ -328,9 +350,22 @@ export function RequestPanel() {
 
           {lastResult !== null ? (
             <Box>
-              <Text size="xs" c="dimmed" tt="uppercase" fw={600} mb={6}>
-                Last result
-              </Text>
+              <Group justify="space-between" align="center" mb={6} wrap="nowrap">
+                <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
+                  Last result
+                </Text>
+                <Group gap={4} wrap="nowrap">
+                  <MetricsChips
+                    metrics={
+                      {
+                        bytes: jsonByteLength(lastResult),
+                        durationMs: lastDurationMs ?? 0,
+                        tokens: lastTokens,
+                      } satisfies ResponseMetrics
+                    }
+                  />
+                </Group>
+              </Group>
               <JsonView
                 value={lastResult}
                 copyButton

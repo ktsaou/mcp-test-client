@@ -1,0 +1,125 @@
+/*
+ * Log panel styles (DEC-012).
+ *
+ * Each row is an accordion-shaped collapsible: a single-line headline plus
+ * an optional expanded body. Density matches the rest of the UI (xs / mono).
+ */
+
+.log-row {
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.log-row__headline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  user-select: none;
+  min-width: 0;
+}
+
+.log-row__headline:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.log-row__chev {
+  color: var(--color-text-muted);
+  width: 12px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s;
+}
+
+.log-row__chev--open {
+  transform: rotate(90deg);
+}
+
+.log-row__dir {
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 12px;
+  text-align: center;
+}
+.log-row__dir--out {
+  color: var(--color-info);
+}
+.log-row__dir--in {
+  color: var(--color-success);
+}
+.log-row__dir--sys {
+  color: var(--color-text-muted);
+}
+
+.log-row__ts {
+  color: var(--color-text-faint);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.log-row__title {
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
+.log-row__title--error {
+  color: var(--color-danger);
+}
+
+.log-row__title-discriminator {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.log-row__chips {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.log-row__actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.log-row__body {
+  padding: 6px 12px 10px 36px;
+  background: var(--mantine-color-body);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.log-row__system-text {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--color-text-muted);
+}
+
+.log-row--system-warn .log-row__system-text {
+  color: var(--color-warning);
+}
+.log-row--system-error .log-row__system-text {
+  color: var(--color-danger);
+}
+
+/*
+ * Metric chip — small, compact. Keep below default Mantine Badge density so
+ * three of them fit on a narrow log column without wrapping.
+ */
+.metric-chip {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}

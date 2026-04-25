@@ -12,6 +12,7 @@ import '@mantine/spotlight/styles.css';
 import './ui/theme.css';
 import './ui/shell.css';
 import './ui/json-view.css';
+import './ui/log-panel.css';
 import './schema-form/schema-form.css';
 
 const rootElement = document.getElementById('root');
