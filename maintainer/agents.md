@@ -112,6 +112,10 @@ public/public-servers.json, otherwise the mock at the URL I'll provide.
 Test scopes (mandatory; added 2026-04-25):
 
 - iPhone-size viewport (390×844). Verify §3 flow does not break.
+  **Verify the header bar at 360, 390, and 414 px widths in both
+  Idle and Connected states**: it must fit on one row, no element
+  may overlay the panel area below it. (A common bug pattern is
+  "panel collapse fixed; header overflow not".)
 - Share-link reload in a fresh incognito tab. **Explicitly verify
   what reconstructs: server, selected tool, method, AND argument
   values must all come back. Anything less is a falsifier on
