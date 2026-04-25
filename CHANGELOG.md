@@ -17,7 +17,7 @@ poking at a public MCP server can read the request flow at a glance.
 ### Added
 
 - **Bold method-summary headline** on every wire entry — `tools/call ·
-  echo`, `prompts/get · greet`, `resources/read · file:///etc/hosts`.
+echo`, `prompts/get · greet`, `resources/read · file:///etc/hosts`.
   Mechanical discriminator from the JSON-RPC params.
 - **Per-entry collapse / expand** with default-collapsed bodies and
   global Expand all / Collapse all toolbar buttons.
