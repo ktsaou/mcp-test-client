@@ -83,6 +83,10 @@ suggestion ("verify header at 360/390/414 px") was folded into
 before this DEC was opened, so the next pass will catch a similar
 header-overflow regression automatically.
 
-**Status.** Open. Worker brief drafted next; v1.1 push gated on Worker
-delivering green pipeline + the third UX-critic pass clearing all four
-findings.
+**Status.** **Closed (2026-04-25).** All four findings closed in
+commit `eb1d3b6`; third UX-critic pass signed off SHIP. Three minor
+items the critic flagged as non-blockers fold into v1.1.1: the F1
+breakpoint off-by-one at exactly 480 px (`< 479` → should be `< 480`);
+delete-saved opening a Menu first instead of a direct confirm when
+there's a single saved entry; friendly-name discarded on share-link
+reload.

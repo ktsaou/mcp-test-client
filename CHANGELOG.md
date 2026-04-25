@@ -7,7 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(Post-v1.0 work tracked in GitHub issues.)
+(Post-v1.1 work tracked in GitHub issues + maintainer/decisions/.)
+
+## [1.1.0] - 2026-04-25
+
+The first user-quality release. v1.0 shipped with structural pieces in
+place but seven unusable surfaces; this release closes them and adds
+the working framework that produced the fix.
+
+### Added
+
+- **Mantine v9 across every visible surface.** Real `<Button>` /
+  `<ActionIcon>` with hover / active / disabled / busy states; real
+  `<Tabs>` with `role="tab"` and arrow-key navigation; real `<Modal>`
+  with focus-trap, Esc-to-close, and Enter-to-submit; `<Tooltip>` on
+  every actionable element; `<SegmentedControl>` for the Form / Raw
+  toggle; `<NavLink>` for the server picker.
+- **Three-axis resizable layout** via `react-resizable-panels` —
+  sidebar / main / inspector / request / log all draggable; sizes
+  persist to localStorage per layout.
+- **Mobile responsive collapse** below 768 px: sidebar becomes a
+  Mantine `Drawer`; inspector / request / log become a stacked
+  `Tabs` with `keepMounted` so per-tab state survives switches. Below
+  ~480 px the header collapses to a compact chip set so primary
+  actions stay reachable on iPhone-size viewports.
+- **Newline-respecting JSON view** restored from the legacy
+  pretty-printer — multi-line strings render across actual line
+  breaks with a `↵` glyph marker; nested-JSON-in-strings is detected
+  and rendered inline with a `[JSON]` badge; per-message and
+  last-result copy / save buttons emit well-formed JSON.
+- **Shareable URLs** now encode AND restore the full state — server,
+  selected tool, method, and arguments all reconstruct on load. Tokens
+  are never included.
+- **Toast notifications** confirm every side effect: connect,
+  disconnect, save, load, delete, copy, share.
+- **Inventory empty-state branches on connection status** — `idle`,
+  `connecting`, `error` (showing the actual error message + a hint),
+  and `connected & empty` each render distinct copy.
+- **CI bundle-size tripwire** at 350 KB gzipped (current: 267.7 KB).
+- **Maintainer brain framework** under `maintainer/` — daily activity
+  logs, ADR-lite decisions per file, skills with checklists + Lessons
+  Learnt, product spec subdirectories, and a `values.md` daily anchor.
+  Three UX-critic passes and one framework-analyst pass landed
+  guardrails into `skills/ux-review.md` so every regression class
+  caught is now blocked-by-default on the next release.
+
+### Changed
+
+- Project entrypoint chrome migrated from hand-rolled CSS + bare HTML
+  to Mantine's `AppShell`. Bundle grew from the v1.0 baseline to
+  267.7 KB gzipped — under the DEC-005 350 KB CI cap.
+- The 4 borderlines (empty-state copy paragraphs, light-theme
+  timestamp contrast, ARIA `valuemin > valuemax` on a separator, log
+  virtualization at 200+ messages) are tracked as v1.1.1 follow-ups
+  alongside DEC-009 response metrics.
+
+### Fixed
+
+- Seven Costa-flagged v1.0 issues, plus four UX-critic-found a11y
+  issues (modal Enter-submit, real tabs, focus-trap, header-overflow
+  occluding mobile tabs after a partial round-1 fix), plus three
+  desktop regressions surfaced during the migration cycle (Send /
+  Share label truncation after Save-as, inventory empty-state lying
+  on connect-error, missing save-confirmation toast).
 
 ## [1.0.0] - 2026-04-23
 

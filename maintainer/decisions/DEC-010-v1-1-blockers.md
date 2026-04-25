@@ -57,5 +57,13 @@ returns no-ship for any of the three blockers. Then the patch was wrong.
 **Advisor sign-off.** UX critic surfaced the blockers; the patch is gated
 on a fresh UX-critic pass post-fix.
 
-**Status.** Open. Worker brief drafted next; v1.1 push gated on Worker
-delivering green pipeline + critic sign-off.
+**Status.** **Closed (2026-04-25).**
+
+- Blocker 2 (share-link state): closed in commit `690ed7c`,
+  re-verified by critic passes 2 + 3.
+- Blocker 3 (Enter-submit): closed in commit `690ed7c`,
+  re-verified by critic passes 2 + 3.
+- Blocker 1 (mobile collapse): round 1 patch was partial (panel
+  collapsed; header still overflowed at narrow widths). Round 2
+  picked it up under [DEC-011](DEC-011-v1-1-round-2.md), closed in
+  commit `eb1d3b6` and verified by critic pass 3.
