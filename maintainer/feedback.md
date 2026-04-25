@@ -22,6 +22,77 @@ which decision in decisions.md.
 
 ---
 
+## 2026-04-25 — UX-critic advisor pass on live v1.0 (source: internal advisor)
+
+After the framework rewrite landed, I spawned the UX-critic advisor template
+(see `agents.md`) against https://ktsaou.github.io/mcp-test-client/. Verdict:
+**do not ship as v1.x.y; wait for the v1.1 Mantine migration.** Full report
+at `/tmp/ux-review-2026-04-25/` plus 22 screenshots.
+
+**§3 60-second flow** — 1 pass / 2 partials / 3 rough-or-fail.
+
+**Four of Costa's seven items still visibly present** in the deploy:
+
+- JSON newlines (DEC-003 falsifier) — fixed in commit `d7f7fb2`, awaiting deploy.
+- `window.prompt()` for canned-request naming — captured in v1.1 worker brief.
+- Sidebar / tools-pane fixed widths — captured in v1.1 worker brief.
+- Tool descriptions truncated and missing from request panel — captured.
+
+**Additional issues the critic surfaced beyond Costa's seven** (treat as
+must-fix in v1.1, not v1.2):
+
+1. **Modal a11y is broken** — Add Server modal: Escape doesn't close, Enter
+   doesn't submit, no focus trap, Tab leaks behind the backdrop. Mantine
+   `Modal` fixes all four for free; require it.
+2. **Tabs are not real tabs** — no `role="tab"`, no `aria-selected`, no
+   arrow-key nav. Mantine `Tabs` fixes for free; require it.
+3. **Light theme has near-zero header contrast** — title and `Connected`
+   chip on pure-white. Mantine's auto-generated palette should resolve, but
+   verify post-migration.
+4. **Empty states are one-liners ("void")** — "Connect to a server to see
+   its inventory" is too thin. Each empty state needs a paragraph that helps
+   the user know what to do next.
+5. **No log virtualization** — possible perf cliff at 200+ messages. Not in
+   the worker brief; tracked as a v1.1 risk to verify after migration.
+
+**Things the critic flagged as already-good** — don't regress them in the
+migration:
+
+- Theme cycle (Dark → Light → System) with persisted state.
+- Per-field schema form rendering with description + required marker. Mantine
+  doesn't ship this shape; the bespoke `src/schema-form/` must stay.
+- Share link compress/round-trip works — only a toast is missing.
+
+**Falsifier add-on**: in addition to "Costa reports the same problems",
+the critic recommended testing four scopes I had not specified:
+
+- iPhone-size viewport (390×844)
+- Share-link reload in a fresh incognito tab
+- Bearer-token auth flow
+- 200+ messages in the log (scroll perf)
+
+These are now part of the UX-critic prompt template in `agents.md`.
+
+**Status.** **Open.** The v1.1 worker is migrating to Mantine in parallel;
+critic will be re-run against the deployed v1.1 before merging.
+
+---
+
+## 2026-04-25 — Framework-choice analyst sign-off on DEC-001 (source: internal advisor)
+
+Confirmed Mantine over shadcn / Radix Themes / Chakra / Park, with a
+correction: **use v9, not v8** (v8.3.18 is the last 8.x release). Surfaced
+four concrete migration risks now captured in DEC-001 advisor sign-off:
+button hover regression on React 19 (#8482), Radio deselect bug (#8461),
+`AppShell.Navbar` not draggable (use `react-resizable-panels` for both
+splits), `@mantine/code-highlight` bundle trap (~300 KB if mis-imported).
+Real bundle estimate revised upward to 180–230 KB gzipped. CI tripwire at
+350 KB added as DEC-005.
+
+**Status.** Closed by DEC-001 revision and DEC-005.
+
+---
+
 ## 2026-04-25 — v1.0 fails the basics (source: Costa, relaying user reports)
 
 **Verbatim summary** (seven points):
