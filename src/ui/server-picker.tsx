@@ -18,6 +18,8 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 
+import { loadCatalog } from '../catalog/loader.ts';
+import type { CatalogServer } from '../catalog/types.ts';
 import { useConnection } from '../state/connection.tsx';
 import { useServers } from '../state/servers.tsx';
 import type { ServerEntry } from '../persistence/schema.ts';
@@ -316,6 +318,32 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
     existing?.auth?.kind === 'header' ? existing.auth.value : '',
   );
   const [error, setError] = useState<string | null>(null);
+  // DEC-017 #9 — auth-required known-servers dropdown. Only shown in
+  // add mode (edit mode is editing a saved entry, no need to seed
+  // from a known server). Loaded async on mount so the modal opens
+  // instantly even on a slow first paint.
+  const [authCatalog, setAuthCatalog] = useState<CatalogServer[]>([]);
+  useEffect(() => {
+    if (spec.mode !== 'add') return;
+    void loadCatalog().then((c) => {
+      setAuthCatalog(c.servers.filter((s) => s.auth !== 'none' && s.status !== 'retired'));
+    });
+  }, [spec.mode]);
+  function applyKnownServer(id: string | null) {
+    if (id === null) return;
+    const known = authCatalog.find((s) => s.id === id);
+    if (!known) return;
+    setName(known.name);
+    setUrl(known.url);
+    setTransport(known.transport);
+    // Map the catalog's auth shape into the modal's. 'oauth' isn't
+    // (yet) an interactive auth method in this client; treat it as
+    // bearer and let the user paste the token they get from signup.
+    if (known.auth === 'header') setAuthKind('header');
+    else if (known.auth === 'bearer' || known.auth === 'oauth') setAuthKind('bearer');
+    else setAuthKind('none');
+  }
+
   // DEC-016 #4: connecting spinner while the Save handler probes the
   // server. Persistence is gated on a successful connect — if the
   // handshake fails, the entry is NOT saved and the user sees the
@@ -428,6 +456,19 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
         }}
       >
         <Stack gap="sm">
+          {spec.mode === 'add' && authCatalog.length > 0 ? (
+            <Select
+              label="Pick a known server"
+              description="Pre-fill from a catalog of known auth-required MCP servers. You'll still need to provide credentials."
+              placeholder="Choose…"
+              value={null}
+              onChange={(v) => applyKnownServer(v)}
+              data={authCatalog.map((s) => ({ value: s.id, label: s.name }))}
+              clearable
+              searchable
+            />
+          ) : null}
+
           <TextInput
             label="Name"
             value={name}

@@ -9,6 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.17] - 2026-04-26
+
+DEC-017 + DEC-022 #1 — curated server catalog auto-merge and a
+GitHub icon in the header.
+
+### Added
+
+- **Curated public-server catalog** seeded with 9 verified no-auth
+  MCP servers (Context7, DeepWiki, GitMCP, Cloudflare Docs, Hugging
+  Face Hub, Netdata Registry, Manifold Markets, NYC Transit,
+  Ferryhopper) plus 1 auth-required entry (Cloudflare API).
+  Verified live in the April 2026 research pass.
+- **Catalog auto-merge on first paint** (DEC-017 #8). No-auth
+  entries are silently inserted into the user's server list at
+  app boot — the empty-state experience for a brand-new user is
+  populated, not blank. URLs the user has explicitly removed are
+  tombstoned (`mcptc:catalog-tombstones`) so a deleted catalog
+  entry stays deleted across reloads.
+- **"Pick a known server" dropdown** in the add-server modal
+  (DEC-017 #9). Pre-fills URL / name / transport / auth shape from
+  the auth-required catalog. Credentials remain the user's
+  responsibility — the dropdown only populates the structural
+  fields.
+- **GitHub icon in the header** (DEC-022 #1). Inline SVG (no new
+  icon dep) linking to the source repo with `target="_blank"
+  rel="noopener noreferrer"`. Sits next to the theme toggle.
+
+### Notes
+
+- The catalog is shipped as a static `public-servers.json` so PRs
+  to add / retire / re-flag entries don't require a code change.
+  The schema accepts `status: 'active' | 'unstable' | 'retired'`
+  — `retired` entries are skipped on auto-merge.
+- 227 unit tests pass; lint, typecheck, build clean.
+
 ## [1.1.16] - 2026-04-26
 
 DEC-019 — Send button validation gate + bypass split-button.

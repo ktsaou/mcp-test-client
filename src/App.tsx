@@ -3,14 +3,67 @@ import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 
+import { loadCatalog } from './catalog/loader.ts';
+import { Keys } from './persistence/schema.ts';
 import { ConnectionProvider, useConnection } from './state/connection.tsx';
 import { LogProvider } from './state/log.tsx';
 import { SelectionProvider, useSelection } from './state/selection.tsx';
 import { ServersProvider, useServers } from './state/servers.tsx';
+import { appStore } from './state/store-instance.ts';
 import { ThemeProvider, useTheme } from './state/theme.tsx';
 import { readLastSelection } from './state/tool-state-persistence.ts';
 import { appTheme } from './ui/mantine-theme.ts';
 import { Layout } from './ui/layout.tsx';
+
+/**
+ * DEC-017 — catalog auto-merge.
+ *
+ * On first paint, load the bundled `public-servers.json` catalog and
+ * silently merge `auth: 'none'` entries into the user's server list
+ * (matching by URL). Skips entries the user has explicitly removed
+ * (tombstones in `mcptc:catalog-tombstones`). The auth-required
+ * catalog entries are surfaced in the add-server modal as a "Pick a
+ * known server" dropdown — they are NOT auto-merged because they
+ * need credentials before they can connect.
+ *
+ * Renders nothing — pure side-effect.
+ */
+function CatalogAutoMerge() {
+  const { servers, add } = useServers();
+  // Snapshot the current servers + add() in refs so the effect runs
+  // exactly once on mount; if servers update mid-merge (e.g. another
+  // boot path adds something) we don't re-fire.
+  const serversRef = useRef(servers);
+  serversRef.current = servers;
+  const addRef = useRef(add);
+  addRef.current = add;
+  const consumedRef = useRef(false);
+
+  useEffect(() => {
+    if (consumedRef.current) return;
+    consumedRef.current = true;
+    void (async () => {
+      const catalog = await loadCatalog();
+      const tombstones = new Set(appStore.read<string[]>(Keys.catalogTombstones) ?? []);
+      const have = new Set(serversRef.current.map((s) => s.url));
+      for (const entry of catalog.servers) {
+        if (entry.auth !== 'none') continue;
+        if (have.has(entry.url)) continue;
+        if (tombstones.has(entry.url)) continue;
+        if (entry.status === 'retired') continue;
+        addRef.current({
+          name: entry.name,
+          url: entry.url,
+          transport: entry.transport,
+          auth: { kind: 'none' },
+        });
+        have.add(entry.url);
+      }
+    })();
+  }, []);
+
+  return null;
+}
 
 /**
  * DEC-018 — selection lifecycle on server switch.
@@ -109,6 +162,7 @@ export function App() {
           <LogProvider>
             <ConnectionProvider>
               <SelectionProvider>
+                <CatalogAutoMerge />
                 <RestoreSelectionOnServerReady />
                 <Layout />
               </SelectionProvider>

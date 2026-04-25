@@ -1,5 +1,107 @@
 {
   "$schema": "./public-servers.schema.json",
   "version": 1,
-  "servers": []
+  "servers": [
+    {
+      "id": "context7",
+      "name": "Context7",
+      "url": "https://mcp.context7.com/mcp",
+      "transport": "streamable-http",
+      "description": "Up-to-date library documentation and code examples by library name.",
+      "auth": "none",
+      "addedAt": "2026-04-25",
+      "status": "active"
+    },
+    {
+      "id": "deepwiki",
+      "name": "DeepWiki",
+      "url": "https://mcp.deepwiki.com/mcp",
+      "transport": "streamable-http",
+      "description": "AI-powered Q&A and wiki browsing for any public GitHub repository indexed on DeepWiki.",
+      "auth": "none",
+      "addedAt": "2026-04-25",
+      "status": "active"
+    },
+    {
+      "id": "gitmcp-mcp-servers",
+      "name": "GitMCP — MCP servers repo",
+      "url": "https://gitmcp.io/modelcontextprotocol/servers",
+      "transport": "streamable-http",
+      "description": "Documentation search across the modelcontextprotocol/servers repository (concrete starting point; gitmcp.io serves any GitHub repo at /<owner>/<repo>).",
+      "auth": "none",
+      "addedAt": "2026-04-26",
+      "status": "active"
+    },
+    {
+      "id": "cloudflare-docs",
+      "name": "Cloudflare Docs",
+      "url": "https://docs.mcp.cloudflare.com/mcp",
+      "transport": "streamable-http",
+      "description": "AI-powered search over the Cloudflare documentation site.",
+      "auth": "none",
+      "addedAt": "2026-04-25",
+      "status": "active"
+    },
+    {
+      "id": "huggingface",
+      "name": "Hugging Face Hub",
+      "url": "https://hf.co/mcp",
+      "transport": "streamable-http",
+      "description": "Search and browse models, datasets, and papers on Hugging Face Hub. Anonymous access is rate-limited; bearer token (optional) raises the cap.",
+      "auth": "none",
+      "addedAt": "2026-04-25",
+      "status": "active"
+    },
+    {
+      "id": "netdata-registry",
+      "name": "Netdata Registry",
+      "url": "https://registry.my-netdata.io/mcp",
+      "transport": "streamable-http",
+      "description": "Live infrastructure data from a public Netdata parent — metrics, anomalies, alerts, processes.",
+      "auth": "none",
+      "addedAt": "2026-04-25",
+      "status": "unstable"
+    },
+    {
+      "id": "manifold-markets",
+      "name": "Manifold Markets",
+      "url": "https://api.manifold.markets/v0/mcp",
+      "transport": "streamable-http",
+      "description": "Browse prediction markets — search questions, get market details, look up users (play money).",
+      "auth": "none",
+      "addedAt": "2026-04-25",
+      "status": "active"
+    },
+    {
+      "id": "subwayinfo-nyc",
+      "name": "NYC Transit (MTA)",
+      "url": "https://subwayinfo.nyc/mcp",
+      "transport": "streamable-http",
+      "description": "Real-time NYC subway, bus, ferry, LIRR, Metro-North, and Citibike arrivals and alerts.",
+      "auth": "none",
+      "addedAt": "2026-04-25",
+      "status": "active"
+    },
+    {
+      "id": "ferryhopper",
+      "name": "Ferryhopper",
+      "url": "https://mcp.ferryhopper.com/mcp",
+      "transport": "streamable-http",
+      "description": "Search ferry routes and live availability across Greek and European ports.",
+      "auth": "none",
+      "addedAt": "2026-04-25",
+      "status": "active"
+    },
+    {
+      "id": "cloudflare-mcp",
+      "name": "Cloudflare API",
+      "url": "https://mcp.cloudflare.com/mcp",
+      "transport": "streamable-http",
+      "description": "Full Cloudflare API access — Workers, R2, KV, DNS, etc. OAuth required.",
+      "auth": "oauth",
+      "docs": "https://dash.cloudflare.com/sign-up",
+      "addedAt": "2026-04-25",
+      "status": "active"
+    }
+  ]
 }

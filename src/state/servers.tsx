@@ -67,8 +67,23 @@ export function ServersProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const remove = useCallback((id: string) => {
-    setServers((prev) => prev.filter((s) => s.id !== id));
+    let removedUrl: string | undefined;
+    setServers((prev) => {
+      const target = prev.find((s) => s.id === id);
+      if (target) removedUrl = target.url;
+      return prev.filter((s) => s.id !== id);
+    });
     setActiveIdState((current) => (current === id ? null : current));
+    // DEC-017: tombstone the URL so the next catalog auto-merge skips
+    // it. Stored URLs that don't match catalog entries (user-added
+    // servers) are harmless — the auto-merge only checks against
+    // catalog URLs.
+    if (removedUrl !== undefined) {
+      const existing = appStore.read<string[]>(Keys.catalogTombstones) ?? [];
+      if (!existing.includes(removedUrl)) {
+        appStore.write(Keys.catalogTombstones, [...existing, removedUrl]);
+      }
+    }
   }, []);
 
   const setActive = useCallback((id: string | null) => {

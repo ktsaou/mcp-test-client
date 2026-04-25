@@ -26,6 +26,12 @@ export const Keys = {
   theme: 'theme',
   /** Recent request/response records (capped at HISTORY_MAX). */
   history: 'history',
+  /**
+   * DEC-017: URLs the user has explicitly removed from their server
+   * list. The catalog auto-merge skips these on every boot so a
+   * deleted catalog entry stays deleted.
+   */
+  catalogTombstones: 'catalog-tombstones',
 } as const;
 
 export function prefixed(key: string): string {
