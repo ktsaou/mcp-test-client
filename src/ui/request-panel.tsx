@@ -197,15 +197,21 @@ export function RequestPanel() {
         overflow: 'hidden',
       }}
     >
+      {/*
+        Toolbar layout note (DEC-011 F2): the toolbar wraps so the Saved-
+        requests group can drop to a second row instead of squeezing the
+        primary actions. `Send` and `Share` are flex-shrink:0 with a
+        min-width that fits their label, so they always render in full.
+      */}
       <Group
-        justify="space-between"
-        wrap="nowrap"
+        wrap="wrap"
         gap="xs"
         px="md"
         py={8}
         style={{
           borderBottom: '1px solid var(--mantine-color-default-border)',
           flexShrink: 0,
+          rowGap: 6,
         }}
       >
         <Box style={{ minWidth: 0, flex: 1 }}>
@@ -231,6 +237,7 @@ export function RequestPanel() {
               { value: 'form', label: 'Form' },
               { value: 'raw', label: 'Raw' },
             ]}
+            style={{ flexShrink: 0 }}
           />
         ) : null}
 
@@ -255,6 +262,9 @@ export function RequestPanel() {
             }}
             disabled={disabled}
             loading={sending}
+            // Pin the primary action so neither label nor button shrinks
+            // when the saved-requests dropdown widens the toolbar.
+            style={{ flexShrink: 0, minWidth: 64 }}
           >
             Send
           </Button>

@@ -70,6 +70,9 @@ export function ShareButton({ selection, formValue, rawText, mode }: Props) {
         onClick={() => {
           void handleCopy();
         }}
+        // Pin so the saved-requests dropdown cannot squeeze the label down
+        // to "Sh" once a canned request exists (DEC-011 F2).
+        style={{ flexShrink: 0, minWidth: 60 }}
       >
         {copied ? '✓ Copied' : 'Share'}
       </Button>

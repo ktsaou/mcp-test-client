@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Badge, Box, NavLink, ScrollArea, Tabs, Text } from '@mantine/core';
 
-import { useConnection } from '../state/connection.tsx';
+import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
 import { useSelection } from '../state/selection.tsx';
+import { EmptyState } from './empty-state.tsx';
 
 type Tab = 'tools' | 'prompts' | 'resources' | 'templates';
 
@@ -98,17 +99,9 @@ export function Inspector() {
 
         <Box style={{ flex: 1, minHeight: 0 }}>
           {status.state !== 'connected' ? (
-            <Box p="md">
-              <Text size="sm" c="dimmed">
-                Connect to a server to see its inventory.
-              </Text>
-            </Box>
+            <InventoryEmptyState status={status} />
           ) : current.length === 0 ? (
-            <Box p="md">
-              <Text size="sm" c="dimmed">
-                Server exposes no {tab}.
-              </Text>
-            </Box>
+            <EmptyState title={`Server exposed no ${tab}.`} />
           ) : (
             <ScrollArea style={{ height: '100%' }}>
               {current.map((entry) => {
@@ -150,4 +143,31 @@ export function Inspector() {
       </Tabs>
     </Box>
   );
+}
+
+/**
+ * Branches the inventory empty-state on the connection status so a connect
+ * failure does not silently render "Connect to a server" — which makes the
+ * user think they haven't tried yet, when in fact the server already
+ * rejected them (DEC-011 F3).
+ */
+export function InventoryEmptyState({ status }: { status: ConnectionStatus }) {
+  switch (status.state) {
+    case 'idle':
+      return <EmptyState title="Connect to a server to see its inventory." />;
+    case 'connecting':
+      return <EmptyState busy title="Negotiating with the server…" />;
+    case 'error':
+      return (
+        <EmptyState
+          tone="error"
+          title={`Server returned: ${status.error.message}`}
+          hint="Check the URL or token in the sidebar entry."
+        />
+      );
+    case 'connected':
+      // Inventory is non-empty by construction at this branch; the parent
+      // handles the "connected but exposes no X" case per-tab.
+      return null;
+  }
 }

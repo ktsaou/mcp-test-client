@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 
 import { useServers } from '../state/servers.tsx';
@@ -14,9 +15,21 @@ interface ConnectionBarProps {
   leftSlot?: ReactNode;
 }
 
+/**
+ * Below this width we drop the brand title and the "Active: …" subtitle so the
+ * remaining controls (burger, status pill, primary action, theme toggle) stay
+ * on a single row. The active server name is still discoverable from the
+ * status pill tooltip and the drawer header.
+ */
+const COMPACT_HEADER_BREAKPOINT_PX = 480;
+
 export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
   const { active, markUsed } = useServers();
   const { status, connect, disconnect } = useConnection();
+  // useMediaQuery returns undefined on first render before the listener is
+  // wired up; treat that as "not compact" so the desktop layout is the SSR /
+  // first-paint default.
+  const compact = useMediaQuery(`(max-width: ${COMPACT_HEADER_BREAKPOINT_PX - 1}px)`) ?? false;
 
   const busy = status.state === 'connecting';
   const connected = status.state === 'connected';
@@ -55,8 +68,12 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
     <Group
       h={56}
       px="md"
-      gap="md"
+      gap={compact ? 'xs' : 'md'}
       align="center"
+      // wrap="nowrap" is critical: at < 480 px the previous wrap="wrap"
+      // pushed Connect / theme-toggle onto a second row that physically
+      // overlaid the mobile tab strip below the header (DEC-011 F1).
+      wrap="nowrap"
       style={{
         borderBottom: '1px solid var(--mantine-color-default-border)',
         background: 'var(--mantine-color-body)',
@@ -64,28 +81,36 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
       }}
     >
       {leftSlot}
-      <Text fw={600} size="md" style={{ letterSpacing: '0.02em' }}>
-        MCP Test Client
-      </Text>
-
-      <Box style={{ flex: 1, minWidth: 0 }}>
-        {active ? (
-          <Group gap={6} wrap="nowrap" c="dimmed">
-            <Text size="sm" style={{ whiteSpace: 'nowrap' }}>
-              Active:
-            </Text>
-            <Tooltip label={active.url} withinPortal>
-              <Text size="sm" truncate="end" style={{ minWidth: 0 }}>
-                {active.name || active.url}
-              </Text>
-            </Tooltip>
-          </Group>
-        ) : (
-          <Text size="sm" c="dimmed">
-            Select or add a server in the sidebar.
+      {compact ? (
+        // Spacer keeps the status pill / primary action right-aligned the
+        // same way the brand+active block does on desktop.
+        <Box style={{ flex: 1, minWidth: 0 }} />
+      ) : (
+        <>
+          <Text fw={600} size="md" style={{ letterSpacing: '0.02em' }}>
+            MCP Test Client
           </Text>
-        )}
-      </Box>
+
+          <Box style={{ flex: 1, minWidth: 0 }}>
+            {active ? (
+              <Group gap={6} wrap="nowrap" c="dimmed">
+                <Text size="sm" style={{ whiteSpace: 'nowrap' }}>
+                  Active:
+                </Text>
+                <Tooltip label={active.url} withinPortal>
+                  <Text size="sm" truncate="end" style={{ minWidth: 0 }}>
+                    {active.name || active.url}
+                  </Text>
+                </Tooltip>
+              </Group>
+            ) : (
+              <Text size="sm" c="dimmed">
+                Select or add a server in the sidebar.
+              </Text>
+            )}
+          </Box>
+        </>
+      )}
 
       <StatusBadge status={status} />
 
