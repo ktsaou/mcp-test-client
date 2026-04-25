@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.19] - 2026-04-26
+
+DEC-020 — inflight activity indicator (visibility-only).
+
+### Added
+
+- **Activity icon in the connection bar.** A small icon next to the
+  Settings / GitHub / Theme cluster shows a spinner + count badge
+  whenever JSON-RPC requests are in flight — i.e. an outgoing
+  request whose paired response hasn't landed yet. When idle (count
+  = 0), the icon dims to a thin circle outline. Click the icon to
+  open a popover listing each pending request: method, target tool
+  name (when applicable), and elapsed time.
+- **Future-proof for additional activity types.** The icon's
+  framing isn't request-specific — Costa's call: "the icon with
+  some animation would be ok — we may have more types of activity
+  in the future". Background reconnects, polling, etc. can hang
+  off the same surface later.
+
+### Notes
+
+- Cancel buttons in the popover are deliberately NOT in v1.1.19.
+  Routing an `AbortController` per request through the SDK so the
+  cancel actually terminates the wire request (and emits
+  `notifications/cancelled`) is a separate change. Visibility-only
+  for now matches Costa's "show that something is in progress"
+  ask; cancellation is the v1.2 follow-up.
+- Inflight set is derived from the existing log entries in render
+  (LOG_CAP=500 makes this trivially cheap, ~500 ops per render),
+  not a separate context. One source of truth.
+- 227 unit tests pass; lint, typecheck, build clean.
+
 ## [1.1.18] - 2026-04-26
 
 DEC-021 — settings export and import.

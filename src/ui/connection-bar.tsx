@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ActionIcon,
   Alert,
@@ -7,8 +7,10 @@ import {
   Button,
   Checkbox,
   Group,
+  Loader,
   Menu,
   Modal,
+  Popover,
   Stack,
   Text,
   Tooltip,
@@ -16,10 +18,12 @@ import {
 import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 
+import { useLog } from '../state/log.tsx';
 import { useServers } from '../state/servers.tsx';
 import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
 import { downloadExport, exportSettings, importSettings } from '../persistence/portability.ts';
 import { ThemeToggle } from './theme-toggle.tsx';
+import type { JSONRPCMessage } from '../mcp/types.ts';
 
 /** Gear / settings icon — inline SVG so we don't pull in an icon library. */
 function GearIcon() {
@@ -153,6 +157,164 @@ function SettingsMenu() {
         </Stack>
       </Modal>
     </>
+  );
+}
+
+/**
+ * DEC-020 — inflight activity indicator. Counts outgoing requests
+ * that haven't been answered yet (matched by JSON-RPC id) by walking
+ * the LogProvider's entries. When the count is > 0 the icon spins
+ * and shows a count badge; clicking opens a popover that lists each
+ * pending request with its method, target tool name, and elapsed
+ * time. Cancel UI is intentionally NOT in v1.1.19 — the harder bit
+ * of routing AbortController per request through the SDK is a
+ * follow-up. Visibility-only for now matches Costa's "show that
+ * something is in progress" call.
+ */
+function rpcIdOf(msg: JSONRPCMessage): string | number | undefined {
+  if ('id' in msg && (typeof msg.id === 'string' || typeof msg.id === 'number')) {
+    return msg.id;
+  }
+  return undefined;
+}
+
+function methodOf(msg: JSONRPCMessage): string | undefined {
+  if ('method' in msg && typeof msg.method === 'string') return msg.method;
+  return undefined;
+}
+
+function toolNameFromParams(msg: JSONRPCMessage): string | undefined {
+  if (!('params' in msg) || !msg.params || typeof msg.params !== 'object') return undefined;
+  const params = msg.params as Record<string, unknown>;
+  if (typeof params['name'] === 'string') return params['name'];
+  return undefined;
+}
+
+interface InflightEntry {
+  id: string | number;
+  method: string;
+  toolName?: string;
+  sentAtMs: number;
+}
+
+function ActivityIndicator() {
+  const { entries } = useLog();
+  const [open, setOpen] = useState(false);
+  // Recompute the inflight set from the log on every render. With the
+  // 500-entry LOG_CAP this is trivially cheap (~500 ops). The
+  // alternative — a separate context — would force every wire event
+  // through a second listener for the same data we already have.
+  const inflight = useMemo<InflightEntry[]>(() => {
+    const pending = new Map<string | number, InflightEntry>();
+    for (const e of entries) {
+      if (e.kind !== 'wire') continue;
+      const id = rpcIdOf(e.message);
+      if (id === undefined) continue;
+      if (e.direction === 'outgoing') {
+        const method = methodOf(e.message);
+        if (method === undefined) continue; // notifications have no id, skip
+        pending.set(id, {
+          id,
+          method,
+          toolName: toolNameFromParams(e.message),
+          sentAtMs: e.timestamp,
+        });
+      } else if (e.direction === 'incoming') {
+        // Any incoming with an id is a response — clear the pending entry.
+        pending.delete(id);
+      }
+    }
+    return Array.from(pending.values());
+  }, [entries]);
+
+  const count = inflight.length;
+  const now = Date.now();
+
+  return (
+    <Popover opened={open} onChange={setOpen} position="bottom-end" withinPortal width={320}>
+      <Popover.Target>
+        <Tooltip
+          label={
+            count === 0
+              ? 'No requests in flight'
+              : `${count} request${count === 1 ? '' : 's'} in flight`
+          }
+          withinPortal
+        >
+          <ActionIcon
+            variant="subtle"
+            size="lg"
+            aria-label={`Activity — ${count} in flight`}
+            onClick={() => setOpen((o) => !o)}
+            style={{ position: 'relative' }}
+          >
+            {count > 0 ? (
+              <Loader size={16} color="cyan" />
+            ) : (
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" opacity="0.4" />
+              </svg>
+            )}
+            {count > 0 ? (
+              <Badge
+                size="xs"
+                variant="filled"
+                color="cyan"
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  padding: '0 4px',
+                  minWidth: 14,
+                  height: 14,
+                  fontSize: 9,
+                }}
+              >
+                {count}
+              </Badge>
+            ) : null}
+          </ActionIcon>
+        </Tooltip>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Stack gap="xs">
+          <Text size="sm" fw={600}>
+            {count === 0 ? 'No activity' : `${count} request${count === 1 ? '' : 's'} in flight`}
+          </Text>
+          {count === 0 ? (
+            <Text size="xs" c="dimmed">
+              Outgoing JSON-RPC requests show up here while waiting for a response.
+            </Text>
+          ) : (
+            <Stack gap={4}>
+              {inflight.map((it) => {
+                const elapsed = Math.max(0, now - it.sentAtMs);
+                const elapsedLabel =
+                  elapsed < 1000 ? `${elapsed} ms` : `${(elapsed / 1000).toFixed(1)} s`;
+                return (
+                  <Group key={String(it.id)} justify="space-between" gap="xs" wrap="nowrap">
+                    <Box style={{ minWidth: 0, flex: 1 }}>
+                      <Text size="xs" fw={500} truncate="end">
+                        {it.method}
+                        {it.toolName ? (
+                          <Text component="span" c="dimmed">
+                            {' · '}
+                            {it.toolName}
+                          </Text>
+                        ) : null}
+                      </Text>
+                    </Box>
+                    <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
+                      {elapsedLabel}
+                    </Text>
+                  </Group>
+                );
+              })}
+            </Stack>
+          )}
+        </Stack>
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 
@@ -336,6 +498,8 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
           </Button>
         </Tooltip>
       )}
+
+      <ActivityIndicator />
 
       <SettingsMenu />
 
