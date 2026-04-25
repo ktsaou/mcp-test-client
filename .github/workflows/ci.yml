@@ -43,7 +43,7 @@ jobs:
       - run: npm ci
       - run: npm run test -- --reporter=default --reporter=junit --outputFile=test-results/vitest.junit.xml
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unit-test-results
           path: test-results/
@@ -63,7 +63,7 @@ jobs:
       - run: npm run build
       - run: npm run test:e2e
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
@@ -82,7 +82,7 @@ jobs:
       - run: npm run build
       # DEC-005: fail the build if dist/ exceeds 350 KB gzipped.
       - run: npm run check:bundle
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
