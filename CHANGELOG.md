@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.9] - 2026-04-25
+
+Dark theme nudge after Costa flagged v1.1.8's palette still felt too
+light, especially the log.
+
+### Changed
+
+- **Dark palette shifted down ~one step.** Body content panels go
+  `#1f1f1f` → `#161616`; chrome (sidebar, connection bar, log panel)
+  goes `#181818` → `#0d0d0d`. Mantine's `dark` color tuple updated
+  to match (`dark[7]=#161616`, `dark[8]=#0d0d0d`, `dark[6]=#1f1f1f`
+  for raised popovers/modals, `dark[5]=#2a2a2a` for borders). Hierarchy
+  stays Dark Modern — chrome darker than content — just lower
+  overall.
+- **Log panel pulled into the chrome layer.** Until v1.1.8 the log
+  inherited the body shade and read as part of the editor area;
+  v1.1.9 sets it to `var(--color-bg-log)` = chrome shade (`#0d0d0d`),
+  matching VS Code Dark Modern's `panel.background` design where the
+  bottom panel reads as part of the chrome frame, darker than the
+  editor. Expanded log rows still drop their JSON body to the body
+  shade (`#161616`) — slightly lighter than the surrounding log —
+  so the in-focus row visually rises out of the panel.
+
+### Notes
+
+- Bundle delta: 0 (theme + CSS variable values only). Initial-load
+  gz stays at ~253 KB.
+- 227 unit tests pass; lint, typecheck, build clean.
+
 ## [1.1.8] - 2026-04-25
 
 Three usability calls from Costa, all in one release.

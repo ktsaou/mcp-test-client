@@ -18,17 +18,22 @@
 
 import { createTheme, type MantineColorsTuple } from '@mantine/core';
 
+// v1.1.9: shifted down ~one step from VS Code Dark Modern. Costa: "the bg
+// colors need to be darker — and for log". Body lands at #161616 (was
+// #1f1f1f), chrome at #0d0d0d (was #181818). Raised surfaces (modal,
+// popover) drop to #1f1f1f so they still read as raised over body.
+// Borders soften to #2a2a2a.
 const darkModernShades: MantineColorsTuple = [
   '#cccccc', // 0  — text foreground (lightest)
   '#a8a8a8', // 1
   '#9d9d9d', // 2  — muted text
   '#858585', // 3
   '#6e6e6e', // 4
-  '#3c3c3c', // 5  — border
-  '#2b2b2b', // 6  — raised surface (modal, popover)
-  '#1f1f1f', // 7  — body bg (editor.background — main content panels)
-  '#181818', // 8  — chrome bg (sideBar.background, panel.background)
-  '#0d0d0d', // 9  — deepest
+  '#2a2a2a', // 5  — border
+  '#1f1f1f', // 6  — raised surface (modal, popover)
+  '#161616', // 7  — body bg (main content panels)
+  '#0d0d0d', // 8  — chrome bg (sidebar, connection bar, log panel)
+  '#040404', // 9  — deepest
 ];
 
 export const appTheme = createTheme({

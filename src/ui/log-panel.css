@@ -195,6 +195,10 @@
 
 .log-row__body {
   padding: 6px 12px 10px 36px;
+  /* The expanded body sits at the body shade — slightly LIGHTER than
+     the surrounding log panel (which is at chrome shade since v1.1.9).
+     The contrast cues "this row is in focus" without competing with
+     the JSON syntax highlighting. */
   background: var(--mantine-color-body);
   border-top: 1px solid var(--color-border-subtle);
 }

@@ -203,7 +203,13 @@ export function LogPanel() {
       ref={panelRootRef}
       tabIndex={-1}
       style={{
-        background: 'var(--mantine-color-default-hover)',
+        // v1.1.9: log panel is its own frame — sits at the chrome shade
+        // (`--color-bg-log` = sidebar shade). Until v1.1.8 the log
+        // inherited the body shade and read as part of the editor area;
+        // Costa flagged it should be darker. Pulling it to the chrome
+        // shade matches VS Code Dark Modern's panel.background design
+        // (bottom panel = sidebar shade, both darker than the editor).
+        background: 'var(--color-bg-log)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',

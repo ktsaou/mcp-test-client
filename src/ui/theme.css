@@ -22,18 +22,21 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* Surface — VS Code Dark Modern (default since VS Code Sept 2022).
-     Note the inversion vs Dark+: chrome (sidebar / panel / titlebar) is
-     DARKER than the editor area, not lighter. Costa: "match modern
-     vscode" + "all backgrounds proportionally darker, sections still
-     oriented" — Dark Modern's hierarchy gives both. */
-  --color-bg: #1f1f1f; /* editor.background */
-  --color-bg-raised: #181818; /* sideBar.background — darker than editor in Dark Modern */
-  --color-bg-sunken: #181818; /* panel.background — same chrome layer */
-  --color-bg-titlebar: #181818; /* titleBar.activeBackground — same chrome layer */
+  /* Surface — VS Code Dark Modern, shifted down one step (v1.1.9).
+     Costa: "the bg colors need to be darker — and for log". Hierarchy
+     stays the same as Dark Modern: chrome darker than content; the
+     entire palette just sits a notch lower so the panels feel less
+     glaring. Log specifically gets the chrome shade — it was sitting
+     at body shade before and felt too light against the rest of the
+     bottom frame. */
+  --color-bg: #161616; /* editor.background */
+  --color-bg-raised: #0d0d0d; /* sideBar.background — darker than editor */
+  --color-bg-sunken: #0d0d0d; /* panel.background — same chrome layer */
+  --color-bg-titlebar: #0d0d0d; /* titleBar.activeBackground — same chrome layer */
   --color-bg-statusbar: #0078d4; /* statusBar.background (Dark Modern blue) */
-  --color-border: #2b2b2b; /* editorGroup.border */
-  --color-border-subtle: #1f1f1f; /* sub-divider — fades into editor */
+  --color-bg-log: #0d0d0d; /* log panel — bottom frame, matches chrome */
+  --color-border: #2a2a2a; /* editorGroup.border — softer */
+  --color-border-subtle: #161616; /* sub-divider — fades into editor */
 
   /* Text */
   --color-text: #cccccc; /* editor foreground */
