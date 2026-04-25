@@ -1,11 +1,160 @@
-import type { ReactNode } from 'react';
-import { ActionIcon, Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
+import { useRef, useState, type ReactNode } from 'react';
+import {
+  ActionIcon,
+  Alert,
+  Badge,
+  Box,
+  Button,
+  Checkbox,
+  Group,
+  Menu,
+  Modal,
+  Stack,
+  Text,
+  Tooltip,
+} from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 
 import { useServers } from '../state/servers.tsx';
 import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
+import { downloadExport, exportSettings, importSettings } from '../persistence/portability.ts';
 import { ThemeToggle } from './theme-toggle.tsx';
+
+/** Gear / settings icon — inline SVG so we don't pull in an icon library. */
+function GearIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+      <path d="M9.405 1.05a.78.78 0 0 0-.88-.65l-1.05.16a.78.78 0 0 0-.65.88l.13.84a5.4 5.4 0 0 0-1.18.68L5 2.42a.78.78 0 0 0-1.07.27l-.55.92a.78.78 0 0 0 .27 1.07l.74.45a5.4 5.4 0 0 0 0 1.36l-.74.45a.78.78 0 0 0-.27 1.07l.55.92a.78.78 0 0 0 1.07.27l.78-.45a5.4 5.4 0 0 0 1.18.68l-.13.84a.78.78 0 0 0 .65.88l1.05.16a.78.78 0 0 0 .88-.65l.16-.83a5.4 5.4 0 0 0 1.36 0l.16.83a.78.78 0 0 0 .88.65l1.05-.16a.78.78 0 0 0 .65-.88l-.13-.84a5.4 5.4 0 0 0 1.18-.68l.78.45a.78.78 0 0 0 1.07-.27l.55-.92a.78.78 0 0 0-.27-1.07l-.74-.45a5.4 5.4 0 0 0 0-1.36l.74-.45a.78.78 0 0 0 .27-1.07l-.55-.92a.78.78 0 0 0-1.07-.27l-.78.45a5.4 5.4 0 0 0-1.18-.68l.13-.84a.78.78 0 0 0-.65-.88l-1.05-.16a.78.78 0 0 0-.88.65l-.16.83a5.4 5.4 0 0 0-1.36 0l-.16-.83ZM8 5.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" />
+    </svg>
+  );
+}
+
+/**
+ * DEC-021 — settings export / import. Gear icon in the header opens
+ * a Menu with Export and Import items. Export writes a download with
+ * every `mcptc:*` key, optionally stripping credentials. Import
+ * reads a JSON file, validates `version: 1`, and replaces the
+ * existing keys.
+ */
+function SettingsMenu() {
+  const [exportOpen, setExportOpen] = useState(false);
+  const [includeCreds, setIncludeCreds] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  function doExport() {
+    const blob = exportSettings({ includeCredentials: includeCreds });
+    downloadExport(blob);
+    setExportOpen(false);
+    notifications.show({
+      message: includeCreds
+        ? 'Settings exported (with credentials)'
+        : 'Settings exported (credentials stripped)',
+    });
+  }
+
+  async function doImport(file: File) {
+    let text: string;
+    try {
+      text = await file.text();
+    } catch {
+      notifications.show({ color: 'red', title: 'Import failed', message: 'Could not read file' });
+      return;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      notifications.show({
+        color: 'red',
+        title: 'Import failed',
+        message: `Not valid JSON: ${e instanceof Error ? e.message : String(e)}`,
+      });
+      return;
+    }
+    const result = importSettings(parsed);
+    if (!result.ok) {
+      notifications.show({
+        color: 'red',
+        title: 'Import failed',
+        message: result.error ?? 'Unknown error',
+      });
+      return;
+    }
+    notifications.show({
+      title: 'Settings imported',
+      message: result.credentialsStripped
+        ? `Wrote ${String(result.keysWritten)} keys. Credentials were stripped on export — re-enter tokens.`
+        : `Wrote ${String(result.keysWritten)} keys.`,
+    });
+    // Reload so every state slice picks up the imported values.
+    setTimeout(() => window.location.reload(), 800);
+  }
+
+  return (
+    <>
+      <Menu position="bottom-end" withinPortal>
+        <Menu.Target>
+          <Tooltip label="Export / Import settings" withinPortal>
+            <ActionIcon variant="subtle" size="lg" aria-label="Settings menu">
+              <GearIcon />
+            </ActionIcon>
+          </Tooltip>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>Settings</Menu.Label>
+          <Menu.Item onClick={() => setExportOpen(true)}>Export settings…</Menu.Item>
+          <Menu.Item onClick={() => fileInputRef.current?.click()}>Import settings…</Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+
+      {/* Hidden file input for the import flow. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.currentTarget.files?.[0];
+          e.currentTarget.value = '';
+          if (file) void doImport(file);
+        }}
+      />
+
+      <Modal
+        opened={exportOpen}
+        onClose={() => setExportOpen(false)}
+        title="Export settings"
+        size="md"
+      >
+        <Stack gap="sm">
+          <Text size="sm">
+            Downloads a JSON file with every <code>mcptc:*</code> key — your servers, layout, theme,
+            canned requests, per-tool form state. Import on another browser to round-trip.
+          </Text>
+          <Checkbox
+            checked={includeCreds}
+            onChange={(e) => setIncludeCreds(e.currentTarget.checked)}
+            label="Include credentials (bearer tokens, custom-header values)"
+            description="Default on so the round-trip works without re-typing. Turn off to share the file safely with a colleague."
+          />
+          {includeCreds ? (
+            <Alert color="yellow" variant="light" title="Treat the file like a password">
+              The download will contain your saved auth tokens in plaintext. Anyone with the file
+              can connect to your servers as you.
+            </Alert>
+          ) : null}
+          <Group justify="flex-end" gap="xs">
+            <Button variant="default" onClick={() => setExportOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={doExport}>Download</Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </>
+  );
+}
 
 /** GitHub mark, inline so we don't pull in another icon dep. */
 function GitHubIcon() {
@@ -187,6 +336,8 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
           </Button>
         </Tooltip>
       )}
+
+      <SettingsMenu />
 
       <Tooltip label="View source on GitHub" withinPortal>
         <ActionIcon

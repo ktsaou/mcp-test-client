@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.18] - 2026-04-26
+
+DEC-021 — settings export and import.
+
+### Added
+
+- **Export settings** to a JSON file (gear icon in the header → Export
+  settings…). Walks every `mcptc:*` key in localStorage and produces
+  a `version: 1` blob with all servers, layout, theme, canned
+  requests, per-tool form snapshots. The export modal carries a
+  `Include credentials` checkbox (default on, with a yellow Alert
+  warning); turning it off strips bearer tokens / custom-header
+  values from the saved server entries before download — safe to
+  share with a colleague.
+- **Import settings** from a JSON file (gear icon → Import
+  settings…). Validates `version: 1`, refuses files newer than the
+  app supports, refuses anything malformed. On success, replaces
+  every `mcptc:*` key with the imported value and reloads the app
+  so all state slices pick up the change. Round-trip works between
+  browsers / machines.
+
+### Notes
+
+- Bundle delta: ~3 KB gz (~0 visible deps; the new helper is small).
+- 227 unit tests pass; lint, typecheck, build clean.
+
 ## [1.1.17] - 2026-04-26
 
 DEC-017 + DEC-022 #1 — curated server catalog auto-merge and a
@@ -34,7 +60,7 @@ GitHub icon in the header.
   fields.
 - **GitHub icon in the header** (DEC-022 #1). Inline SVG (no new
   icon dep) linking to the source repo with `target="_blank"
-  rel="noopener noreferrer"`. Sits next to the theme toggle.
+rel="noopener noreferrer"`. Sits next to the theme toggle.
 
 ### Notes
 
