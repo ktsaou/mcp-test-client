@@ -36,6 +36,24 @@ export function toolParamsKey(serverId: string, toolName: string): string {
   return prefixed(`tools.${serverId}.${toolName}`);
 }
 
+/**
+ * DEC-018: per-tool form-state snapshot. Stores the current form
+ * value, raw-editor text, mode, and lastResult so switching tools or
+ * servers and coming back restores the user's in-progress work.
+ */
+export function toolStateKey(serverId: string, toolName: string): string {
+  return prefixed(`tool-state.${serverId}.${toolName}`);
+}
+
+/**
+ * DEC-018 auto-restore selection: per-server "last selected tool"
+ * pointer. Lets us auto-re-select the tool the user was on when they
+ * left this server, so flipping back picks up where they were.
+ */
+export function lastSelectionKey(serverId: string): string {
+  return prefixed(`last-selection.${serverId}`);
+}
+
 export function cannedKey(serverId: string, toolName: string): string {
   return prefixed(`canned.${serverId}.${toolName}`);
 }

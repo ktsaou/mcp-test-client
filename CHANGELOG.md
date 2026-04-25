@@ -9,6 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.15] - 2026-04-26
+
+DEC-018 — per-tool form-state persistence with auto-restore on
+server return.
+
+### Added
+
+- **Form state survives tool / server switching.** Switching from
+  tool A1 to A2 then back to A1 used to drop A1's form to empty.
+  v1.1.15 persists `{ formValue, rawText, mode, lastResult }` per
+  `(server, tool)` in `mcptc:tool-state.<server>.<tool>` and hydrates
+  the request panel on selection-change. Saves are debounced 200 ms.
+- **Auto-reselect last tool on server return.** When the user
+  switches servers and returns, the tool they were on (per
+  `mcptc:last-selection.<server>`) is auto-re-selected once the new
+  server's inventory loads. Combined with the per-tool persistence,
+  the user picks up exactly where they left off — including the
+  values they had typed.
+
+### Changed
+
+- `<ClearSelectionOnServerSwitch>` from v1.1.13 is replaced by
+  `<RestoreSelectionOnServerReady>`. Server switch still clears the
+  selection immediately (so the form empties on click and the user
+  isn't confused by a stale form rendering against the new server's
+  loading inventory). The auto-restore fires once
+  `status === 'connected'` AND the saved tool exists in the new
+  inventory — strictly after the clear, so there's no flash of the
+  wrong form.
+
+### Notes
+
+- 64 KB cap per per-tool snapshot — oversized snapshots trim
+  `lastResult` and the raw editor text and re-attempt; on still-too-
+  big the persistence is silently skipped (no UI breakage).
+- 200-entry LRU across all `mcptc:tool-state.*` keys to keep
+  localStorage healthy on heavy users.
+- Bundle delta: ~1.7 KB gz (from 252 to 254 KB initial-load gz).
+  Well under DEC-005's 350 KB cap.
+- 227 unit tests pass; lint, typecheck, build clean.
+
 ## [1.1.14] - 2026-04-26
 
 Closes the remaining DEC-016 sub-items.

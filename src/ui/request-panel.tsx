@@ -16,6 +16,12 @@ import { notifications } from '@mantine/notifications';
 import { useConnection } from '../state/connection.tsx';
 import { useLog } from '../state/log.tsx';
 import { useSelection } from '../state/selection.tsx';
+import { useServers } from '../state/servers.tsx';
+import {
+  readToolState,
+  writeToolState,
+  writeLastSelection,
+} from '../state/tool-state-persistence.ts';
 import { JsonView } from './json-view.tsx';
 import { SchemaForm, type JSONSchema } from '../schema-form/index.ts';
 import { CannedRequests } from './canned-requests.tsx';
@@ -101,6 +107,7 @@ export function RequestPanel() {
   const { client, status } = useConnection();
   const log = useLog();
   const { selection, consumeInbox } = useSelection();
+  const { activeId } = useServers();
   const [text, setText] = useState('');
   const [formValue, setFormValue] = useState<unknown>({});
   const [mode, setMode] = useState<Mode>('form');
@@ -114,10 +121,22 @@ export function RequestPanel() {
   const formSchema = useMemo(() => formSchemaFor(selection), [selection]);
   const description = useMemo(() => selectionDescription(selection), [selection]);
 
-  // Reset transient panel state whenever the selection changes. If a share
-  // URL inbox carries args/raw matching this selection, apply them now and
-  // clear the inbox so the user's later edits are not overwritten.
+  // DEC-018 — per-tool form-state persistence. On selection change:
+  //
+  //  1. If a stored snapshot exists for `(activeId, selection.name)`,
+  //     hydrate the form / raw / mode / lastResult fields from it.
+  //     The user's in-progress work survives switching tools or
+  //     servers and coming back.
+  //  2. Otherwise, seed from a share-url inbox if the recipient
+  //     arrived via a share link and the inbox matches this tool.
+  //  3. Otherwise, default-empty (with the request template seeded).
+  //
+  // The share-url inbox is consumed BEFORE the snapshot check would
+  // be — but we only use the inbox path when no snapshot exists, so
+  // a returning user's saved work isn't clobbered by a stale share-
+  // url match.
   useEffect(() => {
+    // Default-empty as the baseline; specialised paths below override.
     if (template) setText(template);
     setFormValue({});
     setMode(formSchema ? 'form' : 'raw');
@@ -127,6 +146,20 @@ export function RequestPanel() {
     setError(null);
 
     if (!selection || selection.kind !== 'tools') return;
+
+    // 1. Stored snapshot (DEC-018)
+    if (activeId !== null) {
+      const snapshot = readToolState(activeId, selection.name);
+      if (snapshot) {
+        setFormValue(snapshot.formValue ?? {});
+        setText(typeof snapshot.rawText === 'string' ? snapshot.rawText : (template ?? ''));
+        setMode(snapshot.mode === 'raw' ? 'raw' : formSchema ? 'form' : 'raw');
+        if (snapshot.lastResult !== null) setLastResult(snapshot.lastResult);
+        return;
+      }
+    }
+
+    // 2. Share-url inbox (one-shot)
     const inbox = consumeInbox();
     if (!inbox || inbox.tool !== selection.name) return;
     if (inbox.raw !== undefined) {
@@ -138,7 +171,35 @@ export function RequestPanel() {
       setFormValue(inbox.args);
       setMode('form');
     }
-  }, [template, formSchema, selection, consumeInbox]);
+  }, [activeId, template, formSchema, selection, consumeInbox]);
+
+  // DEC-018 — debounced persistence of the current snapshot. Fires on
+  // every change to formValue / text / mode / lastResult. Debounced
+  // 200 ms so fast typing doesn't hit storage on every keystroke.
+  useEffect(() => {
+    if (!selection || selection.kind !== 'tools' || activeId === null) return;
+    const tool = selection.name;
+    const id = setTimeout(() => {
+      writeToolState(activeId, tool, {
+        formValue,
+        rawText: text,
+        mode,
+        lastResult,
+        touchedAt: Date.now(),
+      });
+    }, 200);
+    return () => clearTimeout(id);
+  }, [activeId, selection, formValue, text, mode, lastResult]);
+
+  // DEC-018 — track the user's current selection per server so
+  // switching servers and coming back auto-re-selects the same tool.
+  // Replaces the v1.1.13 ClearSelectionOnServerSwitch effect.
+  useEffect(() => {
+    if (activeId === null) return;
+    if (selection && selection.kind === 'tools') {
+      writeLastSelection(activeId, selection.name);
+    }
+  }, [activeId, selection]);
 
   function recordResultMetrics(result: unknown, startedAt: number) {
     setLastDurationMs(performance.now() - startedAt);
