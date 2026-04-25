@@ -19,8 +19,12 @@ required auth), #5 (click-to-connect on server-list selection), and
 
 - [ ] **#5 — click-to-connect on server-list selection.** Selecting a
       `<NavLink>` in the sidebar triggers connect immediately. The
-      header Connect button stays for keyboard / no-server-yet edge
-      cases (or removed if we can't justify it).
+      header Connect button is **repurposed as a status badge**
+      (Costa Q1: option C, 2026-04-25) — non-interactive label
+      "Connected to <name>" / "Disconnected" / "Connecting…", with a
+      click-to-open menu carrying Disconnect / Reconnect /
+      "Edit server" actions. Reclaims the header real estate without
+      losing the connection-state cue.
 - [ ] **#11 — cancel inflight on server switch.** When the user
       switches to a different server (or disconnects), every
       in-flight request must be cancelled via JSON-RPC
@@ -79,6 +83,12 @@ URL-param flow MAY auto-connect when the URL matches an existing entry
 (the user has already given consent by saving that server). For new
 servers it must NOT auto-connect — the user fills the modal, sees the
 auth fields, decides.
+
+**Confirmed (Costa Q2, 2026-04-25):** silent auto-connect when the URL
+matches an existing entry. Risk: a malicious site embedding the deep
+link could autoplay a connection attempt — mitigated by CORS (the MCP
+endpoint must allow the origin) + tokens never replayed (auth-value is
+never carried in the URL per #3 spec). Accepted.
 
 ## Falsifier
 

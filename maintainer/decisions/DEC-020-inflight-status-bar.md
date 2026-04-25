@@ -25,6 +25,19 @@ background), there's no global view of pending work.
 
 ## Direction
 
+**Confirmed (Costa Q8, 2026-04-25): place the indicator in the
+connection bar at the top of the app, not in the footer.** The
+connection bar is already there; it grows an "MCP activity" icon
+that animates while `n > 0`, idle otherwise. **Future-proof:** the
+icon is the entry point for an "activity feed" generally, not just
+inflight requests — additional activity types (background syncs,
+reconnect attempts, catalog auto-merge, polling) can hang off the
+same icon over time. Click → popover with the per-activity list,
+each carrying its own cancel / dismiss action.
+
+The earlier draft of this DEC put the indicator in a footer slot.
+Dropped.
+
 The connection context already holds the SDK `Client`. Add a small
 `InflightContext`:
 
@@ -42,12 +55,18 @@ Track entries in a Map keyed by JSON-RPC id. On every outgoing
 request via the LoggingTransport, insert; on response or error or
 cancel, remove.
 
-UI: a small Mantine `Group` in the page footer (or as a "footer
-slot" in the AppShell) showing a `Loader size="xs"` + count badge.
-Click opens a `Popover` listing the entries.
+UI: a small Mantine `ActionIcon` in the connection bar (top of the
+app), with an animated spinner when `n > 0` and an idle-state icon
+otherwise. The animation is the affordance — a static icon would
+get lost in the connection-bar chrome. Hovering gives a tooltip
+("3 in flight"); clicking opens a `Popover` listing each entry
+(method, target, elapsed ms, [Cancel]).
 
-The footer position keeps it out of the way until something is
-in-flight; hovering on it gives a tooltip; clicking gives the popover.
+The icon's name and component should be **activity-generic** (not
+"inflight-only") — `<ActivityIndicator>` or similar — because Costa
+flagged future activity types (auto-merges, background polls, etc.)
+will share this surface. The popover content is a switch on activity
+kind; the icon's animation reflects "any activity in progress".
 
 ## Falsifier
 

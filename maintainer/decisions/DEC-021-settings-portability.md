@@ -34,6 +34,19 @@ flagged } }` and triggers a browser download.
 
 ## Direction
 
+**Confirmed (Costa Q9, 2026-04-25): user toggle on the export
+dialog.** A checkbox **"Include credentials [✓]"** defaults to
+checked (round-trip-friendly default), with the Mantine `Alert`
+warning beside it ("This file will contain your saved bearer
+tokens and custom-header values in plaintext"). When unchecked, the
+exporter strips the auth-value field from every server entry before
+serialising. The user gets a one-click privacy mode for sharing the
+file with a colleague, without losing the default ergonomics.
+
+The matching import flow is symmetric: if the import file's server
+entries lack auth values, the modal lists them as "credentials needed
+on first connect" (per server) instead of "will be replaced".
+
 Two new helpers in `src/persistence/portability.ts`:
 
 ```ts

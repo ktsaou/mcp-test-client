@@ -26,6 +26,17 @@ gating; an MCP-server developer specifically wants to bypass it.
 
 ## Direction
 
+**Confirmed (Costa Q6 + Q7, 2026-04-25):**
+
+- **Q6 — split-button.** `Send` button stays as-is for the default
+  action; a chevron next to it opens a dropdown carrying "Send without
+  validation". Send-without-validation is never the visible default —
+  the user has to deliberately choose it from the menu.
+- **Q7 — per-send only.** Bypass state is _not_ persisted across sends,
+  not session-sticky, not tool-sticky. Every bypass is an explicit
+  per-click choice. Server developers want intentional escapes, not a
+  foot-gun left armed.
+
 Mantine `Button.Group` (or `SplitButton` if v9 has one — verify) with
 "Send" as the default action and "Send without validation" as the
 secondary. The dropdown reveals only the second option.

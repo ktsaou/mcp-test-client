@@ -26,6 +26,11 @@ lastResult }`.
       sees the prior result on return). The form value itself is
       _not_ cleared automatically.
 
+**Confirmed (Costa Q5, 2026-04-25):** form preserved after Send.
+The user clears explicitly when they want to. No auto-clear, no
+per-tool toggle. Combined with `lastResult` storage, the user always
+returns to their last state for that tool on that server.
+
 ## Direction
 
 Implement as a custom hook `useToolStatePersistence(serverId, toolName)`
