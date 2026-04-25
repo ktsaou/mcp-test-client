@@ -96,6 +96,7 @@
   --color-bg-sunken: #ffffff; /* panel.background */
   --color-bg-titlebar: #dddddd; /* titleBar.activeBackground */
   --color-bg-statusbar: #007acc; /* statusBar.background */
+  --color-bg-log: #f3f3f3; /* log panel — bottom frame, matches chrome */
   --color-border: #e5e5e5;
   --color-border-subtle: #ececec;
 
@@ -138,6 +139,7 @@
     --color-bg-sunken: #ffffff;
     --color-bg-titlebar: #dddddd;
     --color-bg-statusbar: #007acc;
+    --color-bg-log: #f3f3f3;
     --color-border: #e5e5e5;
     --color-border-subtle: #ececec;
 

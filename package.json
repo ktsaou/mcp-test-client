@@ -1,6 +1,6 @@
 {
   "name": "mcp-test-client",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "Zero-install, browser-only test client for public Model Context Protocol (MCP) servers.",
   "license": "GPL-3.0-or-later",
   "type": "module",

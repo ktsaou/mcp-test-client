@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.11] - 2026-04-25
+
+### Fixed
+
+- **Log panel in light mode no longer stuck on dark.** The new
+  `--color-bg-log` token from v1.1.9 was only defined in the dark
+  theme block. Light + system-light schemes inherited the dark
+  fallback, so a user on the light theme saw a black log panel
+  underneath an otherwise-light layout. Added the token to both
+  light variants (set to the light chrome shade `#f3f3f3` so the log
+  matches the sidebar). Surfaced during v1.1.10's playwright verify.
+
 ## [1.1.10] - 2026-04-25
 
 ### Fixed
