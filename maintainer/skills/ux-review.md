@@ -54,3 +54,12 @@ The critic must test these scopes by default (added 2026-04-25):
   missed in the implementation, and only the critic's manual probe
   caught it. **Guardrail:** Enter-submit is now a separate explicit
   scope, not lumped under "modal a11y".
+- **2026-04-25 (still later) — "Mobile collapse" was scoped only to
+  the panel area.** The DEC-010 brief said "panel collapse" and the
+  critic's first pass implicitly assumed the header was fine because
+  it didn't overflow at 1440 px. The patch fixed the panels but the
+  header `<Group wrap="wrap">` still wrapped Connect/theme-toggle
+  onto a second row at narrow widths, physically occluding the new
+  tab strip. **Guardrail:** mobile-scope now demands verifying the
+  header at 360 / 390 / 414 px in both Idle and Connected, and that
+  no header element overlays the panel area.
