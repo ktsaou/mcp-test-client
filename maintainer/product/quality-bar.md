@@ -25,3 +25,9 @@ This is the standard. "Done" means yes to all of these.
   Light theme is a real second-class citizen, not an afterthought.
 - **The empty states are written.** "No server selected" is a paragraph that
   helps; not a void.
+- **Per-response metrics are visible.** Every place a response is shown —
+  the log entry, the request panel's last-result view — surfaces three
+  numbers without DevTools: response size in bytes, end-to-end duration in
+  milliseconds, and estimated token count if the response were fed into an
+  LLM. These three answer the questions a real integrator brings: _transport
+  cost, latency, LLM-context cost_.

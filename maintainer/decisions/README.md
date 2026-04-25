@@ -15,6 +15,7 @@ changed.
 | [DEC-006](DEC-006-json-view-ships-ahead.md)      | JSON view ships independently of the framework migration           | 2026-04-25           | In flight | Land DEC-003 ahead of the Mantine migration.                                       |
 | [DEC-007](DEC-007-non-costa-issues-into-v1-1.md) | Additional non-Costa issues fold into v1.1, not v1.2               | 2026-04-25           | Active    | Modal a11y, real tabs, contrast, empty states join v1.1; virtualization to v1.1.1. |
 | [DEC-008](DEC-008-maintainer-restructure.md)     | Split the maintainer brain into per-day, per-skill, per-spec files | 2026-04-25           | Active    | Adopt the two-axis layout (live activity logs + stable knowledge).                 |
+| [DEC-009](DEC-009-response-metrics.md)           | Per-response metrics: bytes, duration, estimated tokens            | 2026-04-25           | Open      | Show three metrics on every response; ships as v1.1.1 after v1.1 deploys.          |
 
 ## Format spec for new entries
 
