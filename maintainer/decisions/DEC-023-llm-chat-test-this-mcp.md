@@ -50,71 +50,195 @@ Why this matters for an MCP test client specifically:
 - Multi-turn flows get tested (resources + prompts + tools chained
   by an LLM, not by hand).
 
-This is a feature no other browser-based MCP tool offers as of April
-2026 (verified by the catalog-research pass running in parallel).
+This is, as best I can tell, a feature no other browser-based MCP
+test client offers in April 2026 — though I have not done an
+exhaustive survey of competing tools, only of the public _server_
+ecosystem.
 
-## Open feasibility questions
+## Feasibility — confirmed (research, 2026-04-25)
 
-The whole DEC depends on three "yes" answers, all of which the
-research agent (started 2026-04-25) is currently confirming or
-refuting. **No implementation work begins until research returns
-"feasible".**
+The deep-research agent ran live CORS preflight + POST tests against
+nine major LLM providers at 2026-04-25 10:10–10:12 UTC. Every one
+returned valid CORS headers permitting browser-direct calls. The MCP
+tool-call bridge is implementable in-browser using the SDK we already
+ship. Bundle cost is ~2–5 KB gz with raw `fetch()` + a hand-rolled
+SSE parser. **DEC-023 is no longer gated.**
 
-1. **Browser-direct CORS:** does at least one credible LLM provider
-   allow `fetch` from arbitrary browser origins? OpenRouter is the
-   leading candidate (Costa specifically mentioned `openrouter/free`).
-   If every major provider blocks browser-direct calls, this DEC is
-   dead in browser-only form — we'd need a backend, which is out of
-   scope for the project.
-2. **Tool-call bridge:** can the existing MCP SDK (already in the
-   browser bundle) accept tool calls forwarded from a chat-completion
-   stream and return results in the OpenAI-compatible function-call
-   shape, all client-side? Reference implementations in
-   anthropic-cookbook / Vercel AI SDK are the prior art to study.
-3. **Bundle budget:** can we add a chat UI + LLM streaming + tool-
-   bridge without blowing past DEC-005's 350 KB gz initial-load cap?
-   Likely the chat surface itself goes lazy under
-   `import('./chat')`, similar to the docs viewer.
+### Per-provider verdict
 
-## What ships first if research is positive
+| Provider           | Browser-direct?                                           | Notes                                                                                                                                          |
+| ------------------ | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenRouter**     | ✅ Wildcard CORS                                          | Free tier (`:free` models, 200 req/day per model, no key required); OAuth PKCE for browser SPAs; BYOK 1M free requests/month.                  |
+| **Anthropic**      | ✅ Wildcard CORS with one required header                 | Must send `anthropic-dangerous-direct-browser-access: true`. Officially documented; SDK has `dangerouslyAllowBrowser: true` to set it.         |
+| **OpenAI**         | ⚠️ Wildcard on success, **omits CORS on error responses** | Browser blocks JS from reading 401 body — surfaces as `TypeError: Failed to fetch` instead of "invalid key". Needs intentional error handling. |
+| **Groq**           | ✅ Wildcard CORS on every path                            | OpenAI-compatible format. SDK `dangerouslyAllowBrowser: true` is just an SDK warning suppressor; API itself is permissive.                     |
+| **Mistral**        | ✅ Wildcard CORS                                          | Native API format.                                                                                                                             |
+| **Google Gemini**  | ✅ With caveat                                            | Native endpoint works via `x-goog-api-key` header. OpenAI-compat endpoint (`/v1beta/openai`) rejects `x-stainless-*` headers from OpenAI SDK.  |
+| **Together AI**    | ✅ Wildcard CORS                                          | OpenAI-compatible.                                                                                                                             |
+| **Cohere**         | ✅ Wildcard CORS                                          | Cohere-specific format, not OpenAI-compatible.                                                                                                 |
+| **DeepSeek**       | ✅ CORS allowed                                           | OpenAI-compatible. Chinese-origin service — data residency may matter.                                                                         |
+| **Local (Ollama)** | ⚠️ Configurable; mixed-content limits it                  | Default allows localhost only; user sets `OLLAMA_ORIGINS=*` (or specific origin). HTTPS→HTTP from GH Pages blocked except `http://localhost`.  |
+| **LM Studio**      | ⚠️ Configurable; Safari blocks entirely                   | "Enable CORS" toggle in server settings. Safari does not allow HTTP from HTTPS pages, period.                                                  |
+| **llama.cpp**      | ⚠️ Configurable                                           | `--public-domain` flag enables CORS.                                                                                                           |
 
-A minimal viable shape, aggressively scoped:
+### MCP tool-call bridge — feasible
 
-- One default provider (whichever the research confirms is
-  CORS-permissive with a usable free tier — most likely OpenRouter).
-- BYOK field for that provider, plus a "custom OpenAI-compatible
-  endpoint" option for self-hosted (Ollama, llama.cpp server).
-- API keys stored in `localStorage` under `mcptc:llm-keys`, with the
-  same "treat this like a password" warning as DEC-021's export
-  toggle.
-- Streaming chat UI with a single conversation thread (no history,
-  no branching — that's v1.4 if there's appetite).
-- Tool-call bridge wired to the active MCP server's `Client`.
-- Every LLM request and tool call logged in the existing log panel,
-  so the developer sees the same trace shape they're used to.
-- No agentic loops, no tool-call retries, no temperature tuning. This
-  is a developer-facing test harness, not a chat product.
+The `@modelcontextprotocol/sdk` 1.29 we already ship provides
+`StreamableHTTPClientTransport` and `SSEClientTransport` that work in
+browsers. The agentic loop is a ~50-line `while`:
 
-Markdown rendering grows to "full": the v1.2.2 stack
-(`react-markdown` plus `remark-gfm` plus Mermaid) is extended with
-paste-to-markdown for the chat input. Inline code blocks render with
-a copy button matching the log panel's chip style.
+1. `client.listTools()` → tools array.
+2. POST to LLM with `tools` parameter and the user's message.
+3. If response has `tool_calls`, invoke each via `client.callTool()`,
+   push results as `tool` messages, re-POST.
+4. Loop until LLM emits a final assistant message (or hits `MAX_TURNS`).
 
-## Sub-item checklist (gated on research)
+No new SDK needed. No backend needed. No WebSocket. STDIO transport
+is browser-incompatible but irrelevant for us — we already use HTTP/SSE.
 
-- [ ] **Research outcome captured.** Either DEC-023 closes "not
-      feasible" with the evidence, or it opens with a confirmed
-      provider + CORS path + bundle estimate.
-- [ ] If feasible: a Chat panel surface, lazy-imported, that does
-      the basic loop above.
-- [ ] If feasible: per-LLM-request log entries that thread into the
-      existing log panel — the developer sees one continuous trace,
-      not two parallel ones.
-- [ ] If feasible: BYOK storage + warnings parallel to DEC-021's
-      credentials handling.
-- [ ] If feasible: a clear-eyes risks doc covering rate-limit UX,
-      key-leak surface area, and what happens when the LLM goes off
-      the rails.
+### Bundle estimate
+
+| Component                         | Cost              |
+| --------------------------------- | ----------------- |
+| Raw `fetch()` + SSE stream parser | ~2 KB gz          |
+| MCP SDK                           | already in bundle |
+| Chat UI (Mantine, already loaded) | ~0 KB marginal    |
+| **Total marginal**                | **~2–5 KB gz**    |
+
+Compared to the `openai` npm SDK (~29 KB gz) or `groq-sdk` (~10.5 KB gz),
+hand-rolled is dramatically lighter and avoids the SDK warning chrome
+("dangerouslyAllowBrowser must be set"). DEC-005's 350 KB cap is not
+threatened.
+
+### Vercel AI SDK — rejected
+
+The AI SDK's `DirectChatTransport` (6.x) invokes an _in-process agent_,
+not a remote HTTP endpoint. For browser → OpenRouter the dev still has
+to write a custom transport; the SDK's value evaporates. Plus its
+streaming format is proprietary. Decision: skip. Use raw `fetch()`.
+
+## Recommended shape (post-research)
+
+Now that browser-direct is confirmed across the board, here is the
+v1.3.0 minimum viable shape. Several sub-decisions remain Costa's
+call (flagged below); the structure assumes his answers.
+
+### Provider tier
+
+- **Default: OpenRouter free tier.** No key required to start. The
+  first chat works for a brand-new user with zero setup. Default
+  free model TBD — research suggests
+  `meta-llama/llama-3.3-70b-instruct:free` or
+  `google/gemini-2.0-flash-exp:free`; needs a quick verification
+  pass at PR time to pick whichever is currently most reliable.
+- **OpenRouter BYOK via OAuth PKCE.** The user clicks "Sign in to
+  OpenRouter" → redirected to `openrouter.ai/auth` → returns with a
+  user-controlled API key the app stores. No raw key paste needed.
+  This is the documented browser-SPA pattern OpenRouter built
+  specifically for this case. PKCE callback URL must be on HTTPS
+  (GH Pages is fine; localhost dev needs `http://localhost:3000`
+  whitelisted).
+- **Custom OpenAI-compatible endpoint.** Free-text base URL + API
+  key. Covers self-hosted Ollama / LM Studio / llama.cpp + any
+  paid provider (OpenAI, Groq, Mistral, Together, DeepSeek). For
+  Anthropic specifically, the chat client auto-adds the
+  `anthropic-dangerous-direct-browser-access: true` header when the
+  base URL matches `api.anthropic.com`.
+
+### Key storage
+
+**Pending Costa's call (Q-A1, see below):** `sessionStorage` (cleared
+when the tab closes; safer; matches the research recommendation) vs
+`localStorage` (persists across sessions; matches the rest of the
+app's auth-token handling — DEC-021 already handles bearer tokens
+in `localStorage`).
+
+The research strongly recommends `sessionStorage` for LLM keys
+specifically, because users will paste keys for paid providers and
+those keys have non-trivial cost-of-leak. Bearer tokens for MCP
+servers (DEC-021) are usually narrow-scoped and per-server.
+
+### Chat surface
+
+- New top-level mode in the AppShell, alongside the existing tools /
+  prompts / resources view: **"Chat"**.
+- Single conversation thread per (server, model) pair. No history,
+  no branching, no saved conversations — that's v1.4 if there's
+  appetite.
+- Streaming response display. Stop button cancels via `AbortController`,
+  same pattern as DEC-016's connection cancel.
+- Every LLM request, every tool-call, every tool-response: logged
+  in the existing log panel as wire entries, so the developer sees
+  the LLM trace and the MCP trace as one continuous flow. New
+  log-entry kind: `llm` (alongside `wire` and `system`).
+
+### Tool-call loop
+
+- Pulls `client.listTools()` once on chat-mode entry; refreshes when
+  the user clicks "Sync tools" (handles servers that reload).
+- Passes tools as the OpenAI-compatible `tools` parameter.
+- For each tool-call in the response: `client.callTool()`, append
+  result as a `tool` message, re-POST.
+- `MAX_TURNS = 10` hardcoded ceiling. UI shows "10/10 — stopped"
+  if hit.
+- No tool-call retries on error: errors return as tool-message
+  content, the LLM decides what to do. This is intentional — the
+  whole point of the feature is to expose how the LLM handles your
+  server's error messages.
+
+### Markdown stack growth
+
+The v1.2.2 docs viewer ships `react-markdown` + `remark-gfm` +
+Mermaid (lazy). The chat surface extends this with **paste-to-
+markdown** for the chat input (so a user pasting an HTML table or
+rich text gets reasonable Markdown out). Inline code blocks get the
+same copy-button affordance the log panel uses.
+
+## Open sub-decisions for Costa (post-research)
+
+The research closed three feasibility gates but opened six smaller
+design calls. Posed in the next question round, summarised here so
+the DEC stays the source of truth:
+
+- **Q-A1 — key storage:** `sessionStorage` (cleared when tab closes;
+  research recommendation; safer for paid keys) vs `localStorage`
+  (persists; matches DEC-021's bearer-token handling).
+- **Q-A2 — OpenRouter BYOK acquisition:** OAuth PKCE flow now
+  (cleanest, no raw-key paste) vs paste-key first / OAuth in v1.3.1
+  (faster to ship).
+- **Q-A3 — local providers:** explicit Chat-panel UX with config
+  hints ("set OLLAMA_ORIGINS=…", "enable CORS in LM Studio
+  settings") vs treat them as plain "custom OpenAI-compatible
+  endpoint" with a one-line link to a docs page.
+- **Q-A4 — OpenAI error UX:** OpenAI omits CORS on 401s, so JS sees
+  a generic `TypeError: Failed to fetch`. Surface as "OpenAI may
+  have rejected the key — re-check it" heuristic, or expose the
+  raw network error?
+- **Q-A5 — default free model:** which OpenRouter `:free` model is
+  the v1.3.0 default — `meta-llama/llama-3.3-70b-instruct:free`,
+  `google/gemini-2.0-flash-exp:free`, or pick at PR time based on
+  current performance / rate-limits?
+- **Q-A6 — chat thread scope:** one global thread (simpler) vs one
+  per (server, model) pair (the natural "test this MCP" framing —
+  switching servers gives you a fresh thread for that server).
+
+## Sub-item checklist (research closed, design calls open)
+
+- [x] **Research outcome captured.** Feasibility confirmed
+      2026-04-25 by live CORS preflight + POST tests against nine
+      providers. See "Feasibility — confirmed" section above.
+- [ ] **Design calls Q-A1 through Q-A6 settled.** No worker brief
+      until these are picked.
+- [ ] Chat panel surface, lazy-imported, runs the agentic loop
+      against the active MCP server.
+- [ ] Per-LLM-request log entries (new `llm` kind) thread into the
+      existing log panel — one continuous trace, not two parallel.
+- [ ] BYOK storage with the chosen storage tier (Q-A1) + warnings
+      parallel to DEC-021's credentials handling.
+- [ ] OpenAI error-path heuristic per Q-A4.
+- [ ] A clear-eyes risks doc covering rate-limit UX (free-tier
+      exhaustion looking like an outage), key-leak surface, and
+      LLM-going-off-rails.
 
 ## Falsifier
 
@@ -152,10 +276,12 @@ a copy button matching the log panel's chip style.
   shape; new asks become their own DECs.
 
 **Advisor sign-off.** Pending. Will route through UX critic + spec
-purist + security reviewer once research returns.
+purist + security reviewer after Costa settles Q-A1 through Q-A6
+and the worker brief is drafted.
 
-**Status.** **Open, gated on feasibility research.** Target release:
-v1.3.0 (or closed-not-feasible with evidence). Not in scope for v1.2.
+**Status.** **Open, feasibility confirmed (2026-04-25).** Six design
+calls (Q-A1 through Q-A6) are pending Costa's review before any
+worker brief. Target release: v1.3.0. Not in scope for v1.2.
 
 **Linked:**
 

@@ -37,12 +37,9 @@ discover yet another UI region.
 ## Sub-item checklist
 
 - [ ] **#8 — populate `public/public-servers.json` with no-auth
-      servers.** Seed list pending the April-2026 research agent.
-      Hard requirements per entry: stable HTTPS URL, no-auth or
-      `auth_optional_bearer_for_rate_limits: true`, CORS-permissive
-      verified at PR time, transport noted, one-sentence description.
-      Bias toward fewer high-confidence entries over many unverified
-      ones.
+      servers.** Seed list verified by the April-2026 research agent
+      (live MCP `initialize` handshake + CORS preflight per entry).
+      Nine entries qualify; see the verified seed list below.
 - [ ] **#8 — auto-merge into user's server list at boot.** On app
       mount, after persistent state is hydrated: for every catalog
       entry not already in `servers` (matched by URL), insert with
@@ -81,33 +78,95 @@ synthetic `?add=<url>&name=…` URL to walk through the DEC-016 flow
 without the user typing the URL". The two DECs are independent but
 play nicely together.
 
-The seed list:
+## Verified seed list (April 2026 research, live-tested)
+
+The deep-research agent ran `initialize` handshakes + CORS preflight
+checks on 25+ candidate URLs. Nine no-auth entries qualified; the
+list below is the verified set. Every URL was reachable, returned a
+valid MCP `initialize` response, and passed CORS from a browser
+origin (mostly wildcard `*`; HuggingFace and Netdata echo the
+origin, which is equally browser-valid).
+
+All nine use **streamable-http** transport (the modern default; no
+verified pure-SSE or websocket public servers as of 2026-04-25).
+
+**No-auth list, ordered by developer-relevance** (top entries are
+the most useful for a first-time user; the lower entries are
+"interesting demos" that show the protocol's range):
 
 ```json
 {
   "servers": [
     {
-      "id": "huggingface-mcp",
-      "name": "Hugging Face MCP",
-      "url": "https://huggingface.co/mcp",
-      "description": "Search models, datasets, papers, spaces, and the Hub docs from any MCP-compatible client.",
+      "id": "context7",
+      "name": "Context7",
+      "url": "https://mcp.context7.com/mcp",
+      "description": "Up-to-date library documentation and code examples by library name.",
+      "transport": "streamable-http",
+      "auth": "none"
+    },
+    {
+      "id": "deepwiki",
+      "name": "DeepWiki",
+      "url": "https://mcp.deepwiki.com/mcp",
+      "description": "AI-powered Q&A and wiki browsing for any public GitHub repository indexed on DeepWiki.",
+      "transport": "streamable-http",
+      "auth": "none"
+    },
+    {
+      "id": "gitmcp",
+      "name": "GitMCP",
+      "url": "https://gitmcp.io/docs",
+      "description": "Documentation search across any public GitHub repository; /docs lets the model pick the repo dynamically.",
+      "transport": "streamable-http",
+      "auth": "none"
+    },
+    {
+      "id": "cloudflare-docs",
+      "name": "Cloudflare Docs",
+      "url": "https://docs.mcp.cloudflare.com/mcp",
+      "description": "AI-powered search over the Cloudflare documentation site.",
+      "transport": "streamable-http",
+      "auth": "none"
+    },
+    {
+      "id": "huggingface",
+      "name": "Hugging Face Hub",
+      "url": "https://hf.co/mcp",
+      "description": "Search and browse models, datasets, and papers on Hugging Face Hub.",
       "transport": "streamable-http",
       "auth": "none",
       "auth_optional_bearer_for_rate_limits": true
     },
     {
-      "id": "context7",
-      "name": "Context7",
-      "url": "https://mcp.context7.com/mcp",
-      "description": "Library documentation and API references for popular open-source projects.",
+      "id": "netdata-registry",
+      "name": "Netdata Registry",
+      "url": "https://registry.my-netdata.io/mcp",
+      "description": "Live infrastructure data from a public Netdata parent — metrics, anomalies, alerts, processes.",
       "transport": "streamable-http",
       "auth": "none"
     },
     {
-      "id": "netdata-registry",
-      "name": "Netdata registry",
-      "url": "https://registry.my-netdata.io/mcp",
-      "description": "Public Netdata observability registry — query Netdata's own metrics and topology.",
+      "id": "manifold-markets",
+      "name": "Manifold Markets",
+      "url": "https://api.manifold.markets/v0/mcp",
+      "description": "Browse prediction markets — search questions, get market details, look up users (play money).",
+      "transport": "streamable-http",
+      "auth": "none"
+    },
+    {
+      "id": "subwayinfo-nyc",
+      "name": "NYC Transit (MTA)",
+      "url": "https://subwayinfo.nyc/mcp",
+      "description": "Real-time NYC subway, bus, ferry, LIRR, Metro-North, and Citibike arrivals and alerts.",
+      "transport": "streamable-http",
+      "auth": "none"
+    },
+    {
+      "id": "ferryhopper",
+      "name": "Ferryhopper",
+      "url": "https://mcp.ferryhopper.com/mcp",
+      "description": "Search ferry routes and live availability across Greek and European ports.",
       "transport": "streamable-http",
       "auth": "none"
     }
@@ -115,8 +174,61 @@ The seed list:
 }
 ```
 
-Adjust if any of those URLs / auth-shapes turn out wrong on
-first-connect verification.
+**Auth-required list, for the add-server modal dropdown.** These
+were verified to exist + accept browser CORS, but require user-
+supplied credentials. Fewer entries than I expected — most "known
+auth-required servers" worth seeding are still a small set. Padding
+with weak entries (e.g. WebZum, where `initialize` works without
+auth but every tool call returns "Authentication required") makes
+the dropdown noisier without adding value, so they are deferred.
+
+```json
+[
+  {
+    "id": "cloudflare-mcp",
+    "name": "Cloudflare API",
+    "url": "https://mcp.cloudflare.com/mcp",
+    "description": "Full Cloudflare API access — Workers, R2, KV, DNS, etc.",
+    "transport": "streamable-http",
+    "auth": "oauth",
+    "signup_url": "https://dash.cloudflare.com/sign-up"
+  }
+]
+```
+
+Costa's call (Q-C3 in the next question round): include WebZum and
+similar "init-yes / tool-no" servers, or hold the line at one
+high-confidence OAuth entry and grow the list as more clean
+candidates appear?
+
+### Rejected at research time (do not add without re-verification)
+
+- **Exa Web Search (`mcp.exa.ai/mcp`).** No `Access-Control-Allow-Origin`
+  on actual responses. Browsers blocked. Works from curl. Worth filing
+  upstream, but cannot ship in a browser-only client today.
+- **Astro Docs (`mcp.docs.astro.build/mcp`).** Same — Netlify deploy
+  drops CORS headers on the response path.
+- **AWS Knowledge MCP (`knowledge-mcp.global.api.aws`).** No CORS;
+  redirects to AWS sign-in.
+- **TweetSave SSE (`mcp.tweetsave.org/sse`).** Uses legacy SSE with
+  session-URL management — qualifying it would mean implementing the
+  legacy SSE flow, complexity not justified for a Twitter-bookmark
+  demo.
+
+### Stability caveat
+
+None of the nine entries comes with an SLA for public no-auth
+access. The high-confidence operators (Context7, DeepWiki,
+HuggingFace, Cloudflare, Netdata) are funded organisations and
+likely stable. SubwayInfoNYC and Ferryhopper are indie/small-team
+deployments and could disappear without notice.
+
+Per DEC-017's auto-merge approach: when a catalog entry stops
+working, the user just gets a connection failure on click; the
+tombstone mechanism lets them remove it permanently. We add a
+periodic CI verification job (DEC TBD) so the published catalog
+gets re-checked weekly — entries that fail get flagged or removed
+in a maintenance PR.
 
 ## Falsifier
 
