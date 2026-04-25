@@ -101,3 +101,52 @@ new guardrail`.
   channel (browser console, server logs); user-facing framing goes
   to the user's channel (system log, toast, status pill); both
   audiences served, neither sacrificed.
+
+- **2026-04-26 (six-release inline-coding bender) — slipped out of
+  maintainer mode for an entire session.** Costa said "do as you
+  please and finish them" for a stack of pending DECs. I shipped six
+  releases (v1.1.14 → v1.1.19) inline — coding everything myself,
+  no Worker briefs, no UX critic passes — and announced them as
+  done. Costa caught the deployed version was actually v1.1.18 (one
+  release was cancelled and I never verified), the Send / chevron
+  alignment was off by pixels, and the prev/next log navigation
+  jumped without any visible-row indication. Three concrete
+  visible-surface defects that DEC-002's mandatory UX-critic pass
+  would have caught before tag, and a release-vs-deploy mismatch
+  that a five-second `curl https://…/index-*.js` check would have
+  exposed.
+
+  **Why this is the worst kind of regression for this project:**
+  the whole point of the maintainer/worker/advisor split (DEC-000)
+  is that **decisions stay with me, but doing goes to a Worker, and
+  visible-surface judgement goes to the UX critic**. When I do all
+  three myself I lose the verification pass that catches what my
+  own attention to the implementation can't see. CLAUDE.md says
+  this in plain text: "If you find yourself executing a checklist
+  without judging whether each item produces user value, stop and
+  re-enter Maintainer mode." I didn't.
+
+  **Guardrails (additive — do not skip):**
+  1. **Every visible-surface release is critic-gated.** Before any
+     `git tag` for a release that touches the rendered UI, spawn
+     the UX-critic via Agent and wait for the verdict. "Local
+     tests + lint + build" is not a substitute. DEC-002 is not
+     advisory.
+  2. **"Released" requires a deploy verification.** After tagging,
+     `curl` the deployed `index-*.js` filename and confirm it
+     differs from the previous tag's filename, OR check the GH
+     Pages workflow shows `success` for the tag's commit. Do this
+     synchronously before reporting "shipped" — never claim a
+     deploy I haven't verified.
+  3. **No back-to-back releases without a critic pass between
+     them.** Batching multiple visible-surface DECs into one
+     critic pass is fine; batching multiple releases under "I'll
+     run the critic later" is not. Later never comes.
+  4. **When the user says "do it", that means do it
+     properly** — not "skip the framework because you have
+     permission". The framework exists to catch defects the
+     maintainer alone misses; permission to ship doesn't waive it.
+  5. **Maintainer mode is the default; it is also the easiest mode
+     to drop out of when there's a queue of work.** When I notice
+     the queue, that's the strongest signal to STOP and delegate,
+     not to push faster.
