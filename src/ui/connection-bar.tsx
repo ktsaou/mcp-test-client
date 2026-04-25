@@ -90,7 +90,11 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
       wrap="nowrap"
       style={{
         borderBottom: '1px solid var(--mantine-color-default-border)',
-        background: 'var(--mantine-color-body)',
+        // Connection bar gets the "chrome" shade alongside the sidebar so
+        // the top frame reads as one continuous chrome layer, with the
+        // main content (Inspector / RequestPanel / Log) lighter beneath.
+        // Matches VS Code Dark Modern titleBar.activeBackground.
+        background: 'var(--color-bg-raised)',
         flexShrink: 0,
       }}
     >

@@ -9,6 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.8] - 2026-04-25
+
+Three usability calls from Costa, all in one release.
+
+### Added
+
+- **Hover tooltip on every log row** carries the full method headline
+  plus byte size and end-to-end duration when the row is a response.
+  When the row is narrow and the metric chips fold (DEC-014), the
+  numbers stay reachable via the native `title` tooltip. Tokens are
+  deliberately omitted (lazy-computed; expand the row to see them).
+
+### Changed
+
+- **Dark theme switched to VS Code Dark Modern.** Editor-area panels
+  (Inspector, RequestPanel, Log) are `#1f1f1f`; chrome (sidebar,
+  connection bar) is `#181818` — darker than the content, the
+  inverse of VS Code Dark+. Mantine's dark color tuple is overridden
+  to match (`dark[7] = #1f1f1f`, `dark[8] = #181818`, `dark[6] =
+#2b2b2b` for raised popovers / modals). Borders muted to `#2b2b2b`,
+  inputs to `#313131`. Costa: "match modern vscode, sections still
+  oriented".
+- **Log row text is selectable again.** Until v1.1.7 the headline
+  carried `user-select: none`, which blocked the user from selecting
+  the method name, timestamp, or chip values to copy. Now selection
+  is allowed across the title / timestamp / chip text; chevron,
+  direction glyph, and action icons keep `user-select: none` so a
+  triple-click doesn't sweep them into the clipboard. The
+  click-to-expand handler now skips toggling when the user just
+  finished a selection drag inside the row.
+
+### Notes
+
+- Bundle delta: ~0 KB gz (CSS + theme overrides; no library
+  changes). Initial-load gz stays at ~252 KB, well under DEC-005's
+  350 KB cap.
+- 227 unit tests pass; lint, typecheck, build clean. The selection
+  guard's interaction with click-to-expand isn't covered by JSDOM
+  tests (selection APIs are stubs there); will verify in playwright
+  after deploy.
+
 ## [1.1.7] - 2026-04-25
 
 Inspector usability: Costa connected to a server with 61 tools and

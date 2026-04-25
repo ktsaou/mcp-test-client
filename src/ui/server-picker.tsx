@@ -83,7 +83,11 @@ export function ServerPicker() {
       component="aside"
       h="100%"
       style={{
-        background: 'var(--mantine-color-body)',
+        // Sidebar gets the "chrome" shade — visibly darker than the main
+        // editor-like content (Inspector / RequestPanel / Log) which uses
+        // `--mantine-color-body`. Matches VS Code Dark Modern's
+        // sideBar.background being darker than editor.background.
+        background: 'var(--color-bg-raised)',
         borderRight: '1px solid var(--mantine-color-default-border)',
         display: 'flex',
         flexDirection: 'column',

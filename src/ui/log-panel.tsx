@@ -16,6 +16,7 @@ import { notifications } from '@mantine/notifications';
 
 import { useLog, type LogEntry } from '../state/log.tsx';
 import { JsonView } from './json-view.tsx';
+import { formatBytes, formatDuration } from './metrics-chips.tsx';
 import { ReportIssueDialog } from './report-issue-dialog.tsx';
 import {
   formatHeadline,
@@ -406,16 +407,28 @@ function LogRow({
       ? `mcp-${dir}-${headline.method.replace(/[^a-z0-9._-]+/gi, '_')}`
       : `mcp-${dir}`;
 
-  // DEC-014: when the title is ellipsed by a narrow row, the `title`
-  // attribute carries the full method+discriminator so a hover reveals it.
-  // Always-on (the browser shows the tooltip only when the user actually
-  // hovers, and `formatHeadline` is the same string we render visibly).
-  // DEC-013: notifications have no pair-jump button — append a short
-  // explanation so the affordance gap is documented for the user.
+  // When the row is narrow, the title ellipses and the chips fold (DEC-014),
+  // so the metric values disappear from view. The native `title` attribute
+  // carries them inline so a hover reveals everything: full method, byte
+  // size, duration. Tokens are deliberately omitted — they're computed
+  // lazily on expand and might be `pending` / `na`; users can expand the
+  // row to read them. DEC-013: notifications have no pair-jump button —
+  // append a short explanation so the affordance gap is documented.
   const fullHeadline = formatHeadline(headline);
-  const headlineTitle = isNote
-    ? `${fullHeadline} — notification — no paired response`
-    : fullHeadline;
+  const headlineTitleParts: string[] = [fullHeadline];
+  if (isResp) {
+    // Response bytes are the same JSON.stringify length the chip renders.
+    // Compute once here for the tooltip; the chip recomputes for itself.
+    const bytes = JSON.stringify(entry.message, null, 2).length;
+    headlineTitleParts.push(formatBytes(bytes));
+    if (entry.metrics?.durationMs !== undefined) {
+      headlineTitleParts.push(formatDuration(entry.metrics.durationMs));
+    }
+  }
+  if (isNote) {
+    headlineTitleParts.push('notification — no paired response');
+  }
+  const headlineTitle = headlineTitleParts.join(' · ');
 
   return (
     <div
@@ -431,7 +444,28 @@ function LogRow({
         tabIndex={0}
         aria-expanded={expanded}
         title={headlineTitle}
-        onClick={onToggle}
+        onClick={(ev) => {
+          // Selection guard: if the user just finished selecting text inside
+          // this headline (mouseup at the end of a drag), don't treat the
+          // click as an expand-toggle. We allow text selection in the
+          // headline (DEC TBD — log-row__headline used to set
+          // user-select:none which made copy impossible) and this guard is
+          // the standard pattern for keeping click-to-expand alongside
+          // drag-to-select.
+          const sel = typeof window !== 'undefined' ? window.getSelection() : null;
+          if (sel && sel.toString().length > 0) {
+            const target = ev.currentTarget;
+            const anchor = sel.anchorNode;
+            const focus = sel.focusNode;
+            if (
+              (anchor !== null && target.contains(anchor)) ||
+              (focus !== null && target.contains(focus))
+            ) {
+              return;
+            }
+          }
+          onToggle();
+        }}
         onKeyDown={(ev) => {
           if (ev.key === 'Enter' || ev.key === ' ') {
             ev.preventDefault();
