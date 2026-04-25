@@ -161,6 +161,32 @@ describe('LogPanel — DEC-012', () => {
     // just verify the trigger renders so the user can reach the dropdown.
   });
 
+  // DEC-014: when the title is too long for a narrow row it ellipses; the
+  // row's `title` attribute carries the full method+discriminator so a
+  // hover (or focus, via the row's role="button" handler) reveals it.
+  it('row title attribute carries the full method · discriminator', () => {
+    const h = renderPanel();
+    act(() => {
+      h.api.appendWire({
+        direction: 'outgoing',
+        message: {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: { name: 'a-tool-with-a-long-discriminator-name' },
+        },
+        timestamp: 1_000_000,
+      });
+    });
+    const headlines = screen
+      .getAllByRole('button')
+      .filter((el) => el.classList.contains('log-row__headline'));
+    expect(headlines).toHaveLength(1);
+    expect(headlines[0]!.getAttribute('title')).toBe(
+      'tools/call · a-tool-with-a-long-discriminator-name',
+    );
+  });
+
   it('error responses are flagged in red with (error) suffix', () => {
     const h = renderPanel();
     act(() => {

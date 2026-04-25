@@ -4,9 +4,17 @@
  * Exposes a handful of tools, prompts, and resources over Streamable HTTP
  * with permissive CORS so the browser app loaded from any localhost port
  * can connect.
+ *
+ * Session model — one MCP `Server` + transport pair per `initialize`. The
+ * Playwright fixture is reused across specs (`reuseExistingServer: !CI`),
+ * and the SDK rejects re-initialization on a transport that has already
+ * answered an `initialize`. Maintaining a `sessionId → transport` map
+ * means each Playwright spec opens its own session without stepping on
+ * the previous one.
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { randomUUID } from 'node:crypto';
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -24,7 +32,7 @@ export interface RunningServer {
   close: () => Promise<void>;
 }
 
-export async function startMockServer(port = 0): Promise<RunningServer> {
+function buildMcpServer(): Server {
   const mcp = new Server(
     { name: 'mock-mcp-server', version: '0.0.1' },
     {
@@ -105,10 +113,38 @@ export async function startMockServer(port = 0): Promise<RunningServer> {
     ],
   }));
 
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: () => `mock-${Date.now()}`,
-  });
-  await mcp.connect(transport);
+  return mcp;
+}
+
+export async function startMockServer(port = 0): Promise<RunningServer> {
+  // sessionId → transport map. A new transport is created on every
+  // unsessioned `initialize`; subsequent requests carrying the
+  // `MCP-Session-Id` header are routed back to the right one.
+  const sessions = new Map<string, StreamableHTTPServerTransport>();
+  const servers = new Set<Server>();
+
+  async function createSession(): Promise<StreamableHTTPServerTransport> {
+    const mcp = buildMcpServer();
+    let assignedSessionId: string | undefined;
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => `mock-${randomUUID()}`,
+      onsessioninitialized: (id) => {
+        assignedSessionId = id;
+        sessions.set(id, transport);
+      },
+      onsessionclosed: (id) => {
+        sessions.delete(id);
+      },
+    });
+    await mcp.connect(transport);
+    servers.add(mcp);
+    transport.onclose = () => {
+      if (assignedSessionId) sessions.delete(assignedSessionId);
+      void mcp.close().catch(() => undefined);
+      servers.delete(mcp);
+    };
+    return transport;
+  }
 
   const http = createServer((req: IncomingMessage, res: ServerResponse) => {
     // Permissive CORS for any localhost origin in development + tests.
@@ -136,8 +172,36 @@ export async function startMockServer(port = 0): Promise<RunningServer> {
       return;
     }
 
-    void transport.handleRequest(req, res);
+    void routeRequest(req, res);
   });
+
+  async function routeRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const sessionId = pickHeader(req.headers, 'mcp-session-id');
+    if (sessionId) {
+      const transport = sessions.get(sessionId);
+      if (!transport) {
+        res.statusCode = 404;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            error: { code: -32001, message: 'Session not found' },
+            id: null,
+          }),
+        );
+        return;
+      }
+      await transport.handleRequest(req, res);
+      return;
+    }
+
+    // No session id: only `initialize` is allowed (per spec). The SDK
+    // assigns a fresh id on the first POST that carries an initialize
+    // payload; we hand the request to a fresh transport so each spec
+    // gets its own session.
+    const transport = await createSession();
+    await transport.handleRequest(req, res);
+  }
 
   await new Promise<void>((resolve) => http.listen(port, '127.0.0.1', resolve));
   const addr = http.address();
@@ -150,9 +214,18 @@ export async function startMockServer(port = 0): Promise<RunningServer> {
       await new Promise<void>((resolve, reject) =>
         http.close((err) => (err ? reject(err) : resolve())),
       );
-      await mcp.close().catch(() => undefined);
+      for (const s of servers) await s.close().catch(() => undefined);
+      sessions.clear();
+      servers.clear();
     },
   };
+}
+
+function pickHeader(headers: IncomingMessage['headers'], name: string): string | undefined {
+  const v = headers[name];
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v) && v.length > 0) return v[0];
+  return undefined;
 }
 
 // Standalone-executable mode: `node server.ts` starts on a random port.

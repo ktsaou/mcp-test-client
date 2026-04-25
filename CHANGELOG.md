@@ -7,7 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(Post-v1.1.1 work tracked in maintainer/decisions/ and GitHub issues.)
+(v1.2 work tracked in DEC-016 through DEC-022 and GitHub issues.)
+
+## [1.1.2] - 2026-04-25
+
+A small follow-up release fixing a layout bug Costa flagged after
+v1.1.1: when the log column is narrow, the per-row metric chips
+(bytes / ms / tokens) used to push the copy / save buttons off the
+right edge or out of vertical alignment with their neighbours,
+breaking the icon column the eye scans.
+
+### Fixed
+
+- **Log-row alignment under squeeze** (DEC-014). The action-icon
+  column now keeps a single shared X offset across every wire row at
+  every panel width down to 280 px. Chips fold first, in a deliberate
+  drop order — `tokens` → `ms` → `bytes` — driven by a
+  `data-chip-level` attribute (0 / 1 / 2 / 3) on the log-panel root,
+  set by a `ResizeObserver`. Verified via a Playwright e2e
+  (`tests/e2e/log-row-alignment.spec.ts`) that asserts the set of
+  `getBoundingClientRect().right` values across all rows is a single
+  value (±0.5 px) at 280 / 320 / 360 / 400 / 440 / 600 px.
+
+### Notes
+
+- This regression survived three UX-critic passes in v1.1 because
+  the critic walked the panel visually without resizing it narrow
+  enough. A new mandatory scope ("alignment under squeeze") with a
+  measurable falsifier is now part of `maintainer/skills/ux-review.md`
+  and the UX-critic prompt template, so future passes catch this
+  class of bug in code, not by eye.
 
 ## [1.1.1] - 2026-04-25
 

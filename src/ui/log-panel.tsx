@@ -18,6 +18,7 @@ import { useLog, type LogEntry } from '../state/log.tsx';
 import { JsonView } from './json-view.tsx';
 import { ReportIssueDialog } from './report-issue-dialog.tsx';
 import {
+  formatHeadline,
   headlineForRequest,
   headlineForResponse,
   isNotification,
@@ -30,6 +31,7 @@ import {
   pairById,
   type LogFilter,
 } from './log-pairing.ts';
+import { chipLevelFor, type ChipLevel } from './log-chip-visibility.ts';
 import { MetricsChips, type ResponseMetrics, type TokenState } from './metrics-chips.tsx';
 import { estimateTokens } from './log-tokens.ts';
 import { uiKey } from '../persistence/schema.ts';
@@ -63,13 +65,37 @@ export function LogPanel() {
   const { entries, clear } = useLog();
   const endRef = useRef<HTMLDivElement | null>(null);
   const scrollRootRef = useRef<HTMLDivElement | null>(null);
+  const panelRootRef = useRef<HTMLDivElement | null>(null);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const [reportOpen, setReportOpen] = useState(false);
   const [filter, setFilter] = useState<LogFilter>(() => readPersistedFilter());
+  // DEC-014: drop chips one-by-one as the panel narrows so the right-edge
+  // action icons stay flush across every row. A single ResizeObserver on
+  // the panel root drives the level; rows pick it up via the data attribute
+  // → CSS rule (`[data-chip-level="N"] .metric-chip[data-chip="…"]`).
+  const [chipLevel, setChipLevel] = useState<ChipLevel>(0);
   // Tracks which entries are currently expanded. Default-collapsed (DEC-012):
   // a row only appears in this set after the user toggles it open or after
   // pressing "Expand all". Future entries arrive collapsed regardless.
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
+
+  // Observe the panel's own width — that's what every row sees once the
+  // ScrollArea viewport fills it. Don't observe a row directly: at level 3
+  // a row collapses to its actions only and we'd lose the signal.
+  useEffect(() => {
+    const el = panelRootRef.current;
+    if (!el) return;
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const last = entries[entries.length - 1];
+      if (!last) return;
+      const width = last.contentRect.width;
+      const next = chipLevelFor(width);
+      setChipLevel((prev) => (prev === next ? prev : next));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Persist the filter choice across sessions (DEC-012).
   useEffect(() => {
@@ -172,6 +198,8 @@ export function LogPanel() {
       aria-label="Message log"
       h="100%"
       data-log-panel-root="1"
+      data-chip-level={chipLevel}
+      ref={panelRootRef}
       tabIndex={-1}
       style={{
         background: 'var(--mantine-color-default-hover)',
@@ -378,9 +406,16 @@ function LogRow({
       ? `mcp-${dir}-${headline.method.replace(/[^a-z0-9._-]+/gi, '_')}`
       : `mcp-${dir}`;
 
-  // DEC-013: surface why notifications have no pair-jump button. Subtle title
-  // tooltip on the headline avoids visual noise while keeping the UI honest.
-  const headlineTitle = isNote ? 'notification — no paired response' : undefined;
+  // DEC-014: when the title is ellipsed by a narrow row, the `title`
+  // attribute carries the full method+discriminator so a hover reveals it.
+  // Always-on (the browser shows the tooltip only when the user actually
+  // hovers, and `formatHeadline` is the same string we render visibly).
+  // DEC-013: notifications have no pair-jump button — append a short
+  // explanation so the affordance gap is documented for the user.
+  const fullHeadline = formatHeadline(headline);
+  const headlineTitle = isNote
+    ? `${fullHeadline} — notification — no paired response`
+    : fullHeadline;
 
   return (
     <div

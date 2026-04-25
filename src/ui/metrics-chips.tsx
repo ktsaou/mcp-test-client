@@ -33,21 +33,28 @@ function formatTokens(state: TokenState): string {
   return `${state} ~tok`;
 }
 
+/**
+ * Render the three response metrics chips. Each chip is tagged with a
+ * `data-chip` discriminator so DEC-014's chip-drop CSS can hide them
+ * progressively (tokens → ms → bytes) when the row narrows. Visual order
+ * (bytes → ms → tokens, smallest-text first) matches the drop priority:
+ * the most-likely-to-survive chip sits closest to the title.
+ */
 export function MetricsChips({ metrics }: { metrics: ResponseMetrics }) {
   return (
     <>
       <Tooltip label="Pretty-printed JSON byte length (UTF-8)" withinPortal>
-        <Badge size="xs" variant="light" color="gray" className="metric-chip">
+        <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="bytes">
           {formatBytes(metrics.bytes)}
         </Badge>
       </Tooltip>
       <Tooltip label="End-to-end duration (request sent → response received)" withinPortal>
-        <Badge size="xs" variant="light" color="gray" className="metric-chip">
+        <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="ms">
           {formatDuration(metrics.durationMs)}
         </Badge>
       </Tooltip>
       <Tooltip label="Estimated LLM tokens (gpt-tokenizer / o200k_base)" withinPortal>
-        <Badge size="xs" variant="light" color="gray" className="metric-chip">
+        <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="tokens">
           {formatTokens(metrics.tokens)}
         </Badge>
       </Tooltip>
