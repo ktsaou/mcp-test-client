@@ -7,7 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(Post-v1.1 work tracked in GitHub issues + maintainer/decisions/.)
+(Post-v1.1.1 work tracked in maintainer/decisions/ and GitHub issues.)
+
+## [1.1.1] - 2026-04-25
+
+A focused release: the log panel is rewritten end-to-end so a developer
+poking at a public MCP server can read the request flow at a glance.
+
+### Added
+
+- **Bold method-summary headline** on every wire entry — `tools/call ·
+  echo`, `prompts/get · greet`, `resources/read · file:///etc/hosts`.
+  Mechanical discriminator from the JSON-RPC params.
+- **Per-entry collapse / expand** with default-collapsed bodies and
+  global Expand all / Collapse all toolbar buttons.
+- **Prev / next request navigation** — toolbar arrow buttons + `j` /
+  `k` keyboard shortcuts. Skips responses, notifications, and system
+  messages. Input-focus edge case handled.
+- **Per-response metrics chips** — bytes, end-to-end duration in ms,
+  estimated tokens (`~tok` label communicates "estimate"). Same chips
+  surfaced in the request panel's "Last result" header.
+- **Always-visible copy and save** buttons in every wire entry's
+  headline (no more hover-only). Both emit raw JSON-RPC envelopes via
+  `JSON.stringify(value, null, 2)`.
+- **Pair-jump** button (↔) on entries with a paired counterpart.
+  Notifications correctly omit it and carry a "notification — no
+  paired response" tooltip on the row instead.
+- **Direction filter** in the toolbar: All / Outgoing / Incoming /
+  Requests-only / System.
+- **Inline timestamp + direction** in the headline — no fixed-width
+  left column eating horizontal space.
+
+### Changed
+
+- The `gpt-tokenizer` `o200k_base` BPE table is **lazy-loaded** on
+  first response expand (~1008 KB gz on-demand). Initial bundle
+  stays at 271.5 KB gzipped — under the DEC-005 350 KB cap.
+- `scripts/bundle-budget.mjs` distinguishes initial-load assets from
+  lazy chunks.
+
+### Fixed
+
+- Three sub-needs hidden inside the original v1.0 "log is unmanageable"
+  feedback bullet that v1.1 only partially addressed: prev/next
+  request navigation, time/direction wasting horizontal space, and
+  always-visible per-message copy/save are now fully resolved.
+- `notifications/*` rows (e.g. `notifications/initialized`) now expand
+  to a real body and carry copy/save buttons like every other wire
+  entry.
+
+### Memory
+
+- Heap at 232 entries dropped from ~309 MB (v1.1) to ~101 MB. Lazy
+  tokenizer + default-collapsed bodies pay only on demand. The log
+  virtualization deferral becomes less urgent as a result.
+
+### Deferred to v1.1.2
+
+- 360 px discriminator clipping when chips dominate (cosmetic).
+- "Expand all" blocking ~3 s on 200+ entries.
+- Light-theme log timestamp contrast 2.85:1.
+- Last-result vs log-row tokenizer drift labelling.
+- Three v1.1 minor critic notes (480 px off-by-one, delete-saved
+  Menu when one entry, friendly-name in share payload).
 
 ## [1.1.0] - 2026-04-25
 
