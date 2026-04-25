@@ -87,6 +87,13 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
 
       const client = new McpClient({
         onWire: (e) => log.appendWire(e),
+        onSchemaWarning: ({ message, schema }) => {
+          // The SDK doesn't tell the validator which tool the schema
+          // belongs to, so we surface a concise summary the user can
+          // grep against the tools/list response. See DEC-024.
+          const summary = describeSchema(schema);
+          log.appendSystem('warn', `output schema compile failed (${summary}): ${message}`);
+        },
       });
 
       try {
@@ -142,4 +149,27 @@ export function useConnection(): ConnectionContextValue {
   const ctx = useContext(ConnectionContext);
   if (!ctx) throw new Error('useConnection must be used inside <ConnectionProvider>');
   return ctx;
+}
+
+/**
+ * Best-effort, single-line description of an `outputSchema` to put in a
+ * compile-failure warning. The SDK validator hook doesn't tell us which
+ * tool the schema came from, so we extract the most distinctive bits we
+ * can — type, top-level required keys, and the top-level property names
+ * — to help the user grep their tools/list response and find the
+ * offender.
+ */
+function describeSchema(schema: unknown): string {
+  if (!schema || typeof schema !== 'object') return 'non-object schema';
+  const obj = schema as Record<string, unknown>;
+  const type = typeof obj.type === 'string' ? obj.type : 'unknown';
+  const required = Array.isArray(obj.required) ? (obj.required as unknown[]).slice(0, 4) : [];
+  const props =
+    obj.properties && typeof obj.properties === 'object'
+      ? Object.keys(obj.properties).slice(0, 6)
+      : [];
+  const parts = [`type=${type}`];
+  if (required.length > 0) parts.push(`required=[${required.join(',')}]`);
+  if (props.length > 0) parts.push(`props=[${props.join(',')}]`);
+  return parts.join(' ');
 }

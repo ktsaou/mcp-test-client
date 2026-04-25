@@ -152,6 +152,58 @@ describe('McpClient', () => {
     expect(events.some((e) => e.direction === 'incoming')).toBe(true);
   });
 
+  it('survives a tool with an un-compilable outputSchema and warns', async () => {
+    // Regression for DEC-024: the SDK eagerly compiles every tool's
+    // outputSchema after listTools. A schema Ajv chokes on must NOT take
+    // the whole tools list down; it must surface a schema warning and
+    // leave the tool in the list (output validation downgraded).
+    const warnings: { message: string; schema: unknown }[] = [];
+    const transport = new ScriptedTransport({
+      initialize: {
+        protocolVersion: '2025-11-25',
+        capabilities: { tools: {} },
+        serverInfo: { name: 'fixture', version: '0.0.0' },
+      },
+      'tools/list': {
+        tools: [
+          {
+            name: 'good',
+            description: 'compiles fine',
+            inputSchema: { type: 'object', properties: {} },
+            outputSchema: {
+              type: 'object',
+              properties: { ok: { type: 'boolean' } },
+              required: ['ok'],
+              additionalProperties: false,
+            },
+          },
+          {
+            name: 'broken',
+            description: 'output schema is malformed',
+            inputSchema: { type: 'object', properties: {} },
+            outputSchema: {
+              // Top-level type must be "object" (MCP protocol-level
+              // Zod check). Inside, a string property carries an
+              // invalid regex — `[` is an unterminated char class —
+              // which makes Ajv throw at compile time.
+              type: 'object',
+              properties: { x: { type: 'string', pattern: '[' } },
+            },
+          },
+        ],
+      },
+    });
+    const client = new McpClient({
+      transportFactory: () => transport,
+      onSchemaWarning: (w) => warnings.push(w),
+    });
+    await client.connect(BASE_CONFIG);
+    const result = await client.listTools();
+    expect(result.tools.map((t) => t.name).sort()).toEqual(['broken', 'good']);
+    expect(warnings.length).toBeGreaterThanOrEqual(1);
+    expect(warnings[0].message).toBeTruthy();
+  });
+
   it('disconnect is idempotent and resets connected flag', async () => {
     const transport = new ScriptedTransport({
       initialize: {

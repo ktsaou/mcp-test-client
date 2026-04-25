@@ -125,7 +125,19 @@ wrapper once the SDK PR merges and we bump the dependency.
 
 ## Decision
 
-Pending Costa's call — A vs B vs C. Recommendation logged: **C**.
+**Costa's call (2026-04-25): A — make it work first.** B is a
+follow-up _only if_ no open issue / PR already covers it upstream
+(don't duplicate community work). The local wrapper is the focus;
+upstream contribution is a "nice to have", not a v1.1.3 blocker.
+
+Implementation plan:
+
+1. Build the TolerantValidator wrapper (option A) and ship as
+   v1.1.3.
+2. After v1.1.3 ships, do a 5-minute search of the upstream SDK
+   repo for existing issues / PRs about eager outputSchema
+   compilation. If none exists, open one. If one exists, comment
+   with our use case and the wrapper as a workaround.
 
 ## Sub-item checklist (assuming C)
 

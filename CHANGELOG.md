@@ -7,7 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(v1.2 work tracked in DEC-016 through DEC-022 and GitHub issues.)
+(v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
+
+## [1.1.3] - 2026-04-25
+
+A bug-fix release for a connect-failure case Costa hit on a real
+authenticated multi-vendor MCP aggregator (~60 tools): a single
+tool's `outputSchema` failed to compile in the SDK's eager Ajv
+cache and took the entire `tools/list` down with it.
+
+### Fixed
+
+- **Output-schema compile resilience** (DEC-024). One un-compilable
+  output schema no longer blocks every other tool from rendering.
+  The MCP SDK 1.29's `Client.cacheToolMetadata()` eagerly compiles
+  every tool's `outputSchema` after `tools/list`; if any schema
+  throws, the throw propagates and fails the whole call. Fix: a
+  small `TolerantValidator` wrapper around the SDK's
+  `AjvJsonSchemaValidator` that catches per-schema compile errors,
+  surfaces them to a caller-supplied warning sink, and returns a
+  permissive validator (`valid: true`) so the SDK's cache loop
+  continues. Output validation is silently downgraded for the
+  offender; the warning makes the downgrade visible. The user sees
+  a system-log warning of the form
+  `output schema compile failed (type=object props=[…]): <ajv error>`
+  per failing tool.
+
+### Notes
+
+- Output validation for the offending tool is disabled (the
+  permissive validator always passes input through). The protocol
+  layer still validates the response envelope; only the tool-level
+  `outputSchema` cross-check is skipped.
+- An upstream SDK PR is a follow-up — fixing the eager-compile-
+  with-no-catch in `cacheToolMetadata` itself is the right long-
+  term fix; it benefits every browser-side SDK consumer. Tracked
+  in DEC-024.
 
 ## [1.1.2] - 2026-04-25
 

@@ -13,6 +13,7 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { z } from 'zod';
 
 import { LoggingTransport } from './logging-transport.ts';
+import { TolerantValidator, type SchemaWarningSink } from './tolerant-validator.ts';
 import type { ServerConfig, WireEventSink } from './types.ts';
 import { createTransport } from './transports.ts';
 
@@ -25,6 +26,13 @@ const CLIENT_INFO = {
 export interface McpClientOptions {
   /** Sink that receives every JSON-RPC message flowing over the wire. */
   onWire?: WireEventSink;
+  /**
+   * Sink that receives a notice when a tool's `outputSchema` fails to
+   * compile. The SDK eagerly compiles every output schema after
+   * `tools/list`; without this guard, one bad schema would block the
+   * whole tools list. See DEC-024.
+   */
+  onSchemaWarning?: SchemaWarningSink;
   /**
    * Override the SDK Client construction. Intended for tests that need to
    * inject a pre-built Client (e.g. with a mock Protocol); production code
@@ -50,6 +58,7 @@ export class McpClient {
       options.clientFactory?.() ??
       new Client(CLIENT_INFO, {
         capabilities: {},
+        jsonSchemaValidator: new TolerantValidator(options.onSchemaWarning ?? (() => undefined)),
       });
     this.#onWire = options.onWire;
     this.#transportFactory = options.transportFactory ?? createTransport;
