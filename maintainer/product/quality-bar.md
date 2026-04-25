@@ -14,8 +14,19 @@ This is the standard. "Done" means yes to all of these.
 - **JSON renders so a human can read it.** Multi-line strings keep their
   newlines. Long values can be expanded. Nested JSON is detected and
   pretty-printed inline.
-- **Per-message actions in the log.** Copy this message as JSON. Save to
-  file. Jump to its paired request/response. Filter by direction.
+- **The log is scannable.** Each entry has a bold method-summary
+  headline (`tools/call · echo`, `prompts/get · greet`, etc.) so the
+  user can read the request flow without expanding bodies. Per-entry
+  collapse/expand exists; default-collapsed; global "Expand all" /
+  "Collapse all" exist; **prev / next request navigation exists in
+  the toolbar AND on `j` / `k` keys**. Timestamp + direction live
+  inline in the headline (small) — not as a fixed-width left column
+  pushing content right.
+- **Per-message actions in the log.** Copy this message as the original
+  raw JSON. Save to file. Jump to its paired request/response.
+  **These actions are always visible**, not hover-only — a user who
+  doesn't know the affordance is there must still see it. Filter by
+  direction.
 - **Tool descriptions are first-class.** They get prominent space in the
   request panel, not a 1-line truncation.
 - **Saving and naming things uses real modals**, not `window.prompt()`.
