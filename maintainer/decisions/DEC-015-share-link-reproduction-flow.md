@@ -133,11 +133,16 @@ share-link path inconsistent with hand-typed input.
 - [ ] B.2 connection error opens the modal carrying the actual error
       message.
 - [ ] B.3 tool-not-found modal opens; "Open as raw" works.
+- [ ] B.4 schema mismatch is **not** a special case — the form's
+      existing Ajv 8 validation handles it. Verify by share-linking a
+      tool whose `inputSchema` has been (intentionally) tightened in
+      the recipient's mock server: form shows the validation error
+      inline, no modal pops, recipient adjusts the args and sends.
 - [ ] All four flows (server missing → server present, connect ok,
       connect error, tool missing, tool present) covered by tests
       against a mock connection context.
 - [ ] No regression: tokens still never in the share fragment;
-      no auto-connect.
+      no auto-connect; share URL never carries the schema.
 
 ## Falsifier
 
