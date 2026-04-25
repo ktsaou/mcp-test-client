@@ -20,6 +20,7 @@ changed.
 | [DEC-011](DEC-011-v1-1-round-2.md)                 | v1.1 ship blockers, round 2                                        | 2026-04-25           | Closed    | Mobile header overflow, Send/Share truncation, inventory error empty-state, Save-as toast. |
 | [DEC-012](DEC-012-v1-1-1-log-redesign.md)          | v1.1.1: "the log, fixed"                                           | 2026-04-25           | Closed    | 13/13 rows pass; DEC-009 metrics subsumed into the row design; ships as v1.1.1.            |
 | [DEC-013](DEC-013-notification-row-consistency.md) | Notification rows render as full collapsible entries               | 2026-04-25           | Closed    | 6/6 rows pass; logic-only patch on the `!isNote` gate; bundle delta zero.                  |
+| [DEC-014](DEC-014-log-row-alignment.md)            | v1.1.2: log-row alignment under squeeze                            | 2026-04-25           | Open      | Chips fold behind copy/save when log column is narrow; buttons share the same X offset.    |
 
 ## Format spec for new entries
 
