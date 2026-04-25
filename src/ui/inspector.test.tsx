@@ -30,7 +30,7 @@ function withConnection(
       ...inventory,
     },
     client: null,
-    connect: async () => undefined,
+    connect: async () => 'connected' as const,
     disconnect: async () => undefined,
   };
   return (

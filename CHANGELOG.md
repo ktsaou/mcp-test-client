@@ -9,6 +9,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.12] - 2026-04-25
+
+Three coupled bugs Costa flagged after watching a slow MCP server
+hang the UI:
+
+> the connect button cannot be pressed on another mcp server while
+> the connect button is spinning while connecting to another mcp
+> server. The only way out is either to wait for it to timeout, or
+> to refresh the page.
+>
+> On timeout, the toast still says "connected to …" although the
+> logs show failure.
+
+### Added
+
+- **Click-to-connect on the sidebar (DEC-016 #5).** Clicking a
+  `<NavLink>` in the server list now sets it active AND immediately
+  kicks off connect. The header Connect button is no longer the only
+  entry point.
+
+### Fixed
+
+- **In-flight connects are cancellable.** Clicking a different server
+  (or the same one again, or the Disconnect button) while a slow
+  handshake is still spinning now aborts the prior attempt and
+  starts the new one. Implementation: a monotonic
+  `connectEpochRef` in the connection context. Each new `connect()`
+  bumps the counter and snapshots its own value; post-await
+  continuations bail out silently when they see the counter has
+  moved on. The previous client is disconnected fire-and-forget
+  (was awaited — would block the new connect on the dead transport's
+  close, which is exactly what the user is trying to escape).
+- **Toast no longer lies on failure.** `connect()` now returns
+  `'connected' | 'superseded'` and **throws** on real connect failures.
+  The header Connect button only fires the success toast when the
+  outcome is `'connected'`; any thrown error becomes a red "Connect
+  failed" toast. Until v1.1.11 the success path always ran (because
+  the old `connect()` swallowed errors internally), so a 30-second
+  timeout produced the green "Connected to …" toast even though
+  the system log showed the failure.
+- **`disconnect()` now interrupts an in-flight connect** by bumping
+  the same epoch — clicking Disconnect while a handshake is still
+  spinning leaves you idle instead of letting the eventual success
+  flip you back to connected.
+
+### Notes
+
+- 227 unit tests pass; lint, typecheck, build clean.
+- Will verify all four flows in playwright after deploy:
+  click-while-connecting → supersede, click-while-connected → switch,
+  connect-timeout → red toast, disconnect-while-connecting → idle.
+
 ## [1.1.11] - 2026-04-25
 
 ### Fixed

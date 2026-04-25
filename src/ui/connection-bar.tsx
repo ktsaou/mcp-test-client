@@ -51,11 +51,20 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
   async function handleConnect() {
     if (!active) return;
     try {
-      await connect(active);
-      markUsed(active.id);
-      notifications.show({
-        message: `Connected to ${active.name || active.url}`,
-      });
+      const outcome = await connect(active);
+      // Only fire the success toast on a real handshake completion.
+      // Until v1.1.11 this branch fired even when the connect timed
+      // out, because connect() resolved (didn't re-throw) and the
+      // success path always ran — Costa: "On timeout, the toast still
+      // says 'connected to …' although the logs show failure".
+      if (outcome === 'connected') {
+        markUsed(active.id);
+        notifications.show({
+          message: `Connected to ${active.name || active.url}`,
+        });
+      }
+      // 'superseded' = a newer connect() to a different server cancelled
+      // ours mid-flight. Stay silent; the newer attempt owns the toast.
     } catch (e) {
       notifications.show({
         color: 'red',

@@ -18,6 +18,7 @@ import {
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 
+import { useConnection } from '../state/connection.tsx';
 import { useServers } from '../state/servers.tsx';
 import type { ServerEntry } from '../persistence/schema.ts';
 import type { TransportKind } from '../mcp/types.ts';
@@ -58,8 +59,39 @@ function TrashIcon() {
 }
 
 export function ServerPicker() {
-  const { servers, activeId, setActive, remove } = useServers();
+  const { servers, activeId, setActive, markUsed, remove } = useServers();
+  const { connect } = useConnection();
   const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; id: string } | null>(null);
+
+  /**
+   * Click-to-connect (DEC-016 #5). Selecting a server in the sidebar
+   * sets it active AND kicks off connect immediately. If a previous
+   * connect is still in flight, `connect()` cancels it and starts the
+   * new one — so a user staring at a slow-connecting server can click
+   * a different one without waiting for the timeout. (Until v1.1.11
+   * the only escapes were "wait for the timeout" or "refresh the
+   * page", per Costa.)
+   *
+   * Toast shape mirrors the header Connect button so both entry
+   * points produce the same UX: success → "Connected to …", failure
+   * → red "Connect failed" toast, supersede → silent.
+   */
+  async function handleSelectServer(s: ServerEntry) {
+    setActive(s.id);
+    try {
+      const outcome = await connect(s);
+      if (outcome === 'connected') {
+        markUsed(s.id);
+        notifications.show({ message: `Connected to ${s.name || s.url}` });
+      }
+    } catch (e) {
+      notifications.show({
+        color: 'red',
+        title: 'Connect failed',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
 
   function confirmDelete(s: ServerEntry) {
     modals.openConfirmModal({
@@ -131,7 +163,9 @@ export function ServerPicker() {
               <NavLink
                 key={s.id}
                 active={s.id === activeId}
-                onClick={() => setActive(s.id)}
+                onClick={() => {
+                  void handleSelectServer(s);
+                }}
                 label={
                   <Text size="sm" truncate="end">
                     {s.name || s.url}
