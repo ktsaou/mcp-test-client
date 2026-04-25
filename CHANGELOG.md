@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.1.10] - 2026-04-25
+
+### Fixed
+
+- **System theme respects the OS now.** `MantineProvider` was
+  hardcoded `defaultColorScheme="dark"`, so when the user picked
+  "System" and the OS preferred light, Mantine kept rendering dark
+  while our CSS `@media (prefers-color-scheme: light)` applied light
+  tokens — a split-brain where the inspector pane showed the dark
+  body shade `#161616` while the sidebar and connection bar showed
+  the light shade `#f3f3f3`. Switched to `defaultColorScheme="auto"`
+  and only force when the user picked an explicit `light` / `dark`.
+  Now both sides follow the OS for "System".
+
+### Notes
+
+- This bug predated v1.1.9 — likely never noticed because the
+  primary maintainer's machine prefers dark at the OS level.
+  Surfaced during v1.1.9's playwright verification.
+
 ## [1.1.9] - 2026-04-25
 
 Dark theme nudge after Costa flagged v1.1.8's palette still felt too

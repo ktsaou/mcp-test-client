@@ -18,10 +18,19 @@ import { Layout } from './ui/layout.tsx';
  */
 function MantineBridge({ children }: { children: React.ReactNode }) {
   const { preference } = useTheme();
-  // Mantine accepts 'light' | 'dark' | 'auto'; our 'system' maps to 'auto'.
+  // Mantine accepts 'light' | 'dark' | 'auto'. Our 'system' maps to 'auto'
+  // so Mantine follows the OS preference; the explicit picks pass through
+  // unchanged via `forceColorScheme`.
+  //
+  // v1.1.10 fix: previously `defaultColorScheme="dark"` was hardcoded, so
+  // "system" + an OS that prefers light produced a split-brain — Mantine
+  // stayed dark while our CSS `@media (prefers-color-scheme: light)`
+  // applied light tokens. Setting the default to "auto" + only forcing
+  // when the user picked an explicit scheme keeps both sides aligned on
+  // the OS preference.
   const forceColorScheme = preference === 'system' ? undefined : preference;
   return (
-    <MantineProvider theme={appTheme} defaultColorScheme="dark" forceColorScheme={forceColorScheme}>
+    <MantineProvider theme={appTheme} defaultColorScheme="auto" forceColorScheme={forceColorScheme}>
       <ModalsProvider>
         <Notifications position="bottom-right" zIndex={2000} />
         {children}
