@@ -68,5 +68,12 @@ on 200+ entries) and the labelling drift between log-row and Last-result
 chips fold into the v1.1.2 backlog (or v1.1.1's CHANGELOG as known
 non-blockers); they do not gate this DEC.
 
-**Status.** Open. Worker brief drafts next; v1.1.1 push is gated on
-this DEC closing AND a fresh UX-critic pass clearing it.
+**Status.** **Closed (2026-04-25).** Patched in commit `8305809`
+(logic-only: dropped the `!isNote` gate that was suppressing copy/save
+on notification rows; `pairById` already excluded id-less messages so
+pair-jump was correctly absent; added `data-notification` marker and a
+`title="notification — no paired response"` tooltip on the headline).
+Re-critic returned 6/6 with two rows interpreted from the row
+classifier + unit tests (server didn't elicit cancelled/progress
+notifications or push list_changed/message during the live walk; unit
+tests cover those paths). Bundle delta zero.

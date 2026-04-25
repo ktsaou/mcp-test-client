@@ -103,9 +103,14 @@ critic must verify every checked row above against the live UI. Spawn
 a perf analyst if the on-expand tokenizer call introduces visible
 jank (subjective; the analyst will measure).
 
-**Status.** Open. Worker brief drafted next; v1.1.1 ships when every
-checklist row is ticked AND the UX-critic pass is clean AND a fresh
-prod-deploy critic pass clears the same.
+**Status.** **Closed (2026-04-25).** Round 1 (commit `ec…`/`5ad5baa`)
+delivered 12.5/13 rows; the half-fail on the `notifications/*` row
+class was carried to [DEC-013](DEC-013-notification-row-consistency.md)
+and closed by commit `8305809`. The second UX-critic pass on the
+patched dev build returned 13/13 + 6/6 across both DECs, with heap
+unexpectedly _down_ from ~309 MB to ~101 MB at comparable entry counts
+because of lazy tokenizer + default-collapsed bodies. DEC-009 metrics
+ship as part of this DEC's row design and close together.
 
 **Out of scope (still deferred).** Light-theme contrast on log
 timestamps will resolve naturally with the redesign (timestamp moves to

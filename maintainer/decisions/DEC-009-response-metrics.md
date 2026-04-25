@@ -103,5 +103,12 @@ from v1.0 and adding scope mid-flight is the exact pattern
 [`../skills/release-readiness.md`](../skills/release-readiness.md) is
 preventing.
 
-**Status.** Open. Decision-direction locked; advisor sign-off pending;
-implementation deferred to v1.1.1.
+**Status.** **Closed (2026-04-25).** Subsumed into the
+[DEC-012](DEC-012-v1-1-1-log-redesign.md) row design — the three chips
+(bytes, ms, `~tok`) live in every response row's headline and in the
+request-panel "Last result" view. Tokenizer choice held: `gpt-tokenizer`
+with `o200k_base`, but the table is **lazy-loaded** on first response
+expand (~1008 KB gz on-demand), not eager — the original ~25 KB gz
+estimate was wrong and is corrected inline above. Initial bundle is
+unaffected. Critic confirmed the chips read clearly and `~tok` reads
+as "estimate".
