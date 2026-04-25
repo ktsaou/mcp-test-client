@@ -190,4 +190,64 @@ describe('LogPanel — DEC-012', () => {
     expect(row).not.toBeNull();
     expect(within(row as HTMLElement).queryByText(/~tok/)).toBeNull();
   });
+
+  // DEC-013 — notification rows render as full wire entries: real body on
+  // expand, always-visible copy + save buttons, and no pair-jump button (since
+  // notifications have no JSON-RPC id to pair with).
+  it('outgoing notifications/initialized renders body, copy, save — no pair-jump', () => {
+    const h = renderPanel();
+    act(() => {
+      h.api.appendWire({
+        direction: 'outgoing',
+        message: { jsonrpc: '2.0', method: 'notifications/initialized' },
+        timestamp: 1_000_000,
+      });
+    });
+    // Headline shows the method and the row is marked as a notification so
+    // the headline tooltip can document the missing pair-jump.
+    expect(screen.getByText(/notifications\/initialized/)).toBeInTheDocument();
+    const row = document.querySelector('[data-notification="true"]');
+    expect(row).not.toBeNull();
+    // Copy + save are always-visible on every wire entry (DEC-013).
+    expect(within(row as HTMLElement).getByLabelText(/copy as json/i)).toBeInTheDocument();
+    expect(within(row as HTMLElement).getByLabelText(/save as json file/i)).toBeInTheDocument();
+    // Pair-jump is intentionally absent for notifications.
+    expect(within(row as HTMLElement).queryByLabelText(/jump to paired entry/i)).toBeNull();
+    // Headline tooltip explains why pair-jump is missing.
+    const headline = (row as HTMLElement).querySelector('.log-row__headline') as HTMLElement;
+    expect(headline).not.toBeNull();
+    expect(headline.getAttribute('title')).toMatch(/notification — no paired response/);
+    // The body expands to show the JSON envelope when the headline is clicked.
+    fireEvent.click(headline);
+    expect(within(row as HTMLElement).getByLabelText('message 1')).toBeInTheDocument();
+  });
+
+  it('incoming server notification (notifications/message) renders body + copy + save with ← glyph', () => {
+    const h = renderPanel();
+    act(() => {
+      h.api.appendWire({
+        direction: 'incoming',
+        message: {
+          jsonrpc: '2.0',
+          method: 'notifications/message',
+          params: { level: 'info', data: 'hello' },
+        },
+        timestamp: 1_000_000,
+      });
+    });
+    const row = document.querySelector('[data-notification="true"]');
+    expect(row).not.toBeNull();
+    // Direction glyph is the incoming arrow.
+    expect(within(row as HTMLElement).getByText('←')).toBeInTheDocument();
+    // Always-visible chrome.
+    expect(within(row as HTMLElement).getByLabelText(/copy as json/i)).toBeInTheDocument();
+    expect(within(row as HTMLElement).getByLabelText(/save as json file/i)).toBeInTheDocument();
+    // Pair-jump still absent for an incoming server-pushed notification.
+    expect(within(row as HTMLElement).queryByLabelText(/jump to paired entry/i)).toBeNull();
+    // Body expands to the full JSON-RPC envelope.
+    const headline = (row as HTMLElement).querySelector('.log-row__headline') as HTMLElement;
+    expect(headline).not.toBeNull();
+    fireEvent.click(headline);
+    expect(within(row as HTMLElement).getByLabelText('message 1')).toBeInTheDocument();
+  });
 });

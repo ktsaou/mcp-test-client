@@ -359,7 +359,9 @@ function LogRow({
     );
   }
 
-  // Wire entry — derive headline.
+  // Wire entry — derive headline. Every wire entry (request, response, or
+  // notification) gets the same body + copy/save chrome (DEC-013); only
+  // pair-jump is skipped for notifications because they carry no JSON-RPC id.
   const dir = entry.direction === 'outgoing' ? 'out' : 'in';
   const dirGlyph = entry.direction === 'outgoing' ? '→' : '←';
   const isResp = isResponse(entry.message);
@@ -376,18 +378,24 @@ function LogRow({
       ? `mcp-${dir}-${headline.method.replace(/[^a-z0-9._-]+/gi, '_')}`
       : `mcp-${dir}`;
 
+  // DEC-013: surface why notifications have no pair-jump button. Subtle title
+  // tooltip on the headline avoids visual noise while keeping the UI honest.
+  const headlineTitle = isNote ? 'notification — no paired response' : undefined;
+
   return (
     <div
       ref={registerRef}
       className="log-row"
       data-entry-id={entry.id}
       data-direction={entry.direction}
+      data-notification={isNote ? 'true' : undefined}
     >
       <div
         className="log-row__headline"
         role="button"
         tabIndex={0}
         aria-expanded={expanded}
+        title={headlineTitle}
         onClick={onToggle}
         onKeyDown={(ev) => {
           if (ev.key === 'Enter' || ev.key === ' ') {
@@ -443,11 +451,11 @@ function LogRow({
             </Tooltip>
           </div>
         ) : null}
-        {!isNote ? (
-          <div className="log-row__actions">
-            <CopySaveButtons value={entry.message} filenameStem={filenameStem} />
-          </div>
-        ) : null}
+        {/* Copy + save are always visible on every wire entry — request,
+         * response, and notification alike (DEC-013). */}
+        <div className="log-row__actions">
+          <CopySaveButtons value={entry.message} filenameStem={filenameStem} />
+        </div>
       </div>
       {expanded ? (
         <div className="log-row__body">
