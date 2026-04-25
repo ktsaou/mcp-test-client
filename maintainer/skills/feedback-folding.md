@@ -60,3 +60,27 @@ new guardrail`.
   path look special when it isn't. **Guardrail:** checklist step 7
   above — before specifying a new modal, list every state and ask
   whether the existing UI already covers it.
+
+- **2026-04-25 (after DEC-024 / v1.1.3 → v1.1.4) — wrapping a
+  third-party throw is not enough if it also logs.** v1.1.3 wrapped
+  the SDK's Ajv validator to catch compile throws so one bad
+  `outputSchema` wouldn't block the tools list. The fix worked — the
+  throw was caught, the list rendered. But Ajv ALSO does
+  `logger.error(...)` with the failed function-code source _before_
+  throwing, and the user saw a screenful of scary console traces and
+  reported "does not work" even though it actually did. **Guardrail:**
+  whenever wrapping a library to swallow errors, **also check the
+  library's pre-throw logging side-effects**. Either route the logger
+  to our own warning channel or no-op it. Catching the throw alone is
+  not enough; the user's perception of correctness is also part of
+  the fix. Verified at `node_modules/ajv/dist/compile/index.js` —
+  Ajv's compile literally calls `this.logger.error(...)` then `throw e`.
+- **2026-04-25 (also v1.1.4) — no version stamp made deploy
+  verification a guessing game.** Costa: "we need to know the version
+  somewhere. Otherwise I can't tell which version is it." For three
+  rounds of the same DEC-024 bug report, neither of us could be sure
+  whether the deploy was current or stale. **Guardrail:** every shipped
+  app must surface version + build stamp to the user. As of v1.1.4
+  the connection bar carries `v<version> · <git-sha>` with a build-
+  timestamp tooltip. New surfaces (web, CLI, server) should adopt the
+  same pattern.
