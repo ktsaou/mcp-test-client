@@ -1,10 +1,13 @@
 import { useEffect, type ReactNode } from 'react';
 import { act, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { MantineProvider } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 
 import { encodeShareState, type ShareState } from '../share-url/encode.ts';
 import { ServersProvider, useServers } from '../state/servers.tsx';
 import { SelectionProvider, useSelection } from '../state/selection.tsx';
+import { ShareLinkResolverProvider } from '../state/share-link-resolver.tsx';
 import { appStore } from '../state/store-instance.ts';
 import { ShareUrlLoader } from './share-url-loader.tsx';
 
@@ -21,10 +24,10 @@ interface ConnectionStub {
 }
 
 /**
- * The loader pulls from `useConnection`. Re-export the real module's symbols
- * but swap the hook for a test-controlled value that we mutate from the
- * harness. This is the smallest-surface mock: no live MCP client, no real
- * network, no flakiness.
+ * The resolver pulls from `useConnection`. Re-export the real module's
+ * symbols but swap the hook for a test-controlled value that we mutate
+ * from the harness. This is the smallest-surface mock: no live MCP
+ * client, no real network, no flakiness.
  */
 let mockConnection: ConnectionStub = {
   status: { state: 'idle' },
@@ -55,12 +58,17 @@ function StateProbe({ onProbe }: { onProbe: (p: Probe) => void }) {
 
 function Harness({ onProbe }: { onProbe: (p: Probe) => void }): ReactNode {
   return (
-    <ServersProvider>
-      <SelectionProvider>
-        <ShareUrlLoader />
-        <StateProbe onProbe={onProbe} />
-      </SelectionProvider>
-    </ServersProvider>
+    <MantineProvider>
+      <Notifications />
+      <ServersProvider>
+        <SelectionProvider>
+          <ShareLinkResolverProvider>
+            <ShareUrlLoader />
+            <StateProbe onProbe={onProbe} />
+          </ShareLinkResolverProvider>
+        </SelectionProvider>
+      </ServersProvider>
+    </MantineProvider>
   );
 }
 
@@ -92,7 +100,13 @@ describe('ShareUrlLoader', () => {
     expect(probe!.selection.selection).toBeNull();
   });
 
-  it('registers an in-memory server and stashes tool+args in the inbox', async () => {
+  it('hands off to the resolver rather than silently adding the server', async () => {
+    // Loader behaviour change (DEC-015 B.1 / SOW-0005 Chunk B): the
+    // loader no longer creates a server entry on its own. It hands
+    // off to the resolver, which raises the server-missing modal —
+    // the user explicitly confirms the add. This test asserts the
+    // pre-confirmation state: hash is consumed, no server has been
+    // persisted yet, and the inbox stays empty until 'connecting'.
     const state: ShareState = {
       v: 1,
       url: 'https://shared.example/mcp',
@@ -105,22 +119,32 @@ describe('ShareUrlLoader', () => {
     let probe: Probe | null = null;
     render(<Harness onProbe={(p) => (probe = p)} />);
 
-    await waitFor(() => {
-      expect(probe!.servers.servers).toHaveLength(1);
-    });
-    expect(probe!.servers.servers[0]!.url).toBe('https://shared.example/mcp');
-    expect(probe!.servers.activeId).toBe(probe!.servers.servers[0]!.id);
-
-    await waitFor(() => {
-      expect(probe!.selection.inbox).toEqual({ tool: 'add', args: { a: 2, b: 3 } });
-    });
     // Hash is stripped after consumption so a reload does not reapply.
-    expect(window.location.hash).toBe('');
-    // No connection yet → no selection materialised.
+    await waitFor(() => {
+      expect(window.location.hash).toBe('');
+    });
+    // No server added yet — the user has not confirmed.
+    expect(probe!.servers.servers).toHaveLength(0);
+    // No selection or inbox yet — the resolver only seeds the inbox
+    // after the user accepts the server-missing modal AND the
+    // connection settles AND the tool is in inventory.
+    expect(probe!.selection.inbox).toBeNull();
     expect(probe!.selection.selection).toBeNull();
   });
 
   it('selects the tool once the connection is up and the inventory lists it', async () => {
+    // Pre-seed the server in storage so the resolver skips the
+    // server-missing modal and goes straight to 'connecting'.
+    const existing = {
+      id: 'pre',
+      url: 'https://shared.example/mcp',
+      name: 'Saved',
+      transport: 'auto' as const,
+      addedAt: 1,
+      lastUsed: null,
+    };
+    appStore.write('servers', [existing]);
+
     const state: ShareState = {
       v: 1,
       url: 'https://shared.example/mcp',
@@ -133,7 +157,10 @@ describe('ShareUrlLoader', () => {
     let probe: Probe | null = null;
     const { rerender } = render(<Harness onProbe={(p) => (probe = p)} />);
 
-    await waitFor(() => expect(probe!.selection.inbox).not.toBeNull());
+    // Wait for the loader to find the existing server and dispatch.
+    await waitFor(() => {
+      expect(probe!.servers.activeId).toBe('pre');
+    });
 
     // Now simulate "user clicked Connect, inventory came back".
     act(() => {
@@ -149,11 +176,12 @@ describe('ShareUrlLoader', () => {
     });
     rerender(<Harness onProbe={(p) => (probe = p)} />);
 
+    // The resolver advances to 'loaded' and pre-fills the inbox; the
+    // request panel reads the inbox to apply tool selection on its
+    // own render. Assert the inbox is set with the right shape.
     await waitFor(() => {
-      expect(probe!.selection.selection).not.toBeNull();
+      expect(probe!.selection.inbox).toEqual({ tool: 'add', args: { a: 7, b: 11 } });
     });
-    expect(probe!.selection.selection?.kind).toBe('tools');
-    expect(probe!.selection.selection?.name).toBe('add');
   });
 
   it('falls back to existing server entry when the URL matches', async () => {

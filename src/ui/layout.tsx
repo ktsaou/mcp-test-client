@@ -8,6 +8,9 @@ import { useSidebarCollapse } from '../state/sidebar-collapse.tsx';
 import { ConnectionBar } from './connection-bar.tsx';
 import { Inspector } from './inspector.tsx';
 import { LogPanel } from './log-panel.tsx';
+import { ConnectionFailedModal } from './modals/ConnectionFailedModal.tsx';
+import { ServerMissingModal } from './modals/ServerMissingModal.tsx';
+import { ToolNotFoundModal } from './modals/ToolNotFoundModal.tsx';
 import { RequestPanel } from './request-panel.tsx';
 import { ServerPicker } from './server-picker.tsx';
 import { ShareUrlLoader } from './share-url-loader.tsx';
@@ -203,6 +206,16 @@ export function Layout() {
           </Group>
         )}
       </AppShell.Main>
+
+      {/*
+        DEC-015 / SOW-0005 Chunk B — share-link precondition modals.
+        Mounted at the layout root so they overlay every layout branch
+        (desktop wide / desktop narrow / mobile tabs). Each modal
+        reads the resolver state and is opened/closed by its kind.
+      */}
+      <ServerMissingModal />
+      <ConnectionFailedModal />
+      <ToolNotFoundModal />
     </AppShell>
   );
 }

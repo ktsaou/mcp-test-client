@@ -10,6 +10,7 @@ import { LogProvider, useLog } from './state/log.tsx';
 import { RequestActionsProvider } from './state/request-actions.tsx';
 import { SelectionProvider, useSelection } from './state/selection.tsx';
 import { ServersProvider, useServers } from './state/servers.tsx';
+import { ShareLinkResolverProvider } from './state/share-link-resolver.tsx';
 import { SidebarCollapseProvider } from './state/sidebar-collapse.tsx';
 import { appStore } from './state/store-instance.ts';
 import { ThemeProvider, useTheme } from './state/theme.tsx';
@@ -250,16 +251,27 @@ export function App() {
             <LogProvider>
               <ConnectionProvider>
                 <SelectionProvider>
-                  <RequestActionsProvider>
-                    <CommandPaletteHost>
-                      <KeyboardShortcutsHost />
-                      <CatalogAutoMerge />
-                      <ApplyBootUrlState />
-                      <RestoreSelectionOnServerReady />
-                      <Layout />
-                      <ShortcutHelp />
-                    </CommandPaletteHost>
-                  </RequestActionsProvider>
+                  {/*
+                    DEC-015 / SOW-0005 — share-link recipient flow.
+                    The resolver reads servers + connection.status +
+                    inventory and writes through useSelection().setInbox,
+                    so it must sit inside Servers / Connection /
+                    Selection but outside RequestActions (which only
+                    cares about Send dispatch and is independent of
+                    share-link state).
+                  */}
+                  <ShareLinkResolverProvider>
+                    <RequestActionsProvider>
+                      <CommandPaletteHost>
+                        <KeyboardShortcutsHost />
+                        <CatalogAutoMerge />
+                        <ApplyBootUrlState />
+                        <RestoreSelectionOnServerReady />
+                        <Layout />
+                        <ShortcutHelp />
+                      </CommandPaletteHost>
+                    </RequestActionsProvider>
+                  </ShareLinkResolverProvider>
                 </SelectionProvider>
               </ConnectionProvider>
             </LogProvider>
