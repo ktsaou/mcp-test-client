@@ -135,7 +135,18 @@ row shows a stacked tooltip after the audit.
 
 ## Status
 
-Open — assigned to v1.2.4. First DEC after the four-DEC design-
-knowledge wave; ships as straight-from-Costa-feedback to demonstrate
-that the framework two-step (Worker landed → critic gate → ship)
-applies to user feedback, not just internal-roadmap items.
+Closed — shipped as v1.2.4 (Worker commit `46261b0`, release
+`61c17c6`). Critic verdict `pass` after one re-spawn (the first critic
+instance crashed at 521s with API error 400 "Could not process image";
+the re-spawn with a no-screenshots brief succeeded).
+
+All 9 falsifiers + 5 regression checks PASS, including F5 (the
+load-bearing Costa-flagged anti-case): `toastCount=0` at 200ms and
+1700ms after Abort click, system log ends with `Connect cancelled`,
+no spurious `Disconnected.` trailing entry. F7 SKIPPED-NO-PATH per
+spec allowance (no available server reaches `error` state with a
+clean retry path in the test catalog).
+
+This was the first ship of direct Costa-feedback through the framework
+two-step after the four-DEC design-knowledge wave (DEC-025/026/027/028).
+See `maintainer/log/2026-04-26.md` §15.

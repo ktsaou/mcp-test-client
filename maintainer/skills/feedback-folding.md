@@ -150,3 +150,23 @@ new guardrail`.
      to drop out of when there's a queue of work.** When I notice
      the queue, that's the strongest signal to STOP and delegate,
      not to push faster.
+
+- **Lesson — DEC-029 / v1.2.4 (Costa-direct UX feedback ship).**
+  The first sign-off critic crashed at 521 s with API error 400
+  "Could not process image". Re-spawning the critic with an explicit
+  "no `_take_screenshot`, evidence via `_evaluate` + `_snapshot`"
+  brief succeeded cleanly. Lesson:
+
+  **Critic briefs default to evidence via `_evaluate` + `_snapshot`.**
+  `_take_screenshot` is optional — the critic's verdict cites
+  filenames but the embedding pipeline can still fail when the image
+  payload trips the API. Falsifier evidence belongs in JSON returned
+  from `_evaluate` (selector matches, computed styles, attribute
+  values, toast counts), and in YAML returned from `_snapshot`
+  (DOM tree). Screenshots are nice-to-have, not load-bearing.
+
+  Add to every future critic brief: a short paragraph saying so, and
+  a list of acceptable evidence forms ranked by reliability:
+  1. `_evaluate` JSON (selector + computed style + attribute)
+  2. `_snapshot` YAML (accessibility tree)
+  3. `_take_screenshot` (filenames only — optional)
