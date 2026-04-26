@@ -245,3 +245,80 @@ test('B.4 (negative) — schema mismatch shows form-level Ajv errors; NO modal o
   // visible in the request panel header.
   await expect(page.locator('#request[data-panel]').getByText('echo').first()).toBeVisible();
 });
+
+test('A — share-link with two pre-existing servers: sidebar / banner / URL / storage all flip to the share-linked server (DEC-015 Part A regression)', async ({
+  page,
+}) => {
+  // SOW-0005 Chunk A regression test. The v1.1.2 UX-critic observation
+  // was that a recipient with pre-existing servers in localStorage saw
+  // the sidebar's `data-active=true` row stay on a previously-clicked
+  // entry while the request panel correctly drove the shared server's
+  // tool. The bug is empirically gone on v1.2.6+ (likely closed by
+  // DEC-026 URL-as-state); this test codifies that so any future
+  // regression is caught.
+  //
+  // Pre-seed: two servers, srv-a active, srv-b inactive. Navigate to
+  // the share link for srv-b. After settle: every active-server source
+  // (sidebar `data-active`, connection-bar banner, URL `?server=`,
+  // localStorage `mcptc:servers:active`) must point at srv-b.
+  await page.addInitScript((mockUrl: string) => {
+    const now = Date.now();
+    localStorage.setItem(
+      'mcptc:servers',
+      JSON.stringify([
+        {
+          id: 'srv-a',
+          name: 'Alpha',
+          url: 'http://127.0.0.1:9999/a',
+          transport: 'streamable-http',
+          auth: { kind: 'none' },
+          addedAt: now,
+          lastUsed: null,
+        },
+        {
+          id: 'srv-b',
+          name: 'Beta',
+          url: mockUrl,
+          transport: 'streamable-http',
+          auth: { kind: 'none' },
+          addedAt: now,
+          lastUsed: null,
+        },
+      ]),
+    );
+    localStorage.setItem('mcptc:servers:active', JSON.stringify('srv-a'));
+  }, MOCK_MCP_URL);
+
+  const url = await buildShareUrl({
+    v: 1,
+    url: MOCK_MCP_URL,
+    tool: 'echo',
+    args: { text: 'hello' },
+  });
+
+  await page.goto(url);
+
+  // The loader sees srv-b's URL in the seeded list, calls setActive('srv-b'),
+  // and resolves down the chain. The four active-server sources must agree
+  // by the time the resolver settles.
+
+  // 1. Sidebar's data-active row points at srv-b ("Beta").
+  await expect(
+    page.locator('aside a.mantine-NavLink-root[data-active="true"]').filter({ hasText: 'Beta' }),
+  ).toBeVisible({ timeout: 5_000 });
+  // Conversely, srv-a's row is no longer data-active.
+  await expect(
+    page.locator('aside a.mantine-NavLink-root[data-active="true"]').filter({ hasText: 'Alpha' }),
+  ).toHaveCount(0);
+
+  // 2. localStorage active key reflects srv-b.
+  const activeId = await page.evaluate(() => {
+    const raw = localStorage.getItem('mcptc:servers:active');
+    return raw ? (JSON.parse(raw) as string) : null;
+  });
+  expect(activeId).toBe('srv-b');
+
+  // 3. The URL (after the share-link consumer rewrites it) carries
+  // ?server=srv-b — DEC-026 URL-as-state contract.
+  await expect.poll(() => page.url(), { timeout: 5_000 }).toMatch(/[?&]server=srv-b\b/);
+});
