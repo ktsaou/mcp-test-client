@@ -28,10 +28,8 @@ import { EmptyState } from './empty-state.tsx';
 
 import { useLog, type LogEntry } from '../state/log.tsx';
 import { JsonView } from './json-view.tsx';
-import { formatBytes, formatDuration } from './metrics-chips.tsx';
 import { ReportIssueDialog } from './report-issue-dialog.tsx';
 import {
-  formatHeadline,
   headlineForRequest,
   headlineForResponse,
   isNotification,
@@ -469,28 +467,12 @@ function LogRow({
       ? `mcp-${dir}-${headline.method.replace(/[^a-z0-9._-]+/gi, '_')}`
       : `mcp-${dir}`;
 
-  // When the row is narrow, the title ellipses and the chips fold (DEC-014),
-  // so the metric values disappear from view. The native `title` attribute
-  // carries them inline so a hover reveals everything: full method, byte
-  // size, duration. Tokens are deliberately omitted — they're computed
-  // lazily on expand and might be `pending` / `na`; users can expand the
-  // row to read them. DEC-013: notifications have no pair-jump button —
-  // append a short explanation so the affordance gap is documented.
-  const fullHeadline = formatHeadline(headline);
-  const headlineTitleParts: string[] = [fullHeadline];
-  if (isResp) {
-    // Response bytes are the same JSON.stringify length the chip renders.
-    // Compute once here for the tooltip; the chip recomputes for itself.
-    const bytes = JSON.stringify(entry.message, null, 2).length;
-    headlineTitleParts.push(formatBytes(bytes));
-    if (entry.metrics?.durationMs !== undefined) {
-      headlineTitleParts.push(formatDuration(entry.metrics.durationMs));
-    }
-  }
-  if (isNote) {
-    headlineTitleParts.push('notification — no paired response');
-  }
-  const headlineTitle = headlineTitleParts.join(' · ');
+  // DEC-029 — no native `title=` here. The action buttons inside this
+  // row each render their own Mantine <Tooltip>, and stacking a native
+  // browser tooltip on the headline produced a double-tooltip on the
+  // right edge. The chip values this used to surface are reachable via
+  // the row expander (DEC-013) and the chip-fold breakpoints (DEC-014)
+  // already keep at least one chip visible at every width.
 
   return (
     <div
@@ -507,7 +489,6 @@ function LogRow({
         role="button"
         tabIndex={0}
         aria-expanded={expanded}
-        title={headlineTitle}
         onClick={(ev) => {
           // Selection guard: if the user just finished selecting text inside
           // this headline (mouseup at the end of a drag), don't treat the

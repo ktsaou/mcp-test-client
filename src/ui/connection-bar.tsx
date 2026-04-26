@@ -424,13 +424,11 @@ const COMPACT_HEADER_BREAKPOINT_PX = 480;
 export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
   const { active, markUsed } = useServers();
   const { status, connect, disconnect } = useConnection();
+  const { appendSystem } = useLog();
   // useMediaQuery returns undefined on first render before the listener is
   // wired up; treat that as "not compact" so the desktop layout is the SSR /
   // first-paint default.
   const compact = useMediaQuery(`(max-width: ${COMPACT_HEADER_BREAKPOINT_PX - 1}px)`) ?? false;
-
-  const busy = status.state === 'connecting';
-  const connected = status.state === 'connected';
 
   async function handleConnect() {
     if (!active) return;
@@ -469,6 +467,86 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
         message: e instanceof Error ? e.message : String(e),
       });
     }
+  }
+
+  // DEC-029 — Abort during a `connecting` state reuses the same
+  // disconnect() path (the v1.1.20 epoch bump cancels the in-flight
+  // handshake and resets status to `idle`). No toast — the user did
+  // not "disconnect", they cancelled. A neutral system-log entry
+  // documents the cancellation in the wire pane.
+  async function handleAbort() {
+    try {
+      await disconnect();
+      appendSystem('info', 'Connect cancelled');
+    } catch (e) {
+      notifications.show({
+        color: 'red',
+        title: 'Abort failed',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
+  // DEC-029 — tristate primary action. The button is always present;
+  // its label, color, and click handler flip on `status.state`. The
+  // Activity icon (DEC-020) remains the only spinner during the
+  // handshake — it tracks per-request inflight, not lifecycle.
+  const targetName = active ? active.name || active.url : '';
+  let primaryAction: {
+    label: string;
+    tooltip: string;
+    variant: 'default' | 'filled';
+    color?: string;
+    disabled: boolean;
+    onClick: () => void;
+  };
+  switch (status.state) {
+    case 'connecting':
+      primaryAction = {
+        label: 'Abort',
+        tooltip: 'Cancel the in-flight connection (handshake will be aborted)',
+        variant: 'filled',
+        color: 'red',
+        disabled: false,
+        onClick: () => {
+          void handleAbort();
+        },
+      };
+      break;
+    case 'connected':
+      primaryAction = {
+        label: 'Disconnect',
+        tooltip: `Disconnect from ${targetName}`,
+        variant: 'default',
+        disabled: false,
+        onClick: () => {
+          void handleDisconnect();
+        },
+      };
+      break;
+    case 'error':
+      primaryAction = {
+        label: 'Reconnect',
+        tooltip: active ? `Try connecting to ${targetName} again` : 'Pick a server first',
+        variant: 'filled',
+        disabled: !active,
+        onClick: () => {
+          void handleConnect();
+        },
+      };
+      break;
+    case 'idle':
+    default:
+      primaryAction = {
+        label: 'Connect',
+        tooltip: active ? `Connect to ${targetName}` : 'Pick a server first',
+        variant: 'filled',
+        disabled: !active,
+        onClick: () => {
+          void handleConnect();
+        },
+      };
+      break;
   }
 
   return (
@@ -534,36 +612,23 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
 
       <StatusBadge status={status} />
 
-      {connected ? (
-        <Tooltip label="Disconnect from this server" withinPortal>
+      <Tooltip label={primaryAction.tooltip} withinPortal>
+        {/* Wrap the Button in a span so the tooltip target stays a real
+            DOM node when the button is disabled — Mantine drops pointer
+            events on disabled <button> and the tooltip would never fire
+            for the "Pick a server first" idle-no-active state. */}
+        <span style={{ display: 'inline-flex' }}>
           <Button
-            variant="default"
+            variant={primaryAction.variant}
             size="sm"
-            onClick={() => {
-              void handleDisconnect();
-            }}
+            color={primaryAction.color}
+            disabled={primaryAction.disabled}
+            onClick={primaryAction.onClick}
           >
-            Disconnect
+            {primaryAction.label}
           </Button>
-        </Tooltip>
-      ) : (
-        <Tooltip
-          label={active ? `Connect to ${active.name || active.url}` : 'Pick a server first'}
-          withinPortal
-        >
-          <Button
-            variant="filled"
-            size="sm"
-            disabled={!active}
-            loading={busy}
-            onClick={() => {
-              void handleConnect();
-            }}
-          >
-            Connect
-          </Button>
-        </Tooltip>
-      )}
+        </span>
+      </Tooltip>
 
       <ActivityIndicator />
 

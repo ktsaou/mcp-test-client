@@ -161,10 +161,13 @@ describe('LogPanel — DEC-012', () => {
     // just verify the trigger renders so the user can reach the dropdown.
   });
 
-  // DEC-014: when the title is too long for a narrow row it ellipses; the
-  // row's `title` attribute carries the full method+discriminator so a
-  // hover (or focus, via the row's role="button" handler) reveals it.
-  it('row title attribute carries the full method · discriminator', () => {
+  // DEC-029: the headline must NOT carry a native `title=` attribute.
+  // Each action button inside the row has its own Mantine <Tooltip>, and
+  // a native browser tooltip on the headline produced a double-tooltip
+  // when hovering buttons at the right edge. The chip values the title
+  // used to surface are reachable via the row expander (DEC-013) and
+  // the chip-fold breakpoints (DEC-014) keep at least one chip visible.
+  it('headline does not render a native title attribute (DEC-029)', () => {
     const h = renderPanel();
     act(() => {
       h.api.appendWire({
@@ -182,9 +185,7 @@ describe('LogPanel — DEC-012', () => {
       .getAllByRole('button')
       .filter((el) => el.classList.contains('log-row__headline'));
     expect(headlines).toHaveLength(1);
-    expect(headlines[0]!.getAttribute('title')).toBe(
-      'tools/call · a-tool-with-a-long-discriminator-name',
-    );
+    expect(headlines[0]!.getAttribute('title')).toBeNull();
   });
 
   it('error responses are flagged in red with (error) suffix', () => {
@@ -239,10 +240,11 @@ describe('LogPanel — DEC-012', () => {
     expect(within(row as HTMLElement).getByLabelText(/save as json file/i)).toBeInTheDocument();
     // Pair-jump is intentionally absent for notifications.
     expect(within(row as HTMLElement).queryByLabelText(/jump to paired entry/i)).toBeNull();
-    // Headline tooltip explains why pair-jump is missing.
+    // DEC-029 — the headline must not carry a native `title=`; double-
+    // tooltip avoidance trumps the previous notification-note hint.
     const headline = (row as HTMLElement).querySelector('.log-row__headline') as HTMLElement;
     expect(headline).not.toBeNull();
-    expect(headline.getAttribute('title')).toMatch(/notification — no paired response/);
+    expect(headline.getAttribute('title')).toBeNull();
     // The body expands to show the JSON envelope when the headline is clicked.
     fireEvent.click(headline);
     expect(within(row as HTMLElement).getByLabelText('message 1')).toBeInTheDocument();
