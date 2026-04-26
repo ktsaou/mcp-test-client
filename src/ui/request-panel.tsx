@@ -25,6 +25,8 @@ import {
   writeToolState,
   writeLastSelection,
 } from '../state/tool-state-persistence.ts';
+import { consumeBootToolAndArgs } from '../state/url-boot-snapshot.ts';
+import { buildShareUrl, createDebouncedUrlWriter, pushUrlState } from '../state/url-state.ts';
 import { JsonView } from './json-view.tsx';
 import { SchemaForm, type JSONSchema, validate } from '../schema-form/index.ts';
 import { CannedRequests } from './canned-requests.tsx';
@@ -110,7 +112,7 @@ export function RequestPanel() {
   const { client, status } = useConnection();
   const log = useLog();
   const { selection, consumeInbox } = useSelection();
-  const { activeId } = useServers();
+  const { active, activeId } = useServers();
   const [text, setText] = useState('');
   const [formValue, setFormValue] = useState<unknown>({});
   const [mode, setMode] = useState<Mode>('form');
@@ -124,20 +126,17 @@ export function RequestPanel() {
   const formSchema = useMemo(() => formSchemaFor(selection), [selection]);
   const description = useMemo(() => selectionDescription(selection), [selection]);
 
-  // DEC-018 — per-tool form-state persistence. On selection change:
+  // DEC-018 + DEC-026 — hydration on selection change. Order:
   //
-  //  1. If a stored snapshot exists for `(activeId, selection.name)`,
-  //     hydrate the form / raw / mode / lastResult fields from it.
-  //     The user's in-progress work survives switching tools or
-  //     servers and coming back.
-  //  2. Otherwise, seed from a share-url inbox if the recipient
-  //     arrived via a share link and the inbox matches this tool.
-  //  3. Otherwise, default-empty (with the request template seeded).
-  //
-  // The share-url inbox is consumed BEFORE the snapshot check would
-  // be — but we only use the inbox path when no snapshot exists, so
-  // a returning user's saved work isn't clobbered by a stale share-
-  // url match.
+  //  0. URL boot state (DEC-026, one-shot) wins when it names this
+  //     tool. URL is the source of truth at boot — local-storage only
+  //     fills slices the URL is silent about.
+  //  1. Stored snapshot (DEC-018) if no URL hit. The user's
+  //     in-progress work survives switching tools or servers and
+  //     coming back.
+  //  2. Share-url inbox (DEC-016 #2) if neither URL nor snapshot
+  //     applies and the recipient arrived via a hash share link.
+  //  3. Default-empty with the request template seeded.
   useEffect(() => {
     // Default-empty as the baseline; specialised paths below override.
     if (template) setText(template);
@@ -149,6 +148,18 @@ export function RequestPanel() {
     setError(null);
 
     if (!selection || selection.kind !== 'tools') return;
+
+    // 0. URL boot state (DEC-026)
+    const urlBoot = consumeBootToolAndArgs();
+    if (urlBoot.tool !== undefined && urlBoot.tool === selection.name) {
+      if (urlBoot.args !== undefined) setFormValue(urlBoot.args);
+      if (urlBoot.mode === 'raw') {
+        setMode('raw');
+      } else if (urlBoot.mode === 'form' || (urlBoot.args !== undefined && formSchema)) {
+        setMode('form');
+      }
+      return;
+    }
 
     // 1. Stored snapshot (DEC-018)
     if (activeId !== null) {
@@ -203,6 +214,96 @@ export function RequestPanel() {
       writeLastSelection(activeId, selection.name);
     }
   }, [activeId, selection]);
+
+  // DEC-026 — URL writer. A debounced subscriber pushes the current
+  // (server, tool, args, mode) tuple into `?…` via replaceState.
+  // Credentials never reach the URL: the writer's secrets guard hard-
+  // bails when it spots the active token / header value.
+  //
+  // Lazy `useState` guarantees a single writer instance even under
+  // StrictMode double-mount; the unmount effect cancels any pending
+  // tick so the next mount starts clean.
+  const [urlWriter] = useState(() => createDebouncedUrlWriter());
+  useEffect(() => {
+    return () => {
+      urlWriter.cancel();
+    };
+  }, [urlWriter]);
+  useEffect(() => {
+    const isToolSelected = selection !== null && selection.kind === 'tools';
+    urlWriter.schedule(
+      {
+        ...(activeId !== null ? { server: activeId } : {}),
+        ...(isToolSelected ? { tool: selection.name } : {}),
+        ...(isToolSelected && mode === 'form' && formValue && typeof formValue === 'object'
+          ? { args: formValue }
+          : {}),
+        ...(isToolSelected ? { mode } : {}),
+      },
+      active?.auth,
+    );
+  }, [urlWriter, activeId, active, selection, formValue, mode]);
+
+  async function handleCopyLink() {
+    // Force-flush any pending debounced write so the URL the user
+    // copies is fresh, not 200 ms stale.
+    try {
+      urlWriter.flush();
+    } catch {
+      notifications.show({
+        color: 'red',
+        title: 'Could not generate link',
+        message: 'Refused to surface the active credential in the URL.',
+      });
+      return;
+    }
+    const isToolSelected = selection !== null && selection.kind === 'tools';
+    const link = buildShareUrl({
+      ...(activeId !== null ? { server: activeId } : {}),
+      ...(isToolSelected ? { tool: selection.name } : {}),
+      ...(isToolSelected && mode === 'form' && formValue && typeof formValue === 'object'
+        ? { args: formValue }
+        : {}),
+      ...(isToolSelected ? { mode } : {}),
+    });
+    try {
+      // The pushUrlState path already ran the secrets guard via the
+      // flush above — buildShareUrl is plain string assembly, so
+      // re-run the guard explicitly here on the same URL the user is
+      // about to copy.
+      pushUrlState(
+        {
+          ...(activeId !== null ? { server: activeId } : {}),
+          ...(isToolSelected ? { tool: selection.name } : {}),
+          ...(isToolSelected && mode === 'form' && formValue && typeof formValue === 'object'
+            ? { args: formValue }
+            : {}),
+          ...(isToolSelected ? { mode } : {}),
+        },
+        active?.auth,
+        'replace',
+      );
+    } catch {
+      notifications.show({
+        color: 'red',
+        title: 'Could not generate link',
+        message: 'Refused to surface the active credential in the URL.',
+      });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      notifications.show({ message: 'Link copied to clipboard' });
+    } catch {
+      // Best-effort fallback — the URL is already in the address bar
+      // via replaceState above, so the user can copy from there.
+      notifications.show({
+        color: 'yellow',
+        title: 'Could not write to clipboard',
+        message: 'The link is in the address bar — copy from there.',
+      });
+    }
+  }
 
   function recordResultMetrics(result: unknown, startedAt: number) {
     setLastDurationMs(performance.now() - startedAt);
@@ -380,6 +481,26 @@ export function RequestPanel() {
         <CannedRequests selection={selection} formValue={formValue} onLoad={setFormValue} />
 
         <ShareButton selection={selection} formValue={formValue} rawText={text} mode={mode} />
+
+        {/*
+          DEC-026: deep-link to the current tool + args. Sits to the
+          LEFT of the Send split-button so the existing alignment
+          (Send + chevron) is undisturbed. Compact-sm matches the
+          Share button next to it; full Send button still owns the
+          primary visual weight.
+        */}
+        <Tooltip label="Copy a link that opens this exact server / tool / args setup" withinPortal>
+          <Button
+            variant="default"
+            size="compact-sm"
+            onClick={() => {
+              void handleCopyLink();
+            }}
+            style={{ flexShrink: 0, minWidth: 80 }}
+          >
+            Copy link
+          </Button>
+        </Tooltip>
 
         {/*
           DEC-019: split-button primary action. Default Send is gated by

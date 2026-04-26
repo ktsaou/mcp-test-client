@@ -13,6 +13,7 @@ import type { JSONRPCMessage, WireEvent } from '../mcp/types.ts';
 import { uiKey } from '../persistence/schema.ts';
 import { appStore } from './store-instance.ts';
 import type { LogFilter } from '../ui/log-pairing.ts';
+import { consumeBootLogFilter } from './url-boot-snapshot.ts';
 
 /** Upper bound on events kept in memory at once. */
 const LOG_CAP = 500;
@@ -56,6 +57,11 @@ interface LogContextValue {
 const FILTER_STORE_KEY = uiKey('log.filter');
 
 function readPersistedFilter(): LogFilter {
+  // DEC-026: URL is the source of truth at boot. If `?log_filter=…` is
+  // set we consume it (one-shot) and override local-storage; otherwise
+  // local-storage wins, falling back to `all`.
+  const fromUrl = consumeBootLogFilter();
+  if (fromUrl !== undefined) return fromUrl;
   const raw = appStore.read<string>(FILTER_STORE_KEY);
   if (
     raw === 'all' ||

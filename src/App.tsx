@@ -6,13 +6,20 @@ import { Notifications } from '@mantine/notifications';
 import { loadCatalog } from './catalog/loader.ts';
 import { Keys } from './persistence/schema.ts';
 import { ConnectionProvider, useConnection } from './state/connection.tsx';
-import { LogProvider } from './state/log.tsx';
+import { LogProvider, useLog } from './state/log.tsx';
 import { RequestActionsProvider } from './state/request-actions.tsx';
 import { SelectionProvider, useSelection } from './state/selection.tsx';
 import { ServersProvider, useServers } from './state/servers.tsx';
 import { appStore } from './state/store-instance.ts';
 import { ThemeProvider, useTheme } from './state/theme.tsx';
 import { readLastSelection } from './state/tool-state-persistence.ts';
+import {
+  consumeBootServer,
+  drainBootWarnings,
+  getBootUrlState,
+} from './state/url-boot-snapshot.ts';
+import { stripManagedParams } from './state/url-state.ts';
+import { notifications } from '@mantine/notifications';
 import { appTheme } from './ui/mantine-theme.ts';
 import { CommandPaletteHost } from './ui/command-palette.tsx';
 import { Layout } from './ui/layout.tsx';
@@ -108,21 +115,96 @@ function RestoreSelectionOnServerReady() {
     if (activeId === null) return;
     if (lastRestoredForRef.current === activeId) return;
     if (status.state !== 'connected') return;
-    const lastTool = readLastSelection(activeId);
-    if (!lastTool) {
+    // DEC-026: URL > local-storage. If the boot URL named a tool, that
+    // wins over the per-server "last selection" pointer. The
+    // tool/args/mode triple stays in the boot snapshot until the
+    // request panel claims it; we only peek at the tool name here so
+    // selection lands on the URL-named tool first.
+    const urlBoot = getBootUrlState();
+    const candidate = urlBoot.tool ?? readLastSelection(activeId);
+    if (!candidate) {
       lastRestoredForRef.current = activeId;
       return;
     }
     const tool = (inventory.tools as Array<Record<string, unknown>>).find(
-      (t) => t['name'] === lastTool,
+      (t) => t['name'] === candidate,
     );
     if (!tool) {
       lastRestoredForRef.current = activeId;
       return;
     }
-    setSelection({ kind: 'tools', name: lastTool, payload: tool });
+    setSelection({ kind: 'tools', name: candidate, payload: tool });
     lastRestoredForRef.current = activeId;
   }, [activeId, status, inventory, setSelection]);
+
+  return null;
+}
+
+/**
+ * DEC-026 — apply the boot URL state.
+ *
+ * On first mount: replay any warnings the boot URL parser captured into
+ * the system log (so a malformed `?args=` is visible to the user), then
+ * activate the URL-supplied server if it's in the saved list and kick
+ * off connect (mirrors `?add=` connect-on-pickup). Finally strip our
+ * managed params from the URL — leaves `?add=` and any other sibling
+ * params intact for their own consumers.
+ *
+ * Renders nothing — pure side-effect. Lives inside ServersProvider /
+ * ConnectionProvider / LogProvider so it can read + act on all three.
+ */
+function ApplyBootUrlState() {
+  const { servers, setActive, markUsed } = useServers();
+  const { connect } = useConnection();
+  const log = useLog();
+  const consumedRef = useRef(false);
+  // Capture servers in a ref so the effect runs once on mount and does
+  // not re-fire when the list mutates from a parallel boot path.
+  const serversRef = useRef(servers);
+  serversRef.current = servers;
+
+  useEffect(() => {
+    if (consumedRef.current) return;
+    consumedRef.current = true;
+
+    for (const msg of drainBootWarnings()) {
+      log.appendSystem('warn', msg);
+    }
+
+    const urlServerId = consumeBootServer();
+    if (urlServerId !== undefined) {
+      const match = serversRef.current.find((s) => s.id === urlServerId);
+      if (match) {
+        setActive(match.id);
+        void (async () => {
+          try {
+            const outcome = await connect(match);
+            if (outcome === 'connected') {
+              markUsed(match.id);
+              notifications.show({ message: `Connected to ${match.name || match.url}` });
+            }
+          } catch (e) {
+            notifications.show({
+              color: 'red',
+              title: 'Connect failed',
+              message: e instanceof Error ? e.message : String(e),
+            });
+          }
+        })();
+      } else {
+        log.appendSystem('warn', `URL referenced unknown server id "${urlServerId}" — ignored`);
+      }
+    }
+
+    // Strip our managed params; preserve any siblings (notably `?add=…`,
+    // DEC-016 #3) and the hash (share-link state).
+    if (typeof window !== 'undefined') {
+      const sibling = stripManagedParams(window.location.search);
+      const next = window.location.pathname + sibling + window.location.hash;
+      window.history.replaceState(null, '', next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return null;
 }
@@ -167,6 +249,7 @@ export function App() {
                 <RequestActionsProvider>
                   <CommandPaletteHost>
                     <CatalogAutoMerge />
+                    <ApplyBootUrlState />
                     <RestoreSelectionOnServerReady />
                     <Layout />
                   </CommandPaletteHost>
