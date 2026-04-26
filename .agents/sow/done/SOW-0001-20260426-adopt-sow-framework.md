@@ -146,7 +146,6 @@ release-readiness,ui-surface-change,agents-roster}.md` (6 sub-files,
 - `.agents/sow/specs/{values,product-overview,quality-bar,60-second-flow,
 anti-goals,differentiators,design-system}.md` (8 files, via `git mv` from
   maintainer/{values.md, product/\*})
-- `.agents/sow/{pending,current,done}/index.md` (3 status indexes)
 - `.agents/sow/done/SOW-0001…SOW-0004-*.md` (this SOW + 3 retroactive)
 
 Files removed (content preserved in destinations above):

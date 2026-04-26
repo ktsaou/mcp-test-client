@@ -8,7 +8,7 @@ resources through auto-generated forms. Nothing is sent anywhere except your
 browser and the MCP server you point at. No backend, no account, no
 telemetry.
 
-**Status**: rewrite in progress. See [`TODO-MODERNIZATION.md`](TODO-MODERNIZATION.md).
+**Status**: actively maintained. Active work tracked in [`.agents/sow/current/`](.agents/sow/current/) and [`.agents/sow/pending/`](.agents/sow/pending/); decisions in [`.agents/sow/specs/decisions/`](.agents/sow/specs/decisions/).
 
 ## What it's for
 
