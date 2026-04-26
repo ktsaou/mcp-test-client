@@ -30,10 +30,12 @@ import { useLog, type LogEntry } from '../state/log.tsx';
 import { JsonView } from './json-view.tsx';
 import { ReportIssueDialog } from './report-issue-dialog.tsx';
 import {
+  formatHeadline,
   headlineForRequest,
   headlineForResponse,
   isNotification,
   isResponse,
+  type Headline,
 } from './log-headline.ts';
 import {
   applyFilter,
@@ -43,7 +45,13 @@ import {
   type LogFilter,
 } from './log-pairing.ts';
 import { chipLevelFor, type ChipLevel } from './log-chip-visibility.ts';
-import { MetricsChips, type ResponseMetrics, type TokenState } from './metrics-chips.tsx';
+import {
+  MetricsChips,
+  formatBytes,
+  formatDuration,
+  type ResponseMetrics,
+  type TokenState,
+} from './metrics-chips.tsx';
 import { estimateTokens } from './log-tokens.ts';
 
 const FILTER_LABELS: Record<LogFilter, string> = {
@@ -151,8 +159,14 @@ export function LogPanel() {
         // points at. Fires on the next tick to outrun React's
         // re-render that paints `data-current="true"`.
         const el = rowRefs.current.get(entry.id);
-        const headline = el?.querySelector<HTMLElement>('.log-row__headline');
-        if (headline) requestAnimationFrame(() => headline.focus({ preventScroll: true }));
+        // DEC-031 — the role=button click target is `.log-row__values` on
+        // wire rows (chev/dir/ts/title/chips) and `.log-row__headline` on
+        // system rows (which have no action buttons). Try the wire selector
+        // first, fall back to the headline for system rows.
+        const focusable =
+          el?.querySelector<HTMLElement>('.log-row__values') ??
+          el?.querySelector<HTMLElement>('.log-row__headline');
+        if (focusable) requestAnimationFrame(() => focusable.focus({ preventScroll: true }));
       }
     },
     [filtered, scrollToEntry],
@@ -444,7 +458,37 @@ function LogRow({
     [entry.timestamp],
   );
 
+  // DEC-031 — bytes + duration are needed both by the values-tooltip string
+  // and by the chips themselves; compute once at the row level so they stay
+  // in lockstep. Token state is lifted up from the chips for the same reason
+  // (the tooltip omits "pending"/"na"; the chip still renders them). Hooks
+  // run for every row kind (rules-of-hooks); the wire-only branches below
+  // gate their use, and the system-row early return is taken AFTER these.
+  const isWire = entry.kind === 'wire';
+  const wireMessage = isWire ? entry.message : null;
+  const wireMetrics = isWire ? entry.metrics : undefined;
+  const isResp = isWire ? isResponse(entry.message) : false;
+  const bytes = useMemo(
+    () => (isResp && wireMessage ? jsonByteLength(wireMessage) : 0),
+    [isResp, wireMessage],
+  );
+  const durationMs = isResp ? (wireMetrics?.durationMs ?? 0) : 0;
+  const [tokens, setTokens] = useState<TokenState>('pending');
+  const tokensRequestedRef = useRef(false);
+  useEffect(() => {
+    if (!isResp || !expanded || !wireMessage) return;
+    if (tokensRequestedRef.current) return;
+    tokensRequestedRef.current = true;
+    estimateTokens(wireMessage)
+      .then((n) => setTokens(n))
+      .catch(() => setTokens('na'));
+  }, [isResp, expanded, wireMessage]);
+
   if (entry.kind === 'system') {
+    // DEC-031 — system rows have no action buttons, so wrap the whole
+    // headline in a single tooltip carrying the full text. At narrow
+    // widths the system text truncates via flex-overflow; hover reveals
+    // the full message.
     return (
       <div
         ref={registerRef}
@@ -453,24 +497,26 @@ function LogRow({
         data-current={isCurrent ? 'true' : undefined}
         aria-current={isCurrent ? 'true' : undefined}
       >
-        <div
-          className="log-row__headline"
-          style={{ cursor: 'default' }}
-          onClick={(ev) => {
-            // DEC-030 — anchor the cursor on this row, but skip the click
-            // when the user is finishing a text-selection drag (same
-            // pattern as the wire-row headline guard below).
-            if (isSelectionDragInside(ev.currentTarget)) return;
-            onSelect(entry.id);
-          }}
-        >
-          <span className="log-row__chev" aria-hidden="true" />
-          <span className="log-row__dir log-row__dir--sys">•</span>
-          <Text size="xs" className="log-row__ts">
-            {ts}
-          </Text>
-          <span className="log-row__system-text">{entry.text}</span>
-        </div>
+        <Tooltip label={entry.text} withinPortal openDelay={350} disabled={!entry.text}>
+          <div
+            className="log-row__headline"
+            style={{ cursor: 'default' }}
+            onClick={(ev) => {
+              // DEC-030 — anchor the cursor on this row, but skip the click
+              // when the user is finishing a text-selection drag (same
+              // pattern as the wire-row values guard below).
+              if (isSelectionDragInside(ev.currentTarget)) return;
+              onSelect(entry.id);
+            }}
+          >
+            <span className="log-row__chev" aria-hidden="true" />
+            <span className="log-row__dir log-row__dir--sys">•</span>
+            <Text size="xs" className="log-row__ts">
+              {ts}
+            </Text>
+            <span className="log-row__system-text">{entry.text}</span>
+          </div>
+        </Tooltip>
       </div>
     );
   }
@@ -480,7 +526,6 @@ function LogRow({
   // pair-jump is skipped for notifications because they carry no JSON-RPC id.
   const dir = entry.direction === 'outgoing' ? 'out' : 'in';
   const dirGlyph = entry.direction === 'outgoing' ? '→' : '←';
-  const isResp = isResponse(entry.message);
   const isNote = isNotification(entry.message);
   const headline = isResp
     ? headlineForResponse(
@@ -494,12 +539,17 @@ function LogRow({
       ? `mcp-${dir}-${headline.method.replace(/[^a-z0-9._-]+/gi, '_')}`
       : `mcp-${dir}`;
 
-  // DEC-029 — no native `title=` here. The action buttons inside this
-  // row each render their own Mantine <Tooltip>, and stacking a native
-  // browser tooltip on the headline produced a double-tooltip on the
-  // right edge. The chip values this used to surface are reachable via
-  // the row expander (DEC-013) and the chip-fold breakpoints (DEC-014)
-  // already keep at least one chip visible at every width.
+  // DEC-029 — no native `title=` here. DEC-031 wraps the values region in
+  // a single Mantine <Tooltip> instead, and action buttons remain OUTSIDE
+  // that subtree so each keeps exactly one tooltip (no stacking).
+  const valuesString = buildHeadlineTooltip({
+    headline,
+    isResp,
+    isNote,
+    bytes,
+    durationMs,
+    tokens,
+  });
 
   return (
     <div
@@ -511,57 +561,69 @@ function LogRow({
       data-current={isCurrent ? 'true' : undefined}
       aria-current={isCurrent ? 'true' : undefined}
     >
-      <div
-        className="log-row__headline"
-        role="button"
-        tabIndex={0}
-        aria-expanded={expanded}
-        onClick={(ev) => {
-          // Selection guard: if the user just finished selecting text inside
-          // this headline (mouseup at the end of a drag), don't treat the
-          // click as an expand-toggle or as a cursor-anchor (DEC-030). We
-          // allow text selection in the headline (log-row__headline used to
-          // set user-select:none which made copy impossible) and this guard
-          // is the standard pattern for keeping click handlers alongside
-          // drag-to-select.
-          if (isSelectionDragInside(ev.currentTarget)) return;
-          onSelect(entry.id);
-          onToggle();
-        }}
-        onKeyDown={(ev) => {
-          if (ev.key === 'Enter' || ev.key === ' ') {
-            ev.preventDefault();
-            onToggle();
-          }
-        }}
-      >
-        <span
-          className={`log-row__chev${expanded ? ' log-row__chev--open' : ''}`}
-          aria-hidden="true"
-        >
-          ▸
-        </span>
-        <span className={`log-row__dir log-row__dir--${dir}`} aria-hidden="true">
-          {dirGlyph}
-        </span>
-        <Text size="xs" className="log-row__ts">
-          {ts}
-        </Text>
-        <span className={`log-row__title${headline.isError ? ' log-row__title--error' : ''}`}>
-          {headline.method ?? 'response'}
-          {headline.discriminator ? (
-            <span className="log-row__title-discriminator"> · {headline.discriminator}</span>
-          ) : null}
-          {headline.isError ? <span className="log-row__title-discriminator"> (error)</span> : null}
-        </span>
-        {/* Metrics: only on incoming responses (DEC-009 — answers about
-         *response* cost). Outgoing requests show no chips. */}
-        {isResp ? (
-          <div className="log-row__chips">
-            <ResponseMetricsChips entry={entry} expanded={expanded} />
+      <div className="log-row__headline">
+        <Tooltip label={valuesString} withinPortal openDelay={350} disabled={!valuesString}>
+          <div
+            className="log-row__values"
+            role="button"
+            tabIndex={0}
+            aria-expanded={expanded}
+            onClick={(ev) => {
+              // Selection guard: if the user just finished selecting text
+              // inside the values region (mouseup at the end of a drag),
+              // don't treat the click as an expand-toggle or as a
+              // cursor-anchor (DEC-030). Standard pattern for keeping
+              // click handlers alongside drag-to-select.
+              if (isSelectionDragInside(ev.currentTarget)) return;
+              onSelect(entry.id);
+              onToggle();
+            }}
+            onKeyDown={(ev) => {
+              if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                onToggle();
+              }
+            }}
+          >
+            <span
+              className={`log-row__chev${expanded ? ' log-row__chev--open' : ''}`}
+              aria-hidden="true"
+            >
+              ▸
+            </span>
+            <span className={`log-row__dir log-row__dir--${dir}`} aria-hidden="true">
+              {dirGlyph}
+            </span>
+            <Text size="xs" className="log-row__ts">
+              {ts}
+            </Text>
+            <span className={`log-row__title${headline.isError ? ' log-row__title--error' : ''}`}>
+              {headline.method ?? 'response'}
+              {headline.discriminator ? (
+                <span className="log-row__title-discriminator"> · {headline.discriminator}</span>
+              ) : null}
+              {headline.isError ? (
+                <span className="log-row__title-discriminator"> (error)</span>
+              ) : null}
+            </span>
+            {/* Metrics: only on incoming responses (DEC-009 — answers about
+             *response* cost). Outgoing requests show no chips. The chips
+             * themselves render bare here (`withTooltips={false}`); the
+             * outer values tooltip surfaces the same numbers in prose form
+             * to honour DEC-029's no-double-tooltip invariant. */}
+            {isResp ? (
+              <div className="log-row__chips">
+                <MetricsChips
+                  metrics={{ bytes, durationMs, tokens } satisfies ResponseMetrics}
+                  withTooltips={false}
+                />
+              </div>
+            ) : null}
           </div>
-        ) : null}
-        {/* Pair-jump button: only when there's a partner to jump to. */}
+        </Tooltip>
+        {/* Pair-jump button: only when there's a partner to jump to. Sits
+         * OUTSIDE the values tooltip so its own per-button tooltip is the
+         * only one that fires on hover (DEC-029). */}
         {pairedId !== undefined ? (
           <div className="log-row__actions">
             <Tooltip
@@ -583,7 +645,8 @@ function LogRow({
           </div>
         ) : null}
         {/* Copy + save are always visible on every wire entry — request,
-         * response, and notification alike (DEC-013). */}
+         * response, and notification alike (DEC-013). Outside the values
+         * tooltip subtree (DEC-029). */}
         <div className="log-row__actions">
           <CopySaveButtons value={entry.message} filenameStem={filenameStem} />
         </div>
@@ -594,7 +657,7 @@ function LogRow({
           onClick={(ev) => {
             // DEC-030 — body click anchors the cursor without toggling the
             // expand state (the user is reading; collapsing under them
-            // would trap them). Same drag-select guard as the headline:
+            // would trap them). Same drag-select guard as the values:
             // text-drags inside the JSON view must not anchor.
             if (isSelectionDragInside(ev.currentTarget)) return;
             onSelect(entry.id);
@@ -605,6 +668,33 @@ function LogRow({
       ) : null}
     </div>
   );
+}
+
+/**
+ * Build the values-tooltip string shown on hover over the wire-row's
+ * values region (DEC-031). For responses, includes formatted bytes +
+ * duration, plus tokens when the count has loaded. Pending/n/a token
+ * states are intentionally omitted — those clutter the prose and the
+ * expanded-row chip detail covers them.
+ */
+function buildHeadlineTooltip(args: {
+  headline: Headline;
+  isResp: boolean;
+  isNote: boolean;
+  bytes: number;
+  durationMs: number;
+  tokens: TokenState;
+}): string {
+  const base = formatHeadline(args.headline);
+  if (args.isResp) {
+    const parts = [base, formatBytes(args.bytes), formatDuration(args.durationMs)];
+    if (typeof args.tokens === 'number') parts.push(`~${args.tokens} tokens`);
+    return parts.join(' · ');
+  }
+  if (args.isNote) {
+    return `${base} · notification — no paired response`;
+  }
+  return base;
 }
 
 /**
@@ -619,40 +709,6 @@ function isSelectionDragInside(target: Node): boolean {
   const anchor = sel.anchorNode;
   const focus = sel.focusNode;
   return (anchor !== null && target.contains(anchor)) || (focus !== null && target.contains(focus));
-}
-
-/**
- * Metrics chips for a *response* row. Bytes + duration are computed
- * synchronously on first render; tokens lazy-load via gpt-tokenizer when the
- * row is first expanded (DEC-012 perf note).
- */
-function ResponseMetricsChips({
-  entry,
-  expanded,
-}: {
-  entry: Extract<LogEntry, { kind: 'wire' }>;
-  expanded: boolean;
-}) {
-  const bytes = useMemo(() => jsonByteLength(entry.message), [entry.message]);
-  // Duration: response timestamp − paired-request timestamp. Without the pair
-  // we can't show a meaningful number, so we display 0 ms — the chip stays
-  // useful as a "just arrived" marker but truthful.
-  const durationMs = entry.metrics?.durationMs ?? 0;
-
-  const [tokens, setTokens] = useState<TokenState>('pending');
-  const requestedRef = useRef(false);
-
-  useEffect(() => {
-    if (!expanded) return;
-    if (requestedRef.current) return;
-    requestedRef.current = true;
-    estimateTokens(entry.message)
-      .then((n) => setTokens(n))
-      .catch(() => setTokens('na'));
-  }, [expanded, entry.message]);
-
-  const metrics: ResponseMetrics = { bytes, durationMs, tokens };
-  return <MetricsChips metrics={metrics} />;
 }
 
 /**

@@ -39,24 +39,55 @@ function formatTokens(state: TokenState): string {
  * progressively (tokens → ms → bytes) when the row narrows. Visual order
  * (bytes → ms → tokens, smallest-text first) matches the drop priority:
  * the most-likely-to-survive chip sits closest to the title.
+ *
+ * `withTooltips` (default `true`) controls per-chip Mantine Tooltips. The
+ * log-row headline wraps the entire values region (including the chips) in
+ * a single outer Tooltip and passes `withTooltips={false}` to suppress the
+ * inner ones — preserving DEC-029's no-double-tooltip invariant. The
+ * request-panel "Last result" view keeps the default and shows per-chip
+ * help on hover.
  */
-export function MetricsChips({ metrics }: { metrics: ResponseMetrics }) {
+export function MetricsChips({
+  metrics,
+  withTooltips = true,
+}: {
+  metrics: ResponseMetrics;
+  withTooltips?: boolean;
+}) {
+  const bytesBadge = (
+    <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="bytes">
+      {formatBytes(metrics.bytes)}
+    </Badge>
+  );
+  const msBadge = (
+    <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="ms">
+      {formatDuration(metrics.durationMs)}
+    </Badge>
+  );
+  const tokensBadge = (
+    <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="tokens">
+      {formatTokens(metrics.tokens)}
+    </Badge>
+  );
+  if (!withTooltips) {
+    return (
+      <>
+        {bytesBadge}
+        {msBadge}
+        {tokensBadge}
+      </>
+    );
+  }
   return (
     <>
       <Tooltip label="Pretty-printed JSON byte length (UTF-8)" withinPortal>
-        <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="bytes">
-          {formatBytes(metrics.bytes)}
-        </Badge>
+        {bytesBadge}
       </Tooltip>
       <Tooltip label="End-to-end duration (request sent → response received)" withinPortal>
-        <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="ms">
-          {formatDuration(metrics.durationMs)}
-        </Badge>
+        {msBadge}
       </Tooltip>
       <Tooltip label="Estimated LLM tokens (gpt-tokenizer / o200k_base)" withinPortal>
-        <Badge size="xs" variant="light" color="gray" className="metric-chip" data-chip="tokens">
-          {formatTokens(metrics.tokens)}
-        </Badge>
+        {tokensBadge}
       </Tooltip>
     </>
   );

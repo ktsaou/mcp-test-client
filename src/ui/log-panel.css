@@ -36,26 +36,38 @@
   align-items: center;
   gap: 8px;
   padding: 4px 12px;
-  cursor: pointer;
   min-width: 0;
   /* Belt + braces: a long unbreakable token in the title must not push the
      action icons off-screen at any width. */
   overflow: hidden;
-  /*
-   * Text selection is INTENTIONALLY allowed on the headline (was
-   * `user-select: none` until v1.1.7). Costa flagged that disabling
-   * selection broke a basic expectation: users want to select-and-copy
-   * the method name, the timestamp, or a chip value the same way they
-   * would in a terminal or in DevTools. The click-to-expand handler in
-   * log-panel.tsx now skips toggling when the user just finished a
-   * selection drag, so selecting text doesn't accidentally toggle the
-   * row.
-   */
+}
+
+/*
+ * DEC-031 — `.log-row__values` is the values region (chev / direction /
+ * timestamp / title / chips). It's the click target for expand + cursor
+ * anchoring (DEC-030) and the inner child of the values-tooltip wrapper.
+ * Action buttons live OUTSIDE this div as siblings inside `.log-row__headline`
+ * so each keeps its own per-button tooltip without stacking with this one.
+ *
+ * Text selection is INTENTIONALLY allowed (was `user-select: none` until
+ * v1.1.7). Costa flagged that disabling selection broke the
+ * select-and-copy-the-method-name expectation. The click handler in
+ * log-panel.tsx skips toggling when the user just finished a drag-select
+ * (`isSelectionDragInside`).
+ */
+.log-row__values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  cursor: pointer;
   user-select: text;
 }
 
 /* Decorative chrome — chevron, direction glyph, action icons — stays
-   unselectable so a triple-click on the headline doesn't sweep them
+   unselectable so a triple-click on the values region doesn't sweep them
    into the copied text. The title, timestamp, chip values, and system
    text remain selectable. */
 .log-row__chev,

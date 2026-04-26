@@ -86,13 +86,14 @@ describe('LogPanel — DEC-012', () => {
         timestamp: 1_000_000,
       });
     });
-    // The headline is a role="button" within the row; the toolbar buttons
-    // have a `name` (Expand all / etc.) so the unnamed one is the headline.
-    const headlines = screen
+    // The values region is a role="button" within the row (DEC-031); the
+    // toolbar buttons have a `name` (Expand all / etc.) so the unnamed one
+    // is the row's values div.
+    const values = screen
       .getAllByRole('button')
-      .filter((el) => el.classList.contains('log-row__headline'));
-    expect(headlines).toHaveLength(1);
-    fireEvent.click(headlines[0]!);
+      .filter((el) => el.classList.contains('log-row__values'));
+    expect(values).toHaveLength(1);
+    fireEvent.click(values[0]!);
     expect(screen.getByLabelText('message 1')).toBeInTheDocument();
   });
 
@@ -161,13 +162,12 @@ describe('LogPanel — DEC-012', () => {
     // just verify the trigger renders so the user can reach the dropdown.
   });
 
-  // DEC-029: the headline must NOT carry a native `title=` attribute.
-  // Each action button inside the row has its own Mantine <Tooltip>, and
-  // a native browser tooltip on the headline produced a double-tooltip
-  // when hovering buttons at the right edge. The chip values the title
-  // used to surface are reachable via the row expander (DEC-013) and
-  // the chip-fold breakpoints (DEC-014) keep at least one chip visible.
-  it('headline does not render a native title attribute (DEC-029)', () => {
+  // DEC-029: no native `title=` on the row; DEC-031 surfaces the values
+  // via a Mantine <Tooltip> wrapping the values div instead. Both the
+  // headline (parent) and the values div (click target) must remain free
+  // of a native HTML `title` attribute, so hovering anywhere stacks at
+  // most one tooltip — Mantine's, never a native one.
+  it('row does not render a native title attribute (DEC-029 / DEC-031)', () => {
     const h = renderPanel();
     act(() => {
       h.api.appendWire({
@@ -181,11 +181,14 @@ describe('LogPanel — DEC-012', () => {
         timestamp: 1_000_000,
       });
     });
-    const headlines = screen
+    const values = screen
       .getAllByRole('button')
-      .filter((el) => el.classList.contains('log-row__headline'));
-    expect(headlines).toHaveLength(1);
-    expect(headlines[0]!.getAttribute('title')).toBeNull();
+      .filter((el) => el.classList.contains('log-row__values'));
+    expect(values).toHaveLength(1);
+    expect(values[0]!.getAttribute('title')).toBeNull();
+    const headline = values[0]!.closest('.log-row__headline') as HTMLElement;
+    expect(headline).not.toBeNull();
+    expect(headline.getAttribute('title')).toBeNull();
   });
 
   it('error responses are flagged in red with (error) suffix', () => {
@@ -240,13 +243,17 @@ describe('LogPanel — DEC-012', () => {
     expect(within(row as HTMLElement).getByLabelText(/save as json file/i)).toBeInTheDocument();
     // Pair-jump is intentionally absent for notifications.
     expect(within(row as HTMLElement).queryByLabelText(/jump to paired entry/i)).toBeNull();
-    // DEC-029 — the headline must not carry a native `title=`; double-
-    // tooltip avoidance trumps the previous notification-note hint.
+    // DEC-029 / DEC-031 — neither the headline nor the values div carries
+    // a native `title=`; the values tooltip (Mantine) is the single source
+    // of hover truth.
     const headline = (row as HTMLElement).querySelector('.log-row__headline') as HTMLElement;
     expect(headline).not.toBeNull();
     expect(headline.getAttribute('title')).toBeNull();
-    // The body expands to show the JSON envelope when the headline is clicked.
-    fireEvent.click(headline);
+    const values = (row as HTMLElement).querySelector('.log-row__values') as HTMLElement;
+    expect(values).not.toBeNull();
+    expect(values.getAttribute('title')).toBeNull();
+    // The body expands to show the JSON envelope when the values are clicked.
+    fireEvent.click(values);
     expect(within(row as HTMLElement).getByLabelText('message 1')).toBeInTheDocument();
   });
 
@@ -272,10 +279,11 @@ describe('LogPanel — DEC-012', () => {
     expect(within(row as HTMLElement).getByLabelText(/save as json file/i)).toBeInTheDocument();
     // Pair-jump still absent for an incoming server-pushed notification.
     expect(within(row as HTMLElement).queryByLabelText(/jump to paired entry/i)).toBeNull();
-    // Body expands to the full JSON-RPC envelope.
-    const headline = (row as HTMLElement).querySelector('.log-row__headline') as HTMLElement;
-    expect(headline).not.toBeNull();
-    fireEvent.click(headline);
+    // Body expands to the full JSON-RPC envelope when the values are clicked
+    // (DEC-031 — the values div is the click target on wire rows).
+    const values = (row as HTMLElement).querySelector('.log-row__values') as HTMLElement;
+    expect(values).not.toBeNull();
+    fireEvent.click(values);
     expect(within(row as HTMLElement).getByLabelText('message 1')).toBeInTheDocument();
   });
 });
