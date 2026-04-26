@@ -66,7 +66,7 @@ describe('usePanelSize', () => {
     });
 
     expect(result.current[0]).toBe(350);
-    expect(mockWrite).toHaveBeenCalledWith('mcptc:ui.log-height', 350);
+    expect(mockWrite).toHaveBeenCalledWith('ui.log-height', 350);
   });
 
   it('clamps writes to bounds and persists the clamped value', () => {
@@ -79,12 +79,12 @@ describe('usePanelSize', () => {
       result.current[1](50); // below min
     });
     expect(result.current[0]).toBe(100);
-    expect(mockWrite).toHaveBeenLastCalledWith('mcptc:ui.log-height', 100);
+    expect(mockWrite).toHaveBeenLastCalledWith('ui.log-height', 100);
 
     act(() => {
       result.current[1](9999); // above max
     });
     expect(result.current[0]).toBe(500);
-    expect(mockWrite).toHaveBeenLastCalledWith('mcptc:ui.log-height', 500);
+    expect(mockWrite).toHaveBeenLastCalledWith('ui.log-height', 500);
   });
 });

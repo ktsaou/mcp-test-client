@@ -68,6 +68,22 @@
   background: var(--mantine-color-default-hover);
 }
 
+/*
+ * v1.1.20 — prev/next navigation cursor. The toolbar arrows (and j/k
+ * keys) move a "current" pointer across the log; without a visible
+ * indicator the reader has no way to tell which row was just landed on
+ * after the smooth-scroll. Cyan inset rule + a subtle background tint;
+ * uses `--color-info` and `--mantine-color-default-hover` so both
+ * dark and light themes stay legible.
+ */
+.log-row[data-current='true'],
+.log-row[data-current='true'] .log-row__headline {
+  background: var(--mantine-color-default-hover);
+}
+.log-row[data-current='true'] {
+  box-shadow: inset 3px 0 0 var(--color-info);
+}
+
 .log-row__chev {
   color: var(--color-text-muted);
   width: 12px;

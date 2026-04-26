@@ -20,7 +20,9 @@ import { notifications } from '@mantine/notifications';
 
 import { loadCatalog } from '../catalog/loader.ts';
 import type { CatalogServer } from '../catalog/types.ts';
+import { McpClient } from '../mcp/client.ts';
 import { useConnection } from '../state/connection.tsx';
+import { useLog } from '../state/log.tsx';
 import { useServers } from '../state/servers.tsx';
 import type { ServerEntry } from '../persistence/schema.ts';
 import type { TransportKind } from '../mcp/types.ts';
@@ -299,6 +301,7 @@ interface ServerModalProps {
 function ServerModal({ spec, onClose }: ServerModalProps) {
   const { servers, add, update, setActive } = useServers();
   const { connect } = useConnection();
+  const log = useLog();
   const existing = spec.mode === 'edit' ? servers.find((s) => s.id === spec.id) : null;
   const prefill = spec.mode === 'add' ? spec.prefill : undefined;
 
@@ -394,23 +397,27 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
     };
 
     setBusy(true);
-    // DEC-016 #4 — connect-on-save. We probe the server with a
-    // throwaway client first; if it works, we persist the entry and
-    // promote to the live connection. If it fails, we surface the
-    // error inline and DON'T persist. The reuse of the live
-    // ConnectionContext.connect() handles supersede if the user
-    // clicks Save while another connect is in flight.
-    try {
-      const outcome = await connect(candidate);
-      if (outcome === 'superseded') {
-        // Another connect (e.g. user clicked a sidebar entry while the
-        // modal probe was running) took over. Don't save; close the
-        // modal silently.
-        onClose();
-        return;
-      }
-      // Connect succeeded — now persist.
-      if (spec.mode === 'add') {
+    if (spec.mode === 'add') {
+      // v1.1.20 — isolated probe. Until v1.1.19 the add flow piped the
+      // draft entry through the global ConnectionContext.connect(),
+      // which routed every status update onto whatever server was
+      // currently active. A failing probe (bad URL or wrong token)
+      // therefore flipped the active server's pill to ERROR. The
+      // probe now runs against a throwaway McpClient — the global
+      // connection state is untouched until we know the entry is
+      // good and have persisted it.
+      const probe = new McpClient({
+        onWire: (e) => log.appendWire(e),
+      });
+      try {
+        log.appendSystem('info', `Probing ${cleanUrl}…`);
+        await probe.connect({
+          url: cleanUrl,
+          transport: candidate.transport,
+          auth: candidate.auth ?? { kind: 'none' },
+        });
+        // Probe succeeded — close the throwaway and promote.
+        await probe.disconnect().catch(() => undefined);
         const created = add({
           name: candidate.name,
           url: candidate.url,
@@ -418,16 +425,41 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
           auth: candidate.auth,
         });
         setActive(created.id);
-        notifications.show({ message: `Added and connected to ${created.name}` });
-      } else {
-        update(spec.id, {
-          name: candidate.name,
-          url: candidate.url,
-          transport: candidate.transport,
-          auth: candidate.auth,
-        });
-        notifications.show({ message: `Updated ${candidate.name}` });
+        const outcome = await connect({ ...created });
+        if (outcome === 'connected') {
+          notifications.show({ message: `Added and connected to ${created.name}` });
+        }
+        onClose();
+      } catch (e) {
+        // Tear down the probe; do NOT persist; do NOT touch the global
+        // ConnectionContext. The currently-active server keeps its
+        // status.
+        await probe.disconnect().catch(() => undefined);
+        const msg = e instanceof Error ? e.message : String(e);
+        log.appendSystem('error', `Probe failed: ${msg}`);
+        setError(`Connect failed: ${msg}`);
+      } finally {
+        setBusy(false);
       }
+      return;
+    }
+
+    // Edit mode — the user is intentionally reconfiguring an existing
+    // entry, so we keep going through ConnectionContext (the prior
+    // connection is to the entry being edited).
+    try {
+      const outcome = await connect(candidate);
+      if (outcome === 'superseded') {
+        onClose();
+        return;
+      }
+      update(spec.id, {
+        name: candidate.name,
+        url: candidate.url,
+        transport: candidate.transport,
+        auth: candidate.auth,
+      });
+      notifications.show({ message: `Updated ${candidate.name}` });
       onClose();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

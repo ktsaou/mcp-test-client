@@ -16,8 +16,8 @@
  *   - Add a test in `migrations.test.ts`.
  */
 
-import { CURRENT_SCHEMA_VERSION, Keys, prefixed } from './schema.ts';
-import type { Store } from './store.ts';
+import { CURRENT_SCHEMA_VERSION, Keys, STORAGE_PREFIX, prefixed } from './schema.ts';
+import type { Store, StorageLike } from './store.ts';
 
 /** Signature of a single migration step. Mutate storage in place. */
 export type Migration = (store: Store) => void;
@@ -84,4 +84,50 @@ export function runMigrations(store: Store): MigrationOutcome {
     fromVersion: stored,
     toVersion: CURRENT_SCHEMA_VERSION,
   };
+}
+
+/**
+ * v1.1.20 cleanup — `mcptc:mcptc:*` → `mcptc:*`.
+ *
+ * The key helpers in `schema.ts` (toolStateKey, lastSelectionKey,
+ * cannedKey, uiKey, toolParamsKey) used to return already-prefixed
+ * keys and were then handed to `Store.read/write` which prefixes
+ * again, so values landed under `mcptc:mcptc:tool-state.<id>.<tool>`
+ * etc. Idempotent: running on a clean store is a no-op. Run
+ * unconditionally on boot — cheaper than version-gating.
+ *
+ * Conflict policy: a single-prefix key already present wins. The
+ * legacy double-prefix entry is removed without overwriting fresh
+ * data the user produced after the schema fix shipped.
+ */
+export function migrateDoublePrefix(storage: StorageLike): { rewritten: number; removed: number } {
+  const doublePrefix = STORAGE_PREFIX + STORAGE_PREFIX;
+  const legacy: string[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (key && key.startsWith(doublePrefix)) legacy.push(key);
+  }
+  let rewritten = 0;
+  let removed = 0;
+  for (const oldKey of legacy) {
+    const newKey = STORAGE_PREFIX + oldKey.slice(doublePrefix.length);
+    const value = storage.getItem(oldKey);
+    if (value === null) continue;
+    if (storage.getItem(newKey) === null) {
+      try {
+        storage.setItem(newKey, value);
+        rewritten++;
+      } catch {
+        // Quota — leave the legacy entry so the data survives the boot.
+        continue;
+      }
+    }
+    try {
+      storage.removeItem(oldKey);
+      removed++;
+    } catch {
+      // ignore
+    }
+  }
+  return { rewritten, removed };
 }

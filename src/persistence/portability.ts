@@ -127,9 +127,16 @@ export function importSettings(blob: unknown): ImportResult {
   }
   for (const key of keysToRemove) ls.removeItem(key);
 
+  // Older exports (v1.1.19 and earlier) carry `mcptc:mcptc:*` keys
+  // because of the double-prefix bug; strip the redundant prefix on
+  // import so those files round-trip into the corrected shape.
+  const doublePrefix = STORAGE_PREFIX + STORAGE_PREFIX;
   let keysWritten = 0;
-  for (const [key, value] of Object.entries(data)) {
-    if (!key.startsWith(STORAGE_PREFIX)) continue;
+  for (const [rawKey, value] of Object.entries(data)) {
+    if (!rawKey.startsWith(STORAGE_PREFIX)) continue;
+    const key = rawKey.startsWith(doublePrefix)
+      ? STORAGE_PREFIX + rawKey.slice(doublePrefix.length)
+      : rawKey;
     try {
       ls.setItem(key, JSON.stringify(value));
       keysWritten++;

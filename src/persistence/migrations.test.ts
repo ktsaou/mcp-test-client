@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { CURRENT_SCHEMA_VERSION, Keys, prefixed } from './schema.ts';
 import { Store } from './store.ts';
-import { migrations, runMigrations, type Migration } from './migrations.ts';
+import { migrateDoublePrefix, migrations, runMigrations, type Migration } from './migrations.ts';
 import { MemoryStorage } from './store.test.ts';
 
 function newStore(): { store: Store; mem: MemoryStorage } {
@@ -81,5 +81,50 @@ describe('runMigrations', () => {
       delete migrations[10];
       delete migrations[20];
     }
+  });
+});
+
+describe('migrateDoublePrefix', () => {
+  it('rewrites mcptc:mcptc:* into mcptc:* and removes the legacy key', () => {
+    const mem = new MemoryStorage();
+    mem.setItem('mcptc:mcptc:tool-state.srv.echo', '{"a":1}');
+    mem.setItem('mcptc:mcptc:last-selection.srv', '"echo"');
+    mem.setItem('mcptc:servers', '[]');
+    mem.setItem('other-app', 'x');
+
+    const result = migrateDoublePrefix(mem);
+
+    expect(result).toEqual({ rewritten: 2, removed: 2 });
+    expect(mem.snapshot()).toEqual({
+      'mcptc:tool-state.srv.echo': '{"a":1}',
+      'mcptc:last-selection.srv': '"echo"',
+      'mcptc:servers': '[]',
+      'other-app': 'x',
+    });
+  });
+
+  it('is idempotent — running on already-clean storage is a no-op', () => {
+    const mem = new MemoryStorage();
+    mem.setItem('mcptc:tool-state.srv.echo', '{"a":1}');
+    const before = mem.snapshot();
+
+    const result = migrateDoublePrefix(mem);
+
+    expect(result).toEqual({ rewritten: 0, removed: 0 });
+    expect(mem.snapshot()).toEqual(before);
+  });
+
+  it('preserves a fresh single-prefix value when both shapes coexist', () => {
+    // Conflict: a fresh value already lives under the corrected key.
+    // The migration must not clobber it; it removes the legacy entry.
+    const mem = new MemoryStorage();
+    mem.setItem('mcptc:tool-state.srv.echo', '"fresh"');
+    mem.setItem('mcptc:mcptc:tool-state.srv.echo', '"legacy"');
+
+    const result = migrateDoublePrefix(mem);
+
+    expect(result).toEqual({ rewritten: 0, removed: 1 });
+    expect(mem.getItem('mcptc:tool-state.srv.echo')).toBe('"fresh"');
+    expect(mem.getItem('mcptc:mcptc:tool-state.srv.echo')).toBeNull();
   });
 });

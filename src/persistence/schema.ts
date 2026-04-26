@@ -38,8 +38,12 @@ export function prefixed(key: string): string {
   return STORAGE_PREFIX + key;
 }
 
+// Key helpers below return UNPREFIXED keys so they compose with
+// `Store.read/write`, which prefixes internally. Returning prefixed keys
+// here was the v1.1.19-and-earlier bug that produced `mcptc:mcptc:*`
+// entries in localStorage; the boot migration in main.tsx rewrites those.
 export function toolParamsKey(serverId: string, toolName: string): string {
-  return prefixed(`tools.${serverId}.${toolName}`);
+  return `tools.${serverId}.${toolName}`;
 }
 
 /**
@@ -48,7 +52,7 @@ export function toolParamsKey(serverId: string, toolName: string): string {
  * servers and coming back restores the user's in-progress work.
  */
 export function toolStateKey(serverId: string, toolName: string): string {
-  return prefixed(`tool-state.${serverId}.${toolName}`);
+  return `tool-state.${serverId}.${toolName}`;
 }
 
 /**
@@ -57,15 +61,15 @@ export function toolStateKey(serverId: string, toolName: string): string {
  * left this server, so flipping back picks up where they were.
  */
 export function lastSelectionKey(serverId: string): string {
-  return prefixed(`last-selection.${serverId}`);
+  return `last-selection.${serverId}`;
 }
 
 export function cannedKey(serverId: string, toolName: string): string {
-  return prefixed(`canned.${serverId}.${toolName}`);
+  return `canned.${serverId}.${toolName}`;
 }
 
 export function uiKey(feature: string): string {
-  return prefixed(`ui.${feature}`);
+  return `ui.${feature}`;
 }
 
 /** Theme preference persisted by the user. */

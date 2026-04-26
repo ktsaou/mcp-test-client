@@ -377,26 +377,39 @@ export function RequestPanel() {
             }
             withinPortal
           >
-            <Button
-              size="sm"
-              onClick={send}
-              disabled={disabled}
-              loading={sending}
-              style={{
-                flexShrink: 0,
-                minWidth: 64,
-                borderTopRightRadius: canSendForm ? 0 : undefined,
-                borderBottomRightRadius: canSendForm ? 0 : undefined,
-              }}
-            >
-              Send
-            </Button>
+            {/*
+             * Mantine v9 disabled buttons swallow pointer events, which
+             * blocks the Tooltip from ever opening — exactly the case
+             * where users most need to read why Send is unavailable.
+             * The Box wrapper takes the hover instead.
+             */}
+            <Box style={{ display: 'inline-block', flexShrink: 0 }}>
+              <Button
+                size="sm"
+                onClick={send}
+                disabled={disabled}
+                loading={sending}
+                style={{
+                  minWidth: 64,
+                  borderTopRightRadius: canSendForm ? 0 : undefined,
+                  borderBottomRightRadius: canSendForm ? 0 : undefined,
+                }}
+              >
+                Send
+              </Button>
+            </Box>
           </Tooltip>
           {canSendForm ? (
             <Menu position="bottom-end" withinPortal trigger="click">
               <Menu.Target>
+                {/*
+                 * Pixel-pin the chevron to the Button-size-sm height
+                 * (36 px in Mantine v9 — see --button-height-sm).
+                 * ActionIcon's "lg" preset is 34 px, which left a 1 px
+                 * top/bottom mismatch against the adjacent Send button.
+                 */}
                 <ActionIcon
-                  size="lg"
+                  size={36}
                   variant="filled"
                   color="cyan"
                   disabled={disabledByConn}

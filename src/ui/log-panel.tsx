@@ -38,7 +38,7 @@ import { estimateTokens } from './log-tokens.ts';
 import { uiKey } from '../persistence/schema.ts';
 import { appStore } from '../state/store-instance.ts';
 
-const FILTER_STORE_KEY = uiKey('log.filter').slice('mcptc:'.length);
+const FILTER_STORE_KEY = uiKey('log.filter');
 
 const FILTER_LABELS: Record<LogFilter, string> = {
   all: 'All',
@@ -141,8 +141,10 @@ export function LogPanel() {
 
   // Prev/next request navigation — operates on the currently-filtered view so
   // the keypress moves the user to the next *visible* request. Tracks the
-  // last-jumped index so successive `j` keys keep advancing.
+  // last-jumped index so successive `j` keys keep advancing, and the resolved
+  // entry id so the row can render a visible "current" highlight (v1.1.20).
   const lastJumpedIndexRef = useRef<number>(-1);
+  const [currentEntryId, setCurrentEntryId] = useState<number | null>(null);
 
   const jumpRequest = useCallback(
     (direction: 'next' | 'prev') => {
@@ -150,7 +152,10 @@ export function LogPanel() {
       if (next === -1) return;
       lastJumpedIndexRef.current = next;
       const entry = filtered[next];
-      if (entry) scrollToEntry(entry.id);
+      if (entry) {
+        setCurrentEntryId(entry.id);
+        scrollToEntry(entry.id);
+      }
     },
     [filtered, scrollToEntry],
   );
@@ -158,6 +163,7 @@ export function LogPanel() {
   // Reset cursor when the filter or entry list changes underneath us.
   useEffect(() => {
     lastJumpedIndexRef.current = -1;
+    setCurrentEntryId(null);
   }, [filter, entries.length]);
 
   // Keyboard shortcuts scoped to focus-within the panel.
@@ -330,6 +336,7 @@ export function LogPanel() {
               key={entry.id}
               entry={entry}
               expanded={expandedIds.has(entry.id)}
+              isCurrent={entry.id === currentEntryId}
               onToggle={() => toggle(entry.id)}
               pairedId={pairs.get(entry.id)}
               pairedEntry={pairs.has(entry.id) ? byId.get(pairs.get(entry.id)!) : undefined}
@@ -354,6 +361,8 @@ export function LogPanel() {
 interface LogRowProps {
   entry: LogEntry;
   expanded: boolean;
+  /** True when prev/next navigation just landed on this row (v1.1.20). */
+  isCurrent: boolean;
   onToggle: () => void;
   pairedId: number | undefined;
   pairedEntry: LogEntry | undefined;
@@ -364,6 +373,7 @@ interface LogRowProps {
 function LogRow({
   entry,
   expanded,
+  isCurrent,
   onToggle,
   pairedId,
   pairedEntry,
@@ -381,6 +391,8 @@ function LogRow({
         ref={registerRef}
         className={`log-row log-row--system-${entry.level}`}
         data-entry-id={entry.id}
+        data-current={isCurrent ? 'true' : undefined}
+        aria-current={isCurrent ? 'true' : undefined}
       >
         <div className="log-row__headline" style={{ cursor: 'default' }}>
           <span className="log-row__chev" aria-hidden="true" />
@@ -443,6 +455,8 @@ function LogRow({
       data-entry-id={entry.id}
       data-direction={entry.direction}
       data-notification={isNote ? 'true' : undefined}
+      data-current={isCurrent ? 'true' : undefined}
+      aria-current={isCurrent ? 'true' : undefined}
     >
       <div
         className="log-row__headline"

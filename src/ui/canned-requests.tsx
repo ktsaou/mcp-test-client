@@ -55,13 +55,13 @@ export function CannedRequests({ selection, formValue, onLoad }: Props) {
       setEntries([]);
       return;
     }
-    const saved = appStore.read<CannedEntry[]>(storeKey.replace(/^mcptc:/, ''));
+    const saved = appStore.read<CannedEntry[]>(storeKey);
     setEntries(Array.isArray(saved) ? saved : []);
   }, [storeKey]);
 
   function persist(next: CannedEntry[]) {
     if (!storeKey) return;
-    appStore.write(storeKey.replace(/^mcptc:/, ''), next);
+    appStore.write(storeKey, next);
     setEntries(next);
   }
 
