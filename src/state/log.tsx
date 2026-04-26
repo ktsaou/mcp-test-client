@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -9,6 +10,9 @@ import {
 } from 'react';
 
 import type { JSONRPCMessage, WireEvent } from '../mcp/types.ts';
+import { uiKey } from '../persistence/schema.ts';
+import { appStore } from './store-instance.ts';
+import type { LogFilter } from '../ui/log-pairing.ts';
 
 /** Upper bound on events kept in memory at once. */
 const LOG_CAP = 500;
@@ -40,6 +44,31 @@ interface LogContextValue {
   appendWire: (event: WireEvent) => void;
   appendSystem: (level: 'info' | 'warn' | 'error', text: string) => void;
   clear: () => void;
+  /**
+   * Persisted filter applied by the LogPanel. Lifted into context so
+   * the command palette (DEC-025) can dispatch a filter change without
+   * routing through DOM events.
+   */
+  filter: LogFilter;
+  setFilter: (next: LogFilter) => void;
+}
+
+const FILTER_STORE_KEY = uiKey('log.filter');
+
+function readPersistedFilter(): LogFilter {
+  const raw = appStore.read<string>(FILTER_STORE_KEY);
+  if (
+    raw === 'all' ||
+    raw === 'outgoing' ||
+    raw === 'incoming' ||
+    raw === 'requests' ||
+    raw === 'system' ||
+    raw === 'wire' ||
+    raw === 'errors'
+  ) {
+    return raw;
+  }
+  return 'all';
 }
 
 const LogContext = createContext<LogContextValue | null>(null);
@@ -108,9 +137,15 @@ export function LogProvider({ children }: { children: ReactNode }) {
     setEntries([]);
   }, []);
 
+  const [filter, setFilterState] = useState<LogFilter>(() => readPersistedFilter());
+  useEffect(() => {
+    appStore.write(FILTER_STORE_KEY, filter);
+  }, [filter]);
+  const setFilter = useCallback((next: LogFilter) => setFilterState(next), []);
+
   const value = useMemo<LogContextValue>(
-    () => ({ entries, appendWire, appendSystem, clear }),
-    [entries, appendWire, appendSystem, clear],
+    () => ({ entries, appendWire, appendSystem, clear, filter, setFilter }),
+    [entries, appendWire, appendSystem, clear, filter, setFilter],
   );
 
   return <LogContext.Provider value={value}>{children}</LogContext.Provider>;

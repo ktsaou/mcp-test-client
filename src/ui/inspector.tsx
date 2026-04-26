@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Badge, Box, NavLink, ScrollArea, Tabs, Text, TextInput } from '@mantine/core';
 
 import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
@@ -28,6 +28,24 @@ export function Inspector() {
   // one kind at a time; persisting across tab switches lets them refine
   // a single search instead of losing it on every tab change.
   const [query, setQuery] = useState('');
+
+  // DEC-025 — when the command palette selects an inventory item it
+  // dispatches a `switch-tab` event so the inspector lands on the
+  // matching tab. Without this the user could pick a prompt from the
+  // palette while the inspector still showed Tools, leaving the
+  // selection invisible.
+  useEffect(() => {
+    function onPaletteEvent(e: Event) {
+      const detail = (e as CustomEvent<{ type?: string; tab?: Tab }>).detail;
+      if (!detail || detail.type !== 'switch-tab') return;
+      const next = detail.tab;
+      if (next === 'tools' || next === 'prompts' || next === 'resources' || next === 'templates') {
+        setTab(next);
+      }
+    }
+    window.addEventListener('mcptc:command-palette', onPaletteEvent);
+    return () => window.removeEventListener('mcptc:command-palette', onPaletteEvent);
+  }, []);
 
   const asStr = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback);
 

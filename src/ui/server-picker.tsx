@@ -86,6 +86,23 @@ export function ServerPicker() {
     { mode: 'add'; prefill?: AddPrefill } | { mode: 'edit'; id: string } | null
   >(null);
 
+  // DEC-025 — open add/edit modals from the command palette. The palette
+  // dispatches the event because lifting modal state higher would have
+  // forced ServerPicker's existing local state to move alongside.
+  useEffect(() => {
+    function onPaletteEvent(e: Event) {
+      const detail = (e as CustomEvent<{ type?: string; id?: string | null }>).detail;
+      if (!detail) return;
+      if (detail.type === 'add-server') {
+        setModal({ mode: 'add' });
+      } else if (detail.type === 'edit-server' && typeof detail.id === 'string') {
+        setModal({ mode: 'edit', id: detail.id });
+      }
+    }
+    window.addEventListener('mcptc:command-palette', onPaletteEvent);
+    return () => window.removeEventListener('mcptc:command-palette', onPaletteEvent);
+  }, []);
+
   // DEC-016 #3 — URL-driven add-server. On first paint, parse
   // `?add=<url>&name=&transport=&auth=&auth_header_name=` from the
   // query string. If the URL matches a saved server, select + connect

@@ -14,6 +14,7 @@ import './ui/theme.css';
 import './ui/shell.css';
 import './ui/json-view.css';
 import './ui/log-panel.css';
+import './ui/command-palette.css';
 import './schema-form/schema-form.css';
 
 // Run before React mounts so any consumer that reads `mcptc:*` on first

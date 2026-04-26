@@ -32,6 +32,12 @@ export const Keys = {
    * deleted catalog entry stays deleted.
    */
   catalogTombstones: 'catalog-tombstones',
+  /**
+   * DEC-025: last 5 command-palette selections, newest-first. Float
+   * to the top of an empty-search palette open. UNPREFIXED — the
+   * Store wrapper prefixes internally.
+   */
+  commandPaletteRecents: 'command-palette.recents',
 } as const;
 
 export function prefixed(key: string): string {

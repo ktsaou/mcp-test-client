@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ActionIcon,
   Alert,
@@ -23,6 +23,7 @@ import { useServers } from '../state/servers.tsx';
 import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
 import { downloadExport, exportSettings, importSettings } from '../persistence/portability.ts';
 import { ThemeToggle } from './theme-toggle.tsx';
+import { useCommandPalette } from './command-palette.tsx';
 import type { JSONRPCMessage } from '../mcp/types.ts';
 
 /** Gear / settings icon — inline SVG so we don't pull in an icon library. */
@@ -45,6 +46,19 @@ function SettingsMenu() {
   const [exportOpen, setExportOpen] = useState(false);
   const [includeCreds, setIncludeCreds] = useState(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // DEC-025 — palette verbs delegate to this menu so import/export logic
+  // lives in one place.
+  useEffect(() => {
+    function onPaletteEvent(e: Event) {
+      const detail = (e as CustomEvent<{ type?: string }>).detail;
+      if (!detail) return;
+      if (detail.type === 'export-settings') setExportOpen(true);
+      else if (detail.type === 'import-settings') fileInputRef.current?.click();
+    }
+    window.addEventListener('mcptc:command-palette', onPaletteEvent);
+    return () => window.removeEventListener('mcptc:command-palette', onPaletteEvent);
+  }, []);
 
   function doExport() {
     const blob = exportSettings({ includeCredentials: includeCreds });
@@ -466,6 +480,8 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
         </>
       )}
 
+      <PaletteAnchor />
+
       <StatusBadge status={status} />
 
       {connected ? (
@@ -519,6 +535,58 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
 
       <ThemeToggle />
     </Group>
+  );
+}
+
+/**
+ * DEC-025 — visible "search" affordance that opens the command
+ * palette. Click or focus opens the palette so newcomers stumble
+ * into Cmd+K without needing docs. Typing inside the anchor seeds
+ * the palette query so keys are not lost during the focus hop.
+ */
+function PaletteAnchor() {
+  const { openPalette } = useCommandPalette();
+  const isMac =
+    typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || '');
+  const shortcut = isMac ? '⌘K' : 'Ctrl+K';
+  return (
+    <button
+      type="button"
+      className="cmd-anchor"
+      aria-label="Open command palette"
+      onClick={() => openPalette()}
+      onFocus={(e) => {
+        // Browser focus rings call this on programmatic focus too — guard
+        // against an open-loop where openPalette() steals focus, which
+        // would re-fire onFocus on the anchor when the modal closes.
+        if (e.currentTarget === document.activeElement) openPalette();
+      }}
+      onKeyDown={(e) => {
+        // If the user starts typing inside the anchor (rather than
+        // clicking it first) we want the keys to land in the palette.
+        // The single-letter check excludes navigation keys; the palette's
+        // openPalette accepts a prefill so the typed character is not
+        // lost on the focus hop.
+        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          e.preventDefault();
+          openPalette(e.key);
+        }
+      }}
+    >
+      <svg
+        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        className="cmd-anchor__icon"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
+        <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+      <span className="cmd-anchor__label">Search servers, tools, actions…</span>
+      <span className="cmd-anchor__kbd">{shortcut}</span>
+    </button>
   );
 }
 

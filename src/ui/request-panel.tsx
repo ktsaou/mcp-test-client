@@ -19,6 +19,7 @@ import { useConnection } from '../state/connection.tsx';
 import { useLog } from '../state/log.tsx';
 import { useSelection } from '../state/selection.tsx';
 import { useServers } from '../state/servers.tsx';
+import { useRegisterRequestActions } from '../state/request-actions.tsx';
 import {
   readToolState,
   writeToolState,
@@ -297,6 +298,30 @@ export function RequestPanel() {
       void sendRaw();
     }
   }
+
+  // DEC-025 — publish send handles so the command palette can fire
+  // them without lifting form state out of this panel. The two gates
+  // mirror the `disabled` and chevron-menu visibility logic above:
+  // canSend = a default Send would do something; canSendSkipValidation
+  // = the bypass menu item is currently meaningful.
+  const canSendNow = !disabled;
+  const canSendSkipValidationNow = canSendForm && formInvalid && !disabledByConn;
+  const requestActions = useMemo(
+    () => ({
+      canSend: canSendNow,
+      canSendSkipValidation: canSendSkipValidationNow,
+      send,
+      sendSkipValidation: () => {
+        void sendFormCall({ skipValidation: true });
+      },
+    }),
+    // sendFormCall / sendRaw / send are stable closures captured at
+    // render time; we depend on the gating booleans + the closures
+    // they bind so the palette always sees the current handlers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [canSendNow, canSendSkipValidationNow],
+  );
+  useRegisterRequestActions(requestActions);
 
   return (
     <Box

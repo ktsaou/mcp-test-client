@@ -1,0 +1,156 @@
+/*
+ * DEC-025 — command palette styles.
+ *
+ * Mantine tokens drive every colour so the palette tracks dark/light
+ * automatically. The Modal shell carries its own padding/background;
+ * .cmd-root wraps the cmdk content with a card-like surface.
+ */
+
+.cmd-root {
+  background: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.18),
+    0 1px 0 rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+}
+
+.cmd-input {
+  appearance: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--mantine-color-text);
+  font: inherit;
+  font-size: var(--mantine-font-size-md);
+  padding: 14px 16px;
+  width: 100%;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.cmd-input::placeholder {
+  color: var(--mantine-color-dimmed);
+}
+
+.cmd-list {
+  overflow: auto;
+  padding: 6px 0;
+}
+
+.cmd-empty {
+  padding: 16px;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dimmed);
+  text-align: center;
+}
+
+.cmd-group [cmdk-group-heading] {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mantine-color-dimmed);
+  padding: 10px 14px 4px;
+}
+
+.cmd-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-text);
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+  margin: 0 6px;
+}
+
+.cmd-item[data-selected='true'] {
+  background: var(--mantine-color-default-hover);
+}
+
+.cmd-item__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmd-item__hint {
+  flex: 0 0 auto;
+  font-size: var(--mantine-font-size-xs);
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50%;
+}
+
+/* Header search anchor — visible "search" affordance in the connection bar. */
+.cmd-anchor {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--mantine-color-default);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+  color: var(--mantine-color-dimmed);
+  font: inherit;
+  font-size: var(--mantine-font-size-xs);
+  padding: 6px 10px;
+  height: 32px;
+  cursor: text;
+  min-width: 0;
+  width: 240px;
+  text-align: left;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.cmd-anchor:hover {
+  border-color: var(--mantine-color-default-hover);
+  background: var(--mantine-color-default-hover);
+}
+
+.cmd-anchor:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 1px;
+}
+
+.cmd-anchor__icon {
+  flex: 0 0 auto;
+  opacity: 0.7;
+}
+
+.cmd-anchor__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmd-anchor__kbd {
+  flex: 0 0 auto;
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 10px;
+  background: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+@media (max-width: 768px) {
+  .cmd-anchor {
+    display: none;
+  }
+}

@@ -7,12 +7,14 @@ import { loadCatalog } from './catalog/loader.ts';
 import { Keys } from './persistence/schema.ts';
 import { ConnectionProvider, useConnection } from './state/connection.tsx';
 import { LogProvider } from './state/log.tsx';
+import { RequestActionsProvider } from './state/request-actions.tsx';
 import { SelectionProvider, useSelection } from './state/selection.tsx';
 import { ServersProvider, useServers } from './state/servers.tsx';
 import { appStore } from './state/store-instance.ts';
 import { ThemeProvider, useTheme } from './state/theme.tsx';
 import { readLastSelection } from './state/tool-state-persistence.ts';
 import { appTheme } from './ui/mantine-theme.ts';
+import { CommandPaletteHost } from './ui/command-palette.tsx';
 import { Layout } from './ui/layout.tsx';
 
 /**
@@ -162,9 +164,13 @@ export function App() {
           <LogProvider>
             <ConnectionProvider>
               <SelectionProvider>
-                <CatalogAutoMerge />
-                <RestoreSelectionOnServerReady />
-                <Layout />
+                <RequestActionsProvider>
+                  <CommandPaletteHost>
+                    <CatalogAutoMerge />
+                    <RestoreSelectionOnServerReady />
+                    <Layout />
+                  </CommandPaletteHost>
+                </RequestActionsProvider>
               </SelectionProvider>
             </ConnectionProvider>
           </LogProvider>

@@ -35,10 +35,6 @@ import {
 import { chipLevelFor, type ChipLevel } from './log-chip-visibility.ts';
 import { MetricsChips, type ResponseMetrics, type TokenState } from './metrics-chips.tsx';
 import { estimateTokens } from './log-tokens.ts';
-import { uiKey } from '../persistence/schema.ts';
-import { appStore } from '../state/store-instance.ts';
-
-const FILTER_STORE_KEY = uiKey('log.filter');
 
 const FILTER_LABELS: Record<LogFilter, string> = {
   all: 'All',
@@ -46,30 +42,17 @@ const FILTER_LABELS: Record<LogFilter, string> = {
   incoming: 'Incoming',
   requests: 'Requests only',
   system: 'System',
+  wire: 'Wire',
+  errors: 'Errors',
 };
 
-function readPersistedFilter(): LogFilter {
-  const raw = appStore.read<string>(FILTER_STORE_KEY);
-  if (
-    raw === 'all' ||
-    raw === 'outgoing' ||
-    raw === 'incoming' ||
-    raw === 'requests' ||
-    raw === 'system'
-  ) {
-    return raw;
-  }
-  return 'all';
-}
-
 export function LogPanel() {
-  const { entries, clear } = useLog();
+  const { entries, clear, filter, setFilter } = useLog();
   const endRef = useRef<HTMLDivElement | null>(null);
   const scrollRootRef = useRef<HTMLDivElement | null>(null);
   const panelRootRef = useRef<HTMLDivElement | null>(null);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const [reportOpen, setReportOpen] = useState(false);
-  const [filter, setFilter] = useState<LogFilter>(() => readPersistedFilter());
   // DEC-014: drop chips one-by-one as the panel narrows so the right-edge
   // action icons stay flush across every row. A single ResizeObserver on
   // the panel root drives the level; rows pick it up via the data attribute
@@ -98,10 +81,8 @@ export function LogPanel() {
     return () => ro.disconnect();
   }, []);
 
-  // Persist the filter choice across sessions (DEC-012).
-  useEffect(() => {
-    appStore.write(FILTER_STORE_KEY, filter);
-  }, [filter]);
+  // Filter persistence is owned by LogProvider (DEC-025) so the
+  // command palette can dispatch the same setter.
 
   // Auto-scroll on new entries — but only when the user is already near the
   // bottom, so they don't get yanked away while reading older traffic.
@@ -290,7 +271,17 @@ export function LogPanel() {
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              {(['all', 'outgoing', 'incoming', 'requests', 'system'] as LogFilter[]).map((f) => (
+              {(
+                [
+                  'all',
+                  'wire',
+                  'outgoing',
+                  'incoming',
+                  'requests',
+                  'system',
+                  'errors',
+                ] as LogFilter[]
+              ).map((f) => (
                 <Menu.Item
                   key={f}
                   onClick={() => setFilter(f)}

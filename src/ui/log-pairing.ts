@@ -15,7 +15,7 @@
 import type { LogEntry } from '../state/log.tsx';
 import { isRequest, isResponse, rpcId } from './log-headline.ts';
 
-export type LogFilter = 'all' | 'outgoing' | 'incoming' | 'requests' | 'system';
+export type LogFilter = 'all' | 'outgoing' | 'incoming' | 'requests' | 'system' | 'wire' | 'errors';
 
 /**
  * Build a Map<entryId → pairedEntryId>. The pair for a request is its
@@ -83,6 +83,8 @@ export function pairById(entries: ReadonlyArray<LogEntry>): Map<number, number> 
  *   - `requests`   — only wire entries whose JSON-RPC message is a request
  *                    (has both `method` and `id`).
  *   - `system`     — only system-level messages (info/warn/error).
+ *   - `wire`       — every wire entry (both directions). DEC-025 palette.
+ *   - `errors`     — system entries at error level. DEC-025 palette.
  */
 export function applyFilter(entries: ReadonlyArray<LogEntry>, filter: LogFilter): LogEntry[] {
   if (filter === 'all') return [...entries];
@@ -92,6 +94,10 @@ export function applyFilter(entries: ReadonlyArray<LogEntry>, filter: LogFilter)
   }
   if (filter === 'incoming') {
     return entries.filter((e) => e.kind === 'wire' && e.direction === 'incoming');
+  }
+  if (filter === 'wire') return entries.filter((e) => e.kind === 'wire');
+  if (filter === 'errors') {
+    return entries.filter((e) => e.kind === 'system' && e.level === 'error');
   }
   // requests-only
   return entries.filter((e) => e.kind === 'wire' && isRequest(e.message));
