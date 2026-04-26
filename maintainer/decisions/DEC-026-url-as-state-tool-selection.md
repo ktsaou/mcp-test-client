@@ -115,5 +115,16 @@ already in DEC-016, a fresh review for the args path is cheap.
 
 ## Status
 
-Open — assigned to v1.2.0. Ships as the killer feature alongside
-DEC-025 command palette.
+Closed — shipped as v1.2.1 (Worker commit `71b5f1e`, release
+`6b54526`). Critic verdict `pass` (no followups required). The
+"deep link works inside one browser" promise holds end-to-end:
+copy → paste → refresh → malformed → migration ordering all PASS.
+
+**Known follow-up — cross-browser server-id portability is broken
+and warrants DEC-029.** Catalog servers (Context7, DeepWiki, etc.)
+get fresh random nanoids per browser via `useServers()`'s autoMerge.
+A URL like `?server=Prw2gQtj` only resolves on the same browser that
+generated the id. The README pitch ("click here to try my new tool")
+across browsers needs catalog entries to use stable slugs derived
+from the catalog manifest; user-added entries keep random ids.
+Captured in `maintainer/log/2026-04-26.md` §10 and in task #41.
