@@ -260,7 +260,7 @@ test('A — share-link with two pre-existing servers: sidebar / banner / URL / s
   // Pre-seed: two servers, srv-a active, srv-b inactive. Navigate to
   // the share link for srv-b. After settle: every active-server source
   // (sidebar `data-active`, connection-bar banner, URL `?server=`,
-  // localStorage `mcptc:servers:active`) must point at srv-b.
+  // localStorage `mcptc:servers.active`) must point at srv-b.
   await page.addInitScript((mockUrl: string) => {
     const now = Date.now();
     localStorage.setItem(
@@ -286,7 +286,7 @@ test('A — share-link with two pre-existing servers: sidebar / banner / URL / s
         },
       ]),
     );
-    localStorage.setItem('mcptc:servers:active', JSON.stringify('srv-a'));
+    localStorage.setItem('mcptc:servers.active', JSON.stringify('srv-a'));
   }, MOCK_MCP_URL);
 
   const url = await buildShareUrl({
@@ -313,7 +313,7 @@ test('A — share-link with two pre-existing servers: sidebar / banner / URL / s
 
   // 2. localStorage active key reflects srv-b.
   const activeId = await page.evaluate(() => {
-    const raw = localStorage.getItem('mcptc:servers:active');
+    const raw = localStorage.getItem('mcptc:servers.active');
     return raw ? (JSON.parse(raw) as string) : null;
   });
   expect(activeId).toBe('srv-b');
