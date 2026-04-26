@@ -93,4 +93,8 @@ MCP-protocol surface affected).
 
 ## Status
 
-Open — assigned to v1.2.0.
+Closed — shipped as v1.2.0 (commit `b24856c` Worker, `d76dab5`
+release). Critic verdict `pass-with-followups`; four cosmetic
+items folded into v1.2.1 hygiene queue (see `maintainer/log/2026-04-26.md`
+§9). Bundle delta 13.79 KB gz over v1.1.20, accepted under
+DEC-005's 350 KB hard cap (75 KB headroom remaining).
