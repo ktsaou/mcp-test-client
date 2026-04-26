@@ -26,6 +26,7 @@ import { useLog } from '../state/log.tsx';
 import { useServers } from '../state/servers.tsx';
 import type { ServerEntry } from '../persistence/schema.ts';
 import type { TransportKind } from '../mcp/types.ts';
+import { EmptyState } from './empty-state.tsx';
 
 /**
  * Pre-fill payload for `<ServerModal mode="add">` — used by the
@@ -250,11 +251,20 @@ export function ServerPicker() {
 
       <Box style={{ flex: 1, overflowY: 'auto' }}>
         {servers.length === 0 ? (
-          <Stack p="md" gap="xs">
-            <Text size="sm" c="dimmed">
-              No servers yet. Click &ldquo;Add&rdquo; to connect to an MCP server.
-            </Text>
-          </Stack>
+          <EmptyState
+            title="No servers yet"
+            description="Save an MCP server URL to see its tools, prompts and resources here."
+            action={
+              <Button
+                size="compact-sm"
+                variant="light"
+                leftSection={<PlusIcon />}
+                onClick={() => setModal({ mode: 'add' })}
+              >
+                Add a server
+              </Button>
+            }
+          />
         ) : (
           <Box>
             {servers.map((s) => (

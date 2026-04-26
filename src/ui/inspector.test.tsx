@@ -27,6 +27,7 @@ function withConnection(
       prompts: [],
       resources: [],
       resourceTemplates: [],
+      errors: {},
       ...inventory,
     },
     client: null,
@@ -115,7 +116,30 @@ describe('Inspector list — sorting and search', () => {
   it('hides the search box when the active tab is empty', () => {
     rtlRender(withConnection({ tools: [] }, <Inspector />));
     expect(screen.queryByLabelText(/search tools/i)).toBeNull();
-    expect(screen.getByText(/server exposed no tools/i)).toBeInTheDocument();
+    // DEC-028: empty inventory tab renders the new EmptyState copy
+    // with a spec link, replacing the v1.2.2 "Server exposed no
+    // tools." short form.
+    expect(screen.getByText(/this server doesn't expose any tools\./i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /what is a tool\?/i })).toBeInTheDocument();
+  });
+
+  it('renders a red Alert (not EmptyState) when the list call errored', () => {
+    rtlRender(
+      withConnection(
+        {
+          tools: [],
+          errors: { tools: 'tools/list unavailable: MCP error -32601: Method not found' },
+        },
+        <Inspector />,
+      ),
+    );
+    // DEC-028 anti-case: a 32601 on tools/list is an error, not "this
+    // server has zero tools" — the Alert must surface the "List
+    // unavailable" title plus the underlying message, and the empty-
+    // state copy must NOT appear.
+    expect(screen.getAllByText(/list unavailable/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/method not found/i)).toBeInTheDocument();
+    expect(screen.queryByText(/this server doesn't expose any tools\./i)).toBeNull();
   });
 
   it('tab counts reflect the full inventory, not the filtered subset', () => {
@@ -157,9 +181,11 @@ describe('InventoryEmptyState', () => {
     render(<InventoryEmptyState status={status} />);
     // The bug we are guarding against (DEC-011 F3): on connect-error the
     // pane used to render "Connect to a server to see its inventory." which
-    // is misleading because the user just tried and was rejected.
+    // is misleading because the user just tried and was rejected. DEC-028
+    // moved this to a red Alert (error != empty); the message must still
+    // surface, plus the URL/token hint.
     expect(screen.queryByText(/connect to a server to see its inventory/i)).toBeNull();
-    expect(screen.getByText(/server returned:/i)).toBeInTheDocument();
+    expect(screen.getByText(/server returned an error/i)).toBeInTheDocument();
     expect(screen.getByText(/401 unauthorized: bad bearer/i)).toBeInTheDocument();
     expect(screen.getByText(/check the url or token/i)).toBeInTheDocument();
   });

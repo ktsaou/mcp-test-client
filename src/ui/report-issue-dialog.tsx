@@ -14,6 +14,7 @@ import { notifications } from '@mantine/notifications';
 
 import { bundleToJson } from '../diagnostics/build.ts';
 import { snapshotBundle } from '../diagnostics/current.ts';
+import { EmptyState } from './empty-state.tsx';
 
 const ISSUE_URL = 'https://github.com/ktsaou/mcp-test-client/issues/new?template=bug_report.yml';
 
@@ -144,19 +145,17 @@ export function ReportIssueDialog({ onClose }: Props) {
           </Group>
         </Stack>
       ) : (
-        <Stack gap="sm">
-          <Text>No diagnostic bundle is available yet.</Text>
-          <Text size="sm" c="dimmed">
-            The app may still be initialising. Try again after you&apos;ve connected to a server.
-          </Text>
-          <Group justify="flex-end">
+        <EmptyState
+          title="No diagnostic bundle available."
+          description="The app may still be initialising. Try again after you've connected to a server."
+          action={
             <Tooltip label="Close this dialog" withinPortal>
               <Button variant="default" onClick={onClose}>
                 Close
               </Button>
             </Tooltip>
-          </Group>
-        </Stack>
+          }
+        />
       )}
     </Modal>
   );

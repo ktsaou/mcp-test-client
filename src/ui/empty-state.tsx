@@ -1,54 +1,55 @@
 import type { ReactNode } from 'react';
-import { Box, Loader, Stack, Text } from '@mantine/core';
+import { Center, Stack, Text } from '@mantine/core';
 
-interface Props {
+export interface EmptyStateProps {
   /**
-   * Primary line. Kept short — one sentence describes the state.
+   * Optional single-line icon (Lucide-style, monochrome). Pass `null` /
+   * omit to render no icon at all — DEC-028 forbids decorative
+   * illustrations. Sized 24×24 by convention; the component does not
+   * resize or recolour the node it receives.
    */
+  icon?: ReactNode;
+  /** One-line, matter-of-fact explanation of what's going on. */
   title: string;
   /**
-   * Optional secondary line that hints at the next action.
+   * Optional 1–2 line elaboration. May embed `<Anchor>` links (e.g. to
+   * the upstream MCP spec) so the user can self-serve the next step.
    */
-  hint?: string;
+  description?: ReactNode;
   /**
-   * If true, render a small spinner before the title. Used while we're
-   * actively waiting on a remote (e.g. negotiating with the server).
-   */
-  busy?: boolean;
-  /**
-   * Tone of the message. `error` paints the title red so a connect failure
-   * cannot be mistaken for "you haven't tried yet".
-   */
-  tone?: 'neutral' | 'error';
-  /**
-   * Optional action slot under the hint (button, link).
+   * Optional CTA — typically a Mantine `<Button>` or `<Anchor>`. Empty
+   * states without a meaningful next action leave this slot empty
+   * rather than render a no-op button.
    */
   action?: ReactNode;
 }
 
 /**
- * Single source of truth for "this pane has nothing useful to show right now"
- * messaging. Used by the inventory pane (DEC-011 F3) so a connect-error does
- * not silently render the same prose as "you haven't selected a server yet".
+ * Single source of truth for "this surface has nothing to show right
+ * now" messaging — DEC-028. Used by the inventory tabs (when a
+ * connected server genuinely exposes zero items under that tab), the
+ * log panel (no entries / filter excludes all), the sidebar
+ * (no servers saved yet), and the request panel (no tool selected).
+ *
+ * NOT used for error surfaces — a failed list call renders a red
+ * Alert inline instead, so empty-vs-error stays visually distinct
+ * (DEC-028 anti-cases).
  */
-export function EmptyState({ title, hint, busy = false, tone = 'neutral', action }: Props) {
-  const titleColor = tone === 'error' ? 'red' : 'dimmed';
+export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <Box p="md">
-      <Stack gap={6} align="flex-start">
-        <Box style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {busy ? <Loader size="xs" /> : null}
-          <Text size="sm" c={titleColor} fw={tone === 'error' ? 600 : 400}>
-            {title}
-          </Text>
-        </Box>
-        {hint ? (
-          <Text size="xs" c="dimmed">
-            {hint}
+    <Center p="md" h="100%" mih={120}>
+      <Stack gap="sm" align="center" maw={420} ta="center">
+        {icon ? <div aria-hidden="true">{icon}</div> : null}
+        <Text size="sm" c="var(--color-text-muted, dimmed)" fw={500}>
+          {title}
+        </Text>
+        {description ? (
+          <Text size="xs" c="var(--color-text-muted, dimmed)" lh={1.5}>
+            {description}
           </Text>
         ) : null}
         {action}
       </Stack>
-    </Box>
+    </Center>
   );
 }

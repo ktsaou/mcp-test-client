@@ -34,11 +34,27 @@ export type ConnectionStatus =
  */
 export type ConnectOutcome = 'connected' | 'superseded';
 
+/**
+ * Per-list error map. Populated by `refreshInventory` when a list call
+ * (tools/list, prompts/list, resources/list, resources/templates/list)
+ * rejects — typically a 32601 Method Not Found from a server that
+ * doesn't expose that capability. The UI consults this to draw a red
+ * "tools/list unavailable: …" Alert instead of a misleading "this
+ * server doesn't expose any tools" empty state (DEC-028 anti-case).
+ */
+export interface InventoryErrors {
+  tools?: string;
+  prompts?: string;
+  resources?: string;
+  resourceTemplates?: string;
+}
+
 interface Inventory {
   tools: unknown[];
   prompts: unknown[];
   resources: unknown[];
   resourceTemplates: unknown[];
+  errors: InventoryErrors;
 }
 
 const emptyInventory: Inventory = {
@@ -46,6 +62,7 @@ const emptyInventory: Inventory = {
   prompts: [],
   resources: [],
   resourceTemplates: [],
+  errors: {},
 };
 
 export interface ConnectionContextValue {
@@ -82,23 +99,40 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
 
   const refreshInventory = useCallback(
     async (client: McpClient) => {
-      const result: Inventory = { ...emptyInventory };
-      const attempt = async <T,>(label: string, fn: () => Promise<T>): Promise<T | undefined> => {
+      // Fresh map each fetch — avoids carrying yesterday's errors over a
+      // successful refresh of the same surface.
+      const result: Inventory = {
+        tools: [],
+        prompts: [],
+        resources: [],
+        resourceTemplates: [],
+        errors: {},
+      };
+      const attempt = async <T,>(
+        label: string,
+        slot: keyof InventoryErrors,
+        fn: () => Promise<T>,
+      ): Promise<T | undefined> => {
         try {
           return await fn();
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           log.appendSystem('warn', `${label} unavailable: ${msg}`);
+          // Stash the per-list message so the inventory tab can render
+          // a red Alert instead of an EmptyState (DEC-028 F4).
+          result.errors[slot] = `${label} unavailable: ${msg}`;
           return undefined;
         }
       };
-      const tools = await attempt('tools/list', () => client.listTools());
+      const tools = await attempt('tools/list', 'tools', () => client.listTools());
       if (tools) result.tools = tools.tools;
-      const prompts = await attempt('prompts/list', () => client.listPrompts());
+      const prompts = await attempt('prompts/list', 'prompts', () => client.listPrompts());
       if (prompts) result.prompts = prompts.prompts;
-      const resources = await attempt('resources/list', () => client.listResources());
+      const resources = await attempt('resources/list', 'resources', () => client.listResources());
       if (resources) result.resources = resources.resources;
-      const rt = await attempt('resources/templates/list', () => client.listResourceTemplates());
+      const rt = await attempt('resources/templates/list', 'resourceTemplates', () =>
+        client.listResourceTemplates(),
+      );
       if (rt) result.resourceTemplates = rt.resourceTemplates;
       setInventory(result);
     },

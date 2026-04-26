@@ -30,6 +30,7 @@ import { buildShareUrl, createDebouncedUrlWriter, pushUrlState } from '../state/
 import { JsonView } from './json-view.tsx';
 import { SchemaForm, type JSONSchema, validate } from '../schema-form/index.ts';
 import { CannedRequests } from './canned-requests.tsx';
+import { EmptyState } from './empty-state.tsx';
 import { ShareButton } from './share-button.tsx';
 import { MetricsChips, type ResponseMetrics, type TokenState } from './metrics-chips.tsx';
 import { jsonByteLength } from './log-pairing.ts';
@@ -615,7 +616,24 @@ export function RequestPanel() {
             </Box>
           ) : null}
 
-          {canSendForm && formSchema ? (
+          {selection === null ? (
+            // DEC-028 — pre-selection empty state. Until the user picks a
+            // tool / prompt / resource from the inventory there is
+            // nothing meaningful to fill in, so render the same matter-
+            // of-fact empty-state copy used elsewhere instead of a blank
+            // textarea that looks broken. The j/k hint is discoverable
+            // now that DEC-027 shipped global keyboard nav.
+            <EmptyState
+              title="Pick a tool from the inventory."
+              description={
+                <>
+                  Select a tool, prompt or resource on the left to build a request. Use <kbd>↑</kbd>{' '}
+                  / <kbd>↓</kbd> or <kbd>j</kbd> / <kbd>k</kbd> from the inventory to navigate by
+                  keyboard.
+                </>
+              }
+            />
+          ) : canSendForm && formSchema ? (
             <SchemaForm schema={formSchema} value={formValue} onChange={setFormValue} />
           ) : (
             <Textarea

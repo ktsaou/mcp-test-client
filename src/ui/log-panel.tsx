@@ -11,8 +11,20 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionIcon, Box, Button, Group, Menu, ScrollArea, Text, Tooltip } from '@mantine/core';
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Group,
+  Menu,
+  Pill,
+  ScrollArea,
+  Text,
+  Tooltip,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+
+import { EmptyState } from './empty-state.tsx';
 
 import { useLog, type LogEntry } from '../state/log.tsx';
 import { JsonView } from './json-view.tsx';
@@ -332,13 +344,36 @@ export function LogPanel() {
       </Group>
       <ScrollArea viewportRef={scrollRootRef} style={{ flex: 1, minHeight: 0 }}>
         {filtered.length === 0 ? (
-          <Box p="md">
-            <Text size="sm" c="dimmed">
-              {entries.length === 0
-                ? 'Wire traffic will appear here.'
-                : `No entries match the "${FILTER_LABELS[filter]}" filter.`}
-            </Text>
-          </Box>
+          entries.length === 0 ? (
+            <EmptyState title="Wire traffic will appear here." />
+          ) : (
+            // DEC-028 silent-failure 1: when a filter excludes every
+            // entry, show the active filter as a removable Pill plus a
+            // "Clear filter" CTA so the user can recover in place
+            // instead of guessing why their log went blank.
+            <EmptyState
+              title={`No log entries match "${FILTER_LABELS[filter]}".`}
+              description={
+                <Group gap={6} justify="center" wrap="wrap">
+                  <Text size="xs" c="dimmed">
+                    Active filter:
+                  </Text>
+                  <Pill
+                    withRemoveButton
+                    onRemove={() => setFilter('all')}
+                    aria-label={`Remove filter ${FILTER_LABELS[filter]}`}
+                  >
+                    {FILTER_LABELS[filter]}
+                  </Pill>
+                </Group>
+              }
+              action={
+                <Button variant="subtle" size="compact-sm" onClick={() => setFilter('all')}>
+                  Clear filter
+                </Button>
+              }
+            />
+          )
         ) : (
           filtered.map((entry) => (
             <LogRow
