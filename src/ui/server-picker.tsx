@@ -236,7 +236,7 @@ export function ServerPicker() {
         <Text size="xs" tt="uppercase" c="dimmed" fw={600} style={{ letterSpacing: '0.05em' }}>
           Servers
         </Text>
-        <Tooltip label="Add a new MCP server" withinPortal>
+        <Tooltip label="Add a new MCP server (c)" withinPortal>
           <Button
             size="compact-sm"
             variant="light"
@@ -276,7 +276,10 @@ export function ServerPicker() {
                 }
                 rightSection={
                   <Group gap={4} wrap="nowrap" onClick={(e) => e.stopPropagation()}>
-                    <Tooltip label="Edit server" withinPortal>
+                    <Tooltip
+                      label={s.id === activeId ? 'Edit server (e)' : 'Edit server'}
+                      withinPortal
+                    >
                       <ActionIcon
                         size="sm"
                         variant="subtle"

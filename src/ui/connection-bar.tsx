@@ -21,6 +21,7 @@ import { notifications } from '@mantine/notifications';
 import { useLog } from '../state/log.tsx';
 import { useServers } from '../state/servers.tsx';
 import { useConnection, type ConnectionStatus } from '../state/connection.tsx';
+import { useSidebarCollapse } from '../state/sidebar-collapse.tsx';
 import { downloadExport, exportSettings, importSettings } from '../persistence/portability.ts';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { useCommandPalette } from './command-palette.tsx';
@@ -332,6 +333,55 @@ function ActivityIndicator() {
   );
 }
 
+/**
+ * DEC-027 — sidebar collapse toggle. A visible affordance for the
+ * `s` shortcut, so single-letter shortcut WCAG compliance has a
+ * traditional UI mechanism alongside the keybinding. Only rendered
+ * on desktop layouts; on mobile the sidebar is a Drawer reached via
+ * the hamburger and `s` is a no-op.
+ */
+function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+      <rect
+        x="1.5"
+        y="2.5"
+        width="13"
+        height="11"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <line
+        x1="6"
+        y1="2.5"
+        x2="6"
+        y2="13.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeOpacity={collapsed ? 0.35 : 1}
+      />
+    </svg>
+  );
+}
+
+function SidebarToggle() {
+  const { collapsed, toggleCollapsed } = useSidebarCollapse();
+  return (
+    <Tooltip label={`${collapsed ? 'Show' : 'Hide'} the server sidebar (s)`} withinPortal>
+      <ActionIcon
+        variant="subtle"
+        size="lg"
+        aria-label={collapsed ? 'Show sidebar' : 'Hide sidebar'}
+        aria-pressed={collapsed}
+        onClick={() => toggleCollapsed()}
+      >
+        <SidebarToggleIcon collapsed={collapsed} />
+      </ActionIcon>
+    </Tooltip>
+  );
+}
+
 /** GitHub mark, inline so we don't pull in another icon dep. */
 function GitHubIcon() {
   return (
@@ -516,6 +566,8 @@ export function ConnectionBar({ leftSlot }: ConnectionBarProps = {}) {
       )}
 
       <ActivityIndicator />
+
+      {compact ? null : <SidebarToggle />}
 
       <SettingsMenu />
 

@@ -136,6 +136,13 @@ export function LogPanel() {
       if (entry) {
         setCurrentEntryId(entry.id);
         scrollToEntry(entry.id);
+        // DEC-027 — keep focus on the cursor so the row's own Enter
+        // handler always operates on the row the visible highlight
+        // points at. Fires on the next tick to outrun React's
+        // re-render that paints `data-current="true"`.
+        const el = rowRefs.current.get(entry.id);
+        const headline = el?.querySelector<HTMLElement>('.log-row__headline');
+        if (headline) requestAnimationFrame(() => headline.focus({ preventScroll: true }));
       }
     },
     [filtered, scrollToEntry],
@@ -148,6 +155,11 @@ export function LogPanel() {
   }, [filter, entries.length]);
 
   // Keyboard shortcuts scoped to focus-within the panel.
+  // DEC-027 added ↑/↓ aliases (mirroring the toolbar arrow buttons)
+  // and Enter to expand the cursored row. j/k existed since v1.1.20.
+  // The single-letter check stays — WCAG 2.1.4 input-skipping is the
+  // load-bearing constraint; suppressing inside any input also keeps
+  // the JSON-RPC raw editor (a textarea) from eating these keys.
   useEffect(() => {
     function onKey(ev: KeyboardEvent) {
       if (!scrollRootRef.current) return;
@@ -155,20 +167,26 @@ export function LogPanel() {
       // Skip when the user is typing in an input.
       if (
         target &&
-        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
       ) {
         return;
       }
       // Only react when focus is inside our panel.
       const root = scrollRootRef.current.closest('[data-log-panel-root="1"]');
       if (!root || !root.contains(document.activeElement)) return;
-      if (ev.key === 'j') {
+      if (ev.key === 'j' || ev.key === 'ArrowDown') {
         ev.preventDefault();
         jumpRequest('next');
-      } else if (ev.key === 'k') {
+      } else if (ev.key === 'k' || ev.key === 'ArrowUp') {
         ev.preventDefault();
         jumpRequest('prev');
       }
+      // Enter is handled by each row's own onKeyDown (role=button
+      // headline). `j`/`k` move both the cursor AND focus to the
+      // cursored row, so Enter always reaches the right row.
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

@@ -377,6 +377,21 @@ function useVerbs(args: { request: RequestActionState; closePalette: () => void 
       },
     });
 
+    // DEC-027 — discoverability verb for the shortcut help modal.
+    // Keeps the palette as the one place users learn about every
+    // keyboard binding (and the modal lists Cmd+K itself).
+    out.push({
+      id: 'shortcut-help',
+      label: 'Keyboard shortcuts (?)',
+      show: true,
+      run: () => {
+        closePalette();
+        window.dispatchEvent(
+          new CustomEvent('mcptc:command-palette', { detail: { type: 'shortcut-help' } }),
+        );
+      },
+    });
+
     out.push({
       id: 'send',
       label: 'Send',

@@ -68,8 +68,15 @@ export function ThemeToggle() {
   const icon =
     preference === 'dark' ? <MoonIcon /> : preference === 'light' ? <SunIcon /> : <SystemIcon />;
 
+  // Mac users see ⌘ ` ; everyone else gets Ctrl ` . Detection is
+  // best-effort — a misdetect just shows the wrong glyph in the
+  // tooltip; the shortcut binding (Mantine `mod+\``) keeps working.
+  const isMac =
+    typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || '');
+  const kbdHint = `(${isMac ? '⌘' : 'Ctrl'} \`)`;
+
   return (
-    <Tooltip label={`Theme: ${label} — click to cycle`} withinPortal>
+    <Tooltip label={`Theme: ${label} — click to cycle ${kbdHint}`} withinPortal>
       <ActionIcon size="lg" variant="subtle" onClick={cycle} aria-label={`Theme: ${label}`}>
         {icon}
       </ActionIcon>

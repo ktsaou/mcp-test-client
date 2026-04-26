@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, AppShell, Box, Drawer, Tabs, Tooltip } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
-import { Group, Panel, Separator } from 'react-resizable-panels';
+import { Group, Panel, Separator, type PanelImperativeHandle } from 'react-resizable-panels';
 
 import { useDiagnosticsPublisher } from '../diagnostics/useDiagnosticsPublisher.ts';
+import { useSidebarCollapse } from '../state/sidebar-collapse.tsx';
 import { ConnectionBar } from './connection-bar.tsx';
 import { Inspector } from './inspector.tsx';
 import { LogPanel } from './log-panel.tsx';
@@ -78,6 +79,21 @@ export function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('inventory');
 
+  // DEC-027 — sidebar collapse drive. The `s` shortcut flips
+  // `collapsed`; the imperative panel ref translates that into the
+  // `react-resizable-panels` collapse/expand call. One ref per
+  // layout branch — they unmount each other on the breakpoint flip,
+  // so only one is ever live at a time.
+  const { collapsed } = useSidebarCollapse();
+  const sidebarPanelRefWide = useRef<PanelImperativeHandle | null>(null);
+  const sidebarPanelRefNarrow = useRef<PanelImperativeHandle | null>(null);
+  useEffect(() => {
+    const ref = sidebarPanelRefWide.current ?? sidebarPanelRefNarrow.current;
+    if (!ref) return;
+    if (collapsed) ref.collapse();
+    else ref.expand();
+  }, [collapsed, wide, isMobile]);
+
   // If the user resizes from mobile back to desktop, close the drawer so
   // its overlay doesn't block the now-visible sidebar.
   useEffect(() => {
@@ -129,7 +145,15 @@ export function Layout() {
             onLayoutChanged={setOuterWide}
             style={{ flex: 1, minHeight: 0 }}
           >
-            <Panel id="sidebar" defaultSize="20%" minSize="12%" maxSize="40%">
+            <Panel
+              id="sidebar"
+              defaultSize="20%"
+              minSize="12%"
+              maxSize="40%"
+              collapsible
+              collapsedSize={0}
+              panelRef={sidebarPanelRefWide}
+            >
               <ServerPicker />
             </Panel>
             <ResizableSeparator orientation="horizontal" />
@@ -155,7 +179,15 @@ export function Layout() {
                 onLayoutChanged={setTopNarrow}
                 style={{ height: '100%', width: '100%' }}
               >
-                <Panel id="sidebar" defaultSize="25%" minSize="12%" maxSize="45%">
+                <Panel
+                  id="sidebar"
+                  defaultSize="25%"
+                  minSize="12%"
+                  maxSize="45%"
+                  collapsible
+                  collapsedSize={0}
+                  panelRef={sidebarPanelRefNarrow}
+                >
                   <ServerPicker />
                 </Panel>
                 <ResizableSeparator orientation="horizontal" />

@@ -10,6 +10,7 @@ import { LogProvider, useLog } from './state/log.tsx';
 import { RequestActionsProvider } from './state/request-actions.tsx';
 import { SelectionProvider, useSelection } from './state/selection.tsx';
 import { ServersProvider, useServers } from './state/servers.tsx';
+import { SidebarCollapseProvider } from './state/sidebar-collapse.tsx';
 import { appStore } from './state/store-instance.ts';
 import { ThemeProvider, useTheme } from './state/theme.tsx';
 import { readLastSelection } from './state/tool-state-persistence.ts';
@@ -22,7 +23,9 @@ import { stripManagedParams } from './state/url-state.ts';
 import { notifications } from '@mantine/notifications';
 import { appTheme } from './ui/mantine-theme.ts';
 import { CommandPaletteHost } from './ui/command-palette.tsx';
+import { KeyboardShortcutsHost } from './ui/keyboard-shortcuts.tsx';
 import { Layout } from './ui/layout.tsx';
+import { ShortcutHelp } from './ui/shortcut-help.tsx';
 
 /**
  * DEC-017 — catalog auto-merge.
@@ -242,22 +245,26 @@ export function App() {
   return (
     <ThemeProvider>
       <MantineBridge>
-        <ServersProvider>
-          <LogProvider>
-            <ConnectionProvider>
-              <SelectionProvider>
-                <RequestActionsProvider>
-                  <CommandPaletteHost>
-                    <CatalogAutoMerge />
-                    <ApplyBootUrlState />
-                    <RestoreSelectionOnServerReady />
-                    <Layout />
-                  </CommandPaletteHost>
-                </RequestActionsProvider>
-              </SelectionProvider>
-            </ConnectionProvider>
-          </LogProvider>
-        </ServersProvider>
+        <SidebarCollapseProvider>
+          <ServersProvider>
+            <LogProvider>
+              <ConnectionProvider>
+                <SelectionProvider>
+                  <RequestActionsProvider>
+                    <CommandPaletteHost>
+                      <KeyboardShortcutsHost />
+                      <CatalogAutoMerge />
+                      <ApplyBootUrlState />
+                      <RestoreSelectionOnServerReady />
+                      <Layout />
+                      <ShortcutHelp />
+                    </CommandPaletteHost>
+                  </RequestActionsProvider>
+                </SelectionProvider>
+              </ConnectionProvider>
+            </LogProvider>
+          </ServersProvider>
+        </SidebarCollapseProvider>
       </MantineBridge>
     </ThemeProvider>
   );
