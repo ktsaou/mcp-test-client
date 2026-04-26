@@ -78,7 +78,7 @@ In `src/ui/log-panel.tsx`:
 
 4. **System-row headline tooltip.** The system row has no action
    buttons; wrap the whole `.log-row__headline` in `<Tooltip
-   label={entry.text}>`. The drag-select guard still applies.
+label={entry.text}>`. The drag-select guard still applies.
 
 ## Anti-cases
 
@@ -87,7 +87,7 @@ In `src/ui/log-panel.tsx`:
   buttons → exactly ONE tooltip appears (the button's own Mantine
   Tooltip, never two stacked).
 - **No native HTML `title=` reintroduced.** This DEC fixes Costa's
-  values gap *without* re-creating the bug DEC-029 closed.
+  values gap _without_ re-creating the bug DEC-029 closed.
 - **Drag-select still works.** The values div keeps the
   `isSelectionDragInside` guard so text-drag mouseups don't
   trigger the click handlers (DEC-030 anti-case).
