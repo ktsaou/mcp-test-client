@@ -109,5 +109,19 @@ regress and re-introduce annoyance.
 
 ## Status
 
-Open — assigned to v1.2.5. First DEC after the v1.2.4 Costa-feedback
-ship; ships under the same framework two-step (Worker → critic gate).
+Closed — shipped as v1.2.5 (Worker commit `4082a77`, release
+`02acc49`). Critic verdict `pass` (clean). All six falsifiers PASS,
+including F5 (load-bearing — drag-select guard correctly extended to
+gate the new `onSelect` alongside the existing `onToggle`). All seven
+wave-regression checks (DEC-025 palette through DEC-029 single tooltip)
+hold.
+
+F2 — Costa's specific "next/previous should continue from there"
+request — verified empirically by both maintainer pre-test and the
+sign-off critic on the live deploy: clicking entry id=2 anchors the
+cursor; pressing ↓ advances to id=6 then id=8. The cursor honours the
+click position, not the last keyboard-jump.
+
+Second Costa-feedback ship of the day after DEC-029 (v1.2.4); both
+ran through the framework two-step. See `maintainer/log/2026-04-26.md`
+§17.
