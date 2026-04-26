@@ -98,5 +98,13 @@ verdict not just for presence but for tone.
 
 ## Status
 
-Open — assigned to v1.2.0. Lower priority than DEC-025/DEC-026; can
-ship in a separate PR.
+Closed — shipped as v1.2.3 (Worker commit `9ecf437`, release
+`20c4274`). Critic verdict `pass` (clean). All seven falsifiers + four
+regression checks PASS. F4 (the load-bearing anti-case) verified
+empirically: Context7's `-32601` rejections render the red
+`[role="alert"]` Alert with the wire error message; DeepWiki's `[]`
+renders the muted EmptyState with the 2025-06-18 MCP spec link.
+
+This release closes the four-DEC design-knowledge synthesis wave
+(DEC-025 + DEC-026 + DEC-027 + DEC-028); see
+`maintainer/log/2026-04-26.md` §14.
