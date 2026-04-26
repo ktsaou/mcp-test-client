@@ -111,6 +111,13 @@ suppression is bulletproof.
 
 ## Status
 
-Open — assigned to v1.2.0. Builds on the v1.1.20 `currentEntryId`
-state and the DEC-025 command palette (the help modal entry should
-launch the palette).
+Closed — shipped as v1.2.2 (Worker commit `78edf8d`, release
+`1f8ec08`). Critic verdict `pass` (no followups required). All seven
+falsifiers + four regression checks PASS, including F3 (the WCAG
+2.1.4 security floor — single-letter shortcuts correctly suppressed
+inside `<input>` / `<textarea>`).
+
+`/` ships as an alias of `Cmd+K` (opens command palette) since no
+log search input exists yet — DEC text "focus the log filter input"
+is forward-looking; documented in `maintainer/log/2026-04-26.md` §11.
+A future log-search UI can repoint `/` without re-opening this DEC.
