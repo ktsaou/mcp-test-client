@@ -158,6 +158,19 @@ export function LogPanel() {
     [filtered, scrollToEntry],
   );
 
+  // DEC-030 — any click inside a row anchors the prev/next cursor on it.
+  // Updates both the visible highlight (`currentEntryId`) and the index
+  // `jumpRequest` reads from, so pressing ↓/j after a click continues from
+  // the clicked row instead of from wherever ↑/↓ last landed.
+  const handleSelect = useCallback(
+    (id: number) => {
+      setCurrentEntryId(id);
+      const idx = filtered.findIndex((e) => e.id === id);
+      if (idx >= 0) lastJumpedIndexRef.current = idx;
+    },
+    [filtered],
+  );
+
   // Reset cursor when the filter or entry list changes underneath us.
   useEffect(() => {
     lastJumpedIndexRef.current = -1;
@@ -380,6 +393,7 @@ export function LogPanel() {
               expanded={expandedIds.has(entry.id)}
               isCurrent={entry.id === currentEntryId}
               onToggle={() => toggle(entry.id)}
+              onSelect={handleSelect}
               pairedId={pairs.get(entry.id)}
               pairedEntry={pairs.has(entry.id) ? byId.get(pairs.get(entry.id)!) : undefined}
               onJumpToPaired={() => {
@@ -406,6 +420,8 @@ interface LogRowProps {
   /** True when prev/next navigation just landed on this row (v1.1.20). */
   isCurrent: boolean;
   onToggle: () => void;
+  /** DEC-030 — anchor the prev/next cursor on this row. */
+  onSelect: (id: number) => void;
   pairedId: number | undefined;
   pairedEntry: LogEntry | undefined;
   onJumpToPaired: () => void;
@@ -417,6 +433,7 @@ function LogRow({
   expanded,
   isCurrent,
   onToggle,
+  onSelect,
   pairedId,
   pairedEntry,
   onJumpToPaired,
@@ -436,7 +453,17 @@ function LogRow({
         data-current={isCurrent ? 'true' : undefined}
         aria-current={isCurrent ? 'true' : undefined}
       >
-        <div className="log-row__headline" style={{ cursor: 'default' }}>
+        <div
+          className="log-row__headline"
+          style={{ cursor: 'default' }}
+          onClick={(ev) => {
+            // DEC-030 — anchor the cursor on this row, but skip the click
+            // when the user is finishing a text-selection drag (same
+            // pattern as the wire-row headline guard below).
+            if (isSelectionDragInside(ev.currentTarget)) return;
+            onSelect(entry.id);
+          }}
+        >
           <span className="log-row__chev" aria-hidden="true" />
           <span className="log-row__dir log-row__dir--sys">•</span>
           <Text size="xs" className="log-row__ts">
@@ -492,23 +519,13 @@ function LogRow({
         onClick={(ev) => {
           // Selection guard: if the user just finished selecting text inside
           // this headline (mouseup at the end of a drag), don't treat the
-          // click as an expand-toggle. We allow text selection in the
-          // headline (DEC TBD — log-row__headline used to set
-          // user-select:none which made copy impossible) and this guard is
-          // the standard pattern for keeping click-to-expand alongside
+          // click as an expand-toggle or as a cursor-anchor (DEC-030). We
+          // allow text selection in the headline (log-row__headline used to
+          // set user-select:none which made copy impossible) and this guard
+          // is the standard pattern for keeping click handlers alongside
           // drag-to-select.
-          const sel = typeof window !== 'undefined' ? window.getSelection() : null;
-          if (sel && sel.toString().length > 0) {
-            const target = ev.currentTarget;
-            const anchor = sel.anchorNode;
-            const focus = sel.focusNode;
-            if (
-              (anchor !== null && target.contains(anchor)) ||
-              (focus !== null && target.contains(focus))
-            ) {
-              return;
-            }
-          }
+          if (isSelectionDragInside(ev.currentTarget)) return;
+          onSelect(entry.id);
           onToggle();
         }}
         onKeyDown={(ev) => {
@@ -572,12 +589,36 @@ function LogRow({
         </div>
       </div>
       {expanded ? (
-        <div className="log-row__body">
+        <div
+          className="log-row__body"
+          onClick={(ev) => {
+            // DEC-030 — body click anchors the cursor without toggling the
+            // expand state (the user is reading; collapsing under them
+            // would trap them). Same drag-select guard as the headline:
+            // text-drags inside the JSON view must not anchor.
+            if (isSelectionDragInside(ev.currentTarget)) return;
+            onSelect(entry.id);
+          }}
+        >
           <JsonView value={entry.message} ariaLabel={`message ${entry.id}`} />
         </div>
       ) : null}
     </div>
   );
+}
+
+/**
+ * Drag-select guard shared by every clickable surface inside a log row
+ * (DEC-030). Returns true when a non-empty selection is anchored or
+ * focused inside `target` — i.e. the user just released a text-drag and
+ * the click should NOT be treated as a row click.
+ */
+function isSelectionDragInside(target: Node): boolean {
+  const sel = typeof window !== 'undefined' ? window.getSelection() : null;
+  if (!sel || sel.toString().length === 0) return false;
+  const anchor = sel.anchorNode;
+  const focus = sel.focusNode;
+  return (anchor !== null && target.contains(anchor)) || (focus !== null && target.contains(focus));
 }
 
 /**
