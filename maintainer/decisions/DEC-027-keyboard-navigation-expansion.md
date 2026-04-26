@@ -32,19 +32,19 @@ respects Mantine's `useHotkeys` semantics (skip when typing in
 inputs, modifier rules per WCAG 2.1.4) and registers shortcuts in a
 discoverable catalog.
 
-| Key      | Effect                                                                                       | Scope                       |
-| -------- | -------------------------------------------------------------------------------------------- | --------------------------- |
-| `Cmd+K`  | Open command palette (DEC-025)                                                               | Global                      |
-| `/`      | Focus the log filter input                                                                   | Log panel focused / global  |
-| `j`      | Move log cursor down 1 request (alias of `↓` from v1.1.20)                                   | Log panel focused           |
-| `k`      | Move log cursor up 1 request (alias of `↑`)                                                  | Log panel focused           |
-| `Enter`  | Expand the currently-cursored log row                                                        | Log panel focused           |
-| `Esc`    | Close the topmost overlay (modal / palette / drawer)                                         | Global                      |
-| `c`      | Open the Add-server modal                                                                    | Global                      |
-| `e`      | Edit the active server (open Edit modal)                                                     | Global, when active != null |
-| `?`      | Open the Shortcut help modal                                                                 | Global                      |
-| `s`      | Toggle sidebar collapsed/expanded                                                            | Global                      |
-| `Cmd+\`` | Toggle theme (dark / light / system cycle)                                                   | Global                      |
+| Key      | Effect                                                     | Scope                       |
+| -------- | ---------------------------------------------------------- | --------------------------- |
+| `Cmd+K`  | Open command palette (DEC-025)                             | Global                      |
+| `/`      | Focus the log filter input                                 | Log panel focused / global  |
+| `j`      | Move log cursor down 1 request (alias of `↓` from v1.1.20) | Log panel focused           |
+| `k`      | Move log cursor up 1 request (alias of `↑`)                | Log panel focused           |
+| `Enter`  | Expand the currently-cursored log row                      | Log panel focused           |
+| `Esc`    | Close the topmost overlay (modal / palette / drawer)       | Global                      |
+| `c`      | Open the Add-server modal                                  | Global                      |
+| `e`      | Edit the active server (open Edit modal)                   | Global, when active != null |
+| `?`      | Open the Shortcut help modal                               | Global                      |
+| `s`      | Toggle sidebar collapsed/expanded                          | Global                      |
+| `Cmd+\`` | Toggle theme (dark / light / system cycle)                 | Global                      |
 
 A **Shortcut help modal** lists every shortcut grouped by scope, with
 the same key labels that appear in tooltips. Press `?` from anywhere

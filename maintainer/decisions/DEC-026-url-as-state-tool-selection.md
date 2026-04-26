@@ -23,14 +23,14 @@ Persist these slices of state in the URL `?` query string (not the
 hash — we already use the hash for share-link reproduction
 fingerprints; keeping the two surfaces separate avoids collision):
 
-| Param          | Source                            | Decoded into                                |
-| -------------- | --------------------------------- | ------------------------------------------- |
-| `server`       | `mcptc:servers.active`            | The active server id                        |
-| `tool`         | request panel selected tool name  | The selected tool tab + tool name           |
-| `args`         | base64url-encoded JSON of form    | `formValue` for the selected tool           |
-| `mode`         | `form` / `raw`                    | Request panel mode toggle                   |
-| `log_filter`   | `mcptc:ui.log.filter`             | `all` / `wire` / `system` / `errors`        |
-| `log_search`   | log filter input text             | The current free-text log filter            |
+| Param        | Source                           | Decoded into                         |
+| ------------ | -------------------------------- | ------------------------------------ |
+| `server`     | `mcptc:servers.active`           | The active server id                 |
+| `tool`       | request panel selected tool name | The selected tool tab + tool name    |
+| `args`       | base64url-encoded JSON of form   | `formValue` for the selected tool    |
+| `mode`       | `form` / `raw`                   | Request panel mode toggle            |
+| `log_filter` | `mcptc:ui.log.filter`            | `all` / `wire` / `system` / `errors` |
+| `log_search` | log filter input text            | The current free-text log filter     |
 
 The URL is the **source of truth** at boot: if `?tool=…&args=…` is
 present and the active server exposes that tool, hydrate the form
