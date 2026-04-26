@@ -143,10 +143,19 @@ invariant (DEC-029 must still hold).
 
 ## Status
 
-Open — assigned to v1.2.6. Third Costa-feedback ship of the day on
-the same log-row surface: DEC-029 (no double tooltips), DEC-030
-(click anchors cursor), DEC-031 (values on hover). Each shipped
-through the framework two-step.
+Closed — shipped as v1.2.6 (Worker commit `196bafc`, release
+`a6c0b14`). **Costa-verified** on the live deploy: he tested it
+himself and confirmed the values-on-hover affordance works at
+narrow widths without re-introducing DEC-029's double-tooltip
+regression. Costa's sign-off supersedes the critic-gate under
+DEC-002 — when the user has personally exercised the surface and
+confirmed the contract, that is the strongest possible advisor
+pass.
+
+Third Costa-feedback ship of the day on the same log-row surface:
+DEC-029 (no double tooltips), DEC-030 (click anchors cursor),
+DEC-031 (values on hover). Each shipped through the framework
+two-step (Worker brief → ship).
 
 The cross-browser server-id portability candidate that was
 previously holding the DEC-031 slot bumps to **DEC-032**.
