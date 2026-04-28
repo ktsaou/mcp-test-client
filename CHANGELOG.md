@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.3.2] - 2026-04-28
+
+DEC-033 — catalog `instructions` + `instructions_url` fields; Netdata Cloud and Netdata Agent entries.
+
+### Added
+
+- **Catalog grows two optional fields per entry:** `instructions`
+  (plain text, ≤ 280 chars) and `instructions_url` (URI). Auth-
+  required entries can now carry guidance on where to find the
+  credential the user needs.
+- **Persistent help block in the add-server modal.** When a user
+  picks a known auth-required server with `instructions` and/or
+  `instructions_url` from the dropdown, a blue help Alert renders
+  under the credential input showing the instructions text and a
+  "Where to find this →" link. Stays visible while the user types
+  the token; clears when the user diverges from the catalog entry's
+  URL. The existing inline "Token required" / "Header value
+  required" error is unchanged.
+- **Netdata Cloud catalog entry** — `https://app.netdata.cloud/api/v1/mcp`
+  (Bearer + `scope:mcp` token, Business plan). CORS preflight
+  verified from the live deploy origin; `status: active`.
+- **Netdata Agent (self-hosted) catalog entry** — placeholder URL
+  `http://your-netdata-host:19999/mcp`; instructions tell the user
+  to edit URL and how to find the key. `status: unstable` until
+  per-deployment CORS / mixed-content can be verified.
+
 ## [1.3.1] - 2026-04-28
 
 DEC-032 — tabs switch to pills variant for at-rest active state.
