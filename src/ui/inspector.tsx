@@ -193,7 +193,7 @@ export function Inspector() {
             setTab(v);
           }
         }}
-        variant="default"
+        variant="pills"
         keepMounted={false}
         style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
       >

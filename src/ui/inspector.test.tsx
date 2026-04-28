@@ -160,6 +160,74 @@ describe('Inspector list — sorting and search', () => {
   });
 });
 
+describe('Inspector tabs — pills variant active state (DEC-032 / SOW-0007)', () => {
+  // SOW-0007: the active tab must be visually identifiable at rest, both
+  // generally and especially when the per-list error Alert is rendered
+  // (Costa-flagged failure mode: switch to a server that 32601s the
+  // currently-selected category → the red Alert dominates the panel and
+  // the at-rest active indicator must still read clearly above it).
+  // Mantine's pills variant exposes `data-active` on the selected
+  // Tabs.Tab; that attribute is what drives the filled background. We
+  // assert on the attribute (the structural signal Mantine paints
+  // against) plus aria-selected (the assistive-tech contract).
+
+  it('marks the active tab with aria-selected="true" and data-active', () => {
+    rtlRender(withConnection({ tools: [{ name: 'sample', description: 'x' }] }, <Inspector />));
+    const toolsTab = screen.getByRole('tab', { name: /tools/i });
+    expect(toolsTab).toHaveAttribute('aria-selected', 'true');
+    expect(toolsTab).toHaveAttribute('data-active');
+  });
+
+  it('inactive tabs have neither aria-selected="true" nor data-active', () => {
+    rtlRender(withConnection({ tools: [{ name: 'sample', description: 'x' }] }, <Inspector />));
+    const promptsTab = screen.getByRole('tab', { name: /prompts/i });
+    expect(promptsTab).toHaveAttribute('aria-selected', 'false');
+    expect(promptsTab).not.toHaveAttribute('data-active');
+  });
+
+  it('switching tab moves the data-active marker to the new tab', () => {
+    rtlRender(withConnection({ tools: [], prompts: [{ name: 'p1' }] }, <Inspector />));
+    const promptsTab = screen.getByRole('tab', { name: /prompts/i });
+    fireEvent.click(promptsTab);
+    expect(promptsTab).toHaveAttribute('aria-selected', 'true');
+    expect(promptsTab).toHaveAttribute('data-active');
+    const toolsTab = screen.getByRole('tab', { name: /tools/i });
+    expect(toolsTab).toHaveAttribute('aria-selected', 'false');
+    expect(toolsTab).not.toHaveAttribute('data-active');
+  });
+
+  it('active tab stays identifiable when the panel renders the per-list error Alert', () => {
+    // This is the exact server-switch + 32601 scenario Costa flagged.
+    // The user has Prompts selected; the new server returns an error on
+    // prompts/list. The red Alert dominates the panel, so the active-tab
+    // strip indicator MUST stay visible at rest. We force-select Prompts
+    // (default is Tools) and assert both the attribute marker and the
+    // a11y contract survive alongside the Alert.
+    rtlRender(
+      withConnection(
+        {
+          tools: [{ name: 't1', description: 'x' }],
+          prompts: [],
+          errors: { prompts: 'prompts/list unavailable: MCP error -32601: Method not found' },
+        },
+        <Inspector />,
+      ),
+    );
+    const promptsTab = screen.getByRole('tab', { name: /prompts/i });
+    fireEvent.click(promptsTab);
+    // The Alert is rendered (the failure mode is reproduced).
+    expect(screen.getAllByText(/list unavailable/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/method not found/i)).toBeInTheDocument();
+    // ...AND the active tab indicator is still on Prompts.
+    expect(promptsTab).toHaveAttribute('aria-selected', 'true');
+    expect(promptsTab).toHaveAttribute('data-active');
+    // Sibling tabs do NOT carry the marker — no visual ambiguity.
+    expect(screen.getByRole('tab', { name: /tools/i })).not.toHaveAttribute('data-active');
+    expect(screen.getByRole('tab', { name: /resources/i })).not.toHaveAttribute('data-active');
+    expect(screen.getByRole('tab', { name: /templates/i })).not.toHaveAttribute('data-active');
+  });
+});
+
 describe('InventoryEmptyState', () => {
   it('idle state asks the user to connect', () => {
     const status: ConnectionStatus = { state: 'idle' };

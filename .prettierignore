@@ -6,3 +6,11 @@ node_modules/
 legacy/
 package-lock.json
 *.min.js
+
+# UX-critic scratch outputs (root-level snapshot dumps from advisor runs)
+/snap*.yml
+/snap*.yaml
+/snap*.md
+/snapshot*.yml
+/snapshot*.yaml
+/snapshot*.md

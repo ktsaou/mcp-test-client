@@ -274,7 +274,7 @@ function MobileLayout({ tab, onTabChange, drawerOpen, onDrawerClose }: MobileLay
           if (v === 'inventory' || v === 'request' || v === 'log') onTabChange(v);
         }}
         keepMounted
-        variant="default"
+        variant="pills"
         style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
       >
         <Tabs.List style={{ flexShrink: 0 }}>
