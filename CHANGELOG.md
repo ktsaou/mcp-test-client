@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.3.1] - 2026-04-28
+
+DEC-032 — tabs switch to pills variant for at-rest active state.
+
+### Changed
+
+- **Active tab is now an unmistakable filled pill.** The Inspector
+  inner tabs (Tools / Prompts / Resources / Templates) and the
+  top-level mobile-layout tabs (Inventory / Request / Log) used
+  Mantine's `variant="default"`, which signals the active tab with a
+  thin bottom border. When the panel below renders an empty-state or
+  error after a server switch, the indicator was easy to miss — users
+  had to read the panel content to figure out which tab was actually
+  selected. Pills variant fixes this at rest. Light theme uses cyan.8
+  (rather than the default cyan.6 = primary-color-filled) so the
+  active pill clears 4.35:1 contrast against the body and white text
+  remains readable; dark theme keeps Mantine's default filled.
+- **Hover and focus polish.** Inactive tabs now show a subtle hover
+  background; keyboard `:focus-visible` lands a 2 px accent outline
+  meeting WCAG 2.2 AA on both themes.
+
+### Internal
+
+- `feedback-folding.md` lesson on the Maintainer Charter contract
+  inside this repo: project-internal product / technical / UX design
+  decisions belong to the maintainer, not Costa.
+- `.prettierignore` now excludes root-level `snap*` / `snapshot*`
+  scratch outputs from advisor runs (a chronic pipeline-rot
+  source).
+
 ## [1.1.19] - 2026-04-26
 
 DEC-020 — inflight activity indicator (visibility-only).

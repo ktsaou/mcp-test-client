@@ -65,6 +65,7 @@ Spawn 2+ different models (codex, gemini, qwen-code, glm) per the Unbiased Secon
 - **v1.1.20 critic image-API flake** → default critic brief specifies `_evaluate` + `_snapshot` over `_take_screenshot`. Screenshots are nice-to-have, not load-bearing.
 - **Cancellation-chain risk on serial GH Pages deploys** → always verify deploy via `curl` of the deployed `index-*.js` filename before announcing "live". Never claim a deploy you haven't verified.
 - **DEC-014 chip-fold uses descendant CSS selectors** so wrapping `.log-row__chips` inside `.log-row__values` (DEC-031) preserves the chip-drop ladder. Reviewers must measure `data-chip-level` (0/1/2/3) at 280/320/360/400 px and verify monotonic-up behaviour, not just visual judgement.
+- **Critic "PASS" verdict ≠ SOW acceptance criteria passing** (SOW-0007). The UX-critic returned SHIP-WITH-CAVEAT on SOW-0007's tabs-pills change; falsifier 1 was reported PASS qualitatively ("identifiable in <1 s") but the SOW's explicit ≥3:1 light-theme contrast target was missed (2.79:1 measured). Reviewers (and the maintainer reviewing the critic) must re-check the critic's numeric measurements against the SOW's acceptance criteria directly. Qualitative pass is necessary but not sufficient when criteria carry numeric thresholds.
 
 ## How to act on review findings
 
