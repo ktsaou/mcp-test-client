@@ -112,6 +112,19 @@
   color: var(--mantine-color-white);
 }
 
+/*
+ * Light-theme active pill needs more weight than Mantine's default
+ * primary-color-filled (cyan.6 = rgb(21,170,191)) gives. cyan.6 on a
+ * white body produces only 2.79:1 contrast — below this SOW's ≥3:1
+ * criterion AND below WCAG 2.2 AA (4.5:1) for the white text on the
+ * pill. cyan.8 lifts both contrast values above 5:1 without losing
+ * the brand teal. Dark theme keeps Mantine's filled (cyan.7-
+ * equivalent), which already clears 3:1 against the dark body.
+ */
+[data-mantine-color-scheme='light'] .mantine-Tabs-tab[data-active] {
+  background-color: var(--mantine-color-cyan-8);
+}
+
 .mantine-Tabs-tab:not([data-active]):hover {
   background-color: var(--mantine-color-default-hover);
 }
