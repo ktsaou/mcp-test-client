@@ -33,7 +33,7 @@ For SOW initialization specifically: delegation is mandatory.
 
 - Any feature, bug fix, refactor, or research involving logic, design, or testing → SOW
 - Anything that may update specs or produce lessons learned → SOW
-- Regressions update the existing SOW (closest match; latest if tied) — never a new SOW
+- Regressions reopen the existing SOW (closest match; latest if tied) — never a new SOW
 
 **Trivial mechanical changes bypass SOW:**
 
@@ -41,21 +41,35 @@ For SOW initialization specifically: delegation is mandatory.
 
 If unclear whether work is trivial: it is not. Use SOW.
 
-### Mandatory SOW pipeline (every step required, no opt-out)
+### The four mandates
 
-1. **Requirements** — capture what must be true when done
-2. **Analysis** — current state, root causes, scope
-3. **Plan** — approach; flag risks
-4. **Chunking** — assistant judges; chunk only when the SOW is large enough that chunked review/test/integration adds value. Small SOWs implement as a single unit.
-5. **Implement** — per chunk if chunked, otherwise as a unit
-6. **Review** — per chunk before the next, or once on completion if not chunked
-7. **Test** — acceptance, real use, edge cases
-8. **Document** — update docs and `.agents/sow/specs/`
-9. **Ship** — commit; PR when applicable
-10. **Lessons** — extract concrete lessons, or explicitly _"none, reasoning: …"_
-11. **Update project skills and specs** — apply the lessons
+Format and ceremony are negotiable; these are not:
 
-Per-step rules and validation gates: `~/.agents/skills/sow/sow-workflow.md`.
+1. **Non-trivial requests get a SOW** — pending work tracked, stakes understood.
+2. **Implementation is tested** — the user is not the QA team.
+3. **Specs updated when work ships** — next session has the shortcut.
+4. **Retrospection on SOW close (even "all good")** — lessons land in skills/specs.
+
+`N/A` on any item is allowed only with a non-boilerplate reason and explicit user agreement; never on the core requirement to satisfy purpose and acceptance criteria.
+
+### SOW sections (the file structure)
+
+Each SOW under `.agents/sow/{pending,current,done}/` is one markdown file `SOW-NNNN-YYYYMMDD-{slug}.md`. Sections must be present so the model can find them later; wording is flexible.
+
+- **Status** — `open` (pending/), `in-progress` / `paused` (current/), `completed` / `closed` (done/).
+- **Requirements** — Purpose, user request verbatim, assistant understanding (stated vs inferred), testable acceptance criteria.
+- **Analysis** — sources, current state, root cause, scope; mark facts vs inference vs working theory vs speculation.
+- **Implications and decisions** — risks, trade-offs, alternatives rejected with reasoning; user decisions captured before implementation.
+- **Plan** — chunks (with risk low/medium/high) or single-unit with reasoning.
+- **Execution log** — chronological per-chunk record; deviations logged honestly.
+- **Validation** — acceptance evidence, real-use evidence, reviewer findings (≥1 for low risk; ≥2 different reviewers/models for medium/high), same-failure-at-other-scales scan, specs updated, skills updated, lessons captured.
+- **Outcome** — what shipped, plain language, artifacts; for `closed` SOWs, closure reason.
+- **Lessons extracted** — concrete patterns mapped to artifact (specs / skill / AGENTS.md / Followup), or non-boilerplate `none, reasoning: ...`.
+- **Followup** (optional), **Regression** (optional — one block per occurrence; reopens preserve the original Outcome and stack new blocks), **Pause** (optional).
+
+Done SOWs are audit trail, not durable memory — day-to-day, behaviour lives in specs. Read `done/` only for regression archaeology.
+
+Full rules and the hard invariants (trust contract): `~/.agents/skills/sow/SKILL.md`.
 
 ### Project Skills (MANDATORY — not opt-in)
 
@@ -66,11 +80,11 @@ The assistant MUST follow these for the work they cover:
 - `.agents/skills/project-testing/` — Vitest / Playwright / fixture patterns / real-use validation rules; MUST be followed for any test work
 - `.agents/skills/project-maintainer/` — operating discipline of the sole owner-operator (mode discipline, framework two-step ship, feedback folding, agents roster); read at the start of every session
 
-The assistant maintains these skills in step 11 of every SOW (lessons → updates).
+The assistant maintains these skills as part of every SOW's Validation / Lessons (mandate 4: retrospection lands lessons in skills/specs).
 
 ### Where things live
 
-- `.agents/sow/specs/` — long-lived project specs (read before relevant SOWs; update in step 8)
+- `.agents/sow/specs/` — long-lived project specs (read before relevant SOWs; updated when work ships, per mandate 3)
 - `.agents/sow/specs/decisions/` — DEC-NNN ADR-lite files (33+ entries; do not re-litigate)
 - `.agents/sow/pending/` — SOWs awaiting work
 - `.agents/sow/current/` — SOWs in progress
@@ -89,6 +103,10 @@ For details, see `~/.agents/skills/sow/SKILL.md`.
 - `.agents/sow/specs/design-system.md` — Mantine v9, theme, bundle budget (DEC-005, 350 KB gz cap)
 - `.agents/sow/specs/product-overview.md` — what the product is, who it serves
 - `.agents/sow/specs/decisions/README.md` — DEC index (DEC-000 through DEC-031+)
+
+### Project-specific overrides
+
+None — global defaults apply.
 
 Project SOW status: initialized
 
@@ -139,7 +157,7 @@ Five mental moves you make explicitly:
 4. **Stress-test with an advisor.** Spawn the relevant advisor. They get the same context you have. You weigh their answer.
 5. **Judge.** Decide. Log it as a new DEC-NNN file under [`.agents/sow/specs/decisions/`](.agents/sow/specs/decisions/) (the SOW pipeline turns this into a step-3 Plan record). Move on.
 
-User feedback is fact, not opinion. When someone says something is bad, your job is to identify the underlying expectation it violated, fold that into [`.agents/sow/specs/quality-bar.md`](.agents/sow/specs/quality-bar.md) (and the relevant skill under [`.agents/skills/project-*/`](.agents/skills/)), and fix the code. Step 10 (Lessons) and step 11 (Update skills + specs) of the SOW pipeline are the enforcement mechanism — the DoD checkbox makes lesson-extraction a tickable gate, not an implicit responsibility.
+User feedback is fact, not opinion. When someone says something is bad, your job is to identify the underlying expectation it violated, fold that into [`.agents/sow/specs/quality-bar.md`](.agents/sow/specs/quality-bar.md) (and the relevant skill under [`.agents/skills/project-*/`](.agents/skills/)), and fix the code. The SOW Validation / Lessons sections are the enforcement mechanism (mandate 3: specs updated when work ships; mandate 4: retrospection on close) — lesson-extraction is a tickable gate, not an implicit responsibility.
 
 ### 4. What you value
 
@@ -224,7 +242,7 @@ A release is not done until **all** of these hold:
 
 If any item is "no", say so out loud — to Costa, in the PR description, to yourself. You do not call it shipped.
 
-The DoD gate from `~/.agents/skills/sow/sow-workflow.md` enforces this with a tickable 5-item Validation checklist on every SOW: acceptance evidence, real-use evidence, cross-model review (when triggered), lessons extracted (or "none, reasoning: …"), same-failure-at-other-scales check.
+The DoD gate from `~/.agents/skills/sow/SKILL.md` (Validation section) enforces this with a tickable 5-item Validation checklist on every SOW: acceptance evidence, real-use evidence, cross-model review (when triggered), lessons extracted (or "none, reasoning: …"), same-failure-at-other-scales check.
 
 ### 7. Communication norms
 

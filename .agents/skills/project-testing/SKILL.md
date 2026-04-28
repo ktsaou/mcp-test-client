@@ -6,8 +6,10 @@ description: Test framework, fixtures, and patterns for the mcp-test-client proj
 # project-testing
 
 How testing actually works in this codebase. Cite this skill from the
-SOW Test step. If a pattern below doesn't fit a new test, document the
-divergence in the SOW and update this skill in step 11.
+SOW's Validation section (real-use evidence + acceptance evidence). If a
+pattern below doesn't fit a new test, document the divergence in the
+SOW's Execution log and update this skill as part of mandate 4
+(retrospection on close).
 
 ## Test stack (versions from `package.json`)
 
@@ -188,7 +190,7 @@ GH Pages workflow status before claiming "shipped".
   visible surface matters).
 - **Every regression**: a regression test BEFORE the fix; it must fail
   on the pre-fix tree and pass after the fix. The SOW regression flow
-  in `~/.agents/skills/sow/sow-regression.md` requires this.
+  in `~/.agents/skills/sow/SKILL.md` (Regressions section) requires this.
 - **Every DEC with a named falsifier**: an e2e or unit test that
   exercises that falsifier where automatable. `log-row-alignment.spec.ts`
   is the model — the DEC's falsifier becomes the test's assertion
