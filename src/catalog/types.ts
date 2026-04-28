@@ -10,6 +10,10 @@ export interface CatalogServer {
   tags?: string[];
   auth: 'none' | 'bearer' | 'oauth' | 'header';
   docs?: string;
+  /** Plain-text guidance for getting the credential. See public/public-servers.schema.json. */
+  instructions?: string;
+  /** URL to the server's auth-setup docs. See public/public-servers.schema.json. */
+  instructions_url?: string;
   addedAt: string;
   status: 'active' | 'unstable' | 'retired';
 }

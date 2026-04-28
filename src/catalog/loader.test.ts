@@ -76,4 +76,101 @@ describe('loadCatalog', () => {
     const cat = await loadCatalog();
     expect(cat.servers.map((s) => s.id)).toEqual(['good']);
   });
+
+  // DEC-033 / SOW-0006 — `instructions` and `instructions_url` are
+  // optional string fields. The loader is defensive: schema enforces
+  // length / URI; loader only requires `typeof === 'string'`.
+  it('keeps a valid instructions string', async () => {
+    respondWith({
+      version: 1,
+      servers: [
+        {
+          id: 'auth-a',
+          name: 'Auth A',
+          url: 'https://a.invalid/mcp',
+          transport: 'streamable-http',
+          description: 'auth required',
+          auth: 'bearer',
+          instructions: 'Generate a token at example.com → Profile → Tokens.',
+          addedAt: '2026-04-28',
+          status: 'active',
+        },
+      ],
+    });
+    const cat = await loadCatalog();
+    expect(cat.servers[0]?.instructions).toBe(
+      'Generate a token at example.com → Profile → Tokens.',
+    );
+    expect(cat.servers[0]?.instructions_url).toBeUndefined();
+  });
+
+  it('keeps a valid instructions_url string', async () => {
+    respondWith({
+      version: 1,
+      servers: [
+        {
+          id: 'auth-b',
+          name: 'Auth B',
+          url: 'https://b.invalid/mcp',
+          transport: 'streamable-http',
+          description: 'auth required',
+          auth: 'bearer',
+          instructions_url: 'https://example.com/docs/auth',
+          addedAt: '2026-04-28',
+          status: 'active',
+        },
+      ],
+    });
+    const cat = await loadCatalog();
+    expect(cat.servers[0]?.instructions_url).toBe('https://example.com/docs/auth');
+    expect(cat.servers[0]?.instructions).toBeUndefined();
+  });
+
+  it('drops non-string instructions / instructions_url silently', async () => {
+    respondWith({
+      version: 1,
+      servers: [
+        {
+          id: 'auth-c',
+          name: 'Auth C',
+          url: 'https://c.invalid/mcp',
+          transport: 'streamable-http',
+          description: 'auth required',
+          auth: 'bearer',
+          instructions: 42,
+          instructions_url: { hostile: true },
+          addedAt: '2026-04-28',
+          status: 'active',
+        },
+      ],
+    });
+    const cat = await loadCatalog();
+    // Entry survives — only the bad fields are dropped.
+    expect(cat.servers).toHaveLength(1);
+    expect(cat.servers[0]?.id).toBe('auth-c');
+    expect(cat.servers[0]?.instructions).toBeUndefined();
+    expect(cat.servers[0]?.instructions_url).toBeUndefined();
+  });
+
+  it('entry without either field still parses', async () => {
+    respondWith({
+      version: 1,
+      servers: [
+        {
+          id: 'no-instr',
+          name: 'No instructions',
+          url: 'https://d.invalid/mcp',
+          transport: 'streamable-http',
+          description: 'auth required',
+          auth: 'oauth',
+          addedAt: '2026-04-28',
+          status: 'active',
+        },
+      ],
+    });
+    const cat = await loadCatalog();
+    expect(cat.servers).toHaveLength(1);
+    expect(cat.servers[0]?.instructions).toBeUndefined();
+    expect(cat.servers[0]?.instructions_url).toBeUndefined();
+  });
 });

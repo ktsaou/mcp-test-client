@@ -362,8 +362,17 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
       setAuthCatalog(c.servers.filter((s) => s.auth !== 'none' && s.status !== 'retired'));
     });
   }, [spec.mode]);
+  // DEC-033 / SOW-0006 — track which known server (if any) was last
+  // picked from the catalog dropdown. Drives the persistent help block
+  // under the credential field. Cleared when the user diverges from the
+  // catalog URL so the help block doesn't lie about an entry that no
+  // longer matches the form.
+  const [pickedKnownServerId, setPickedKnownServerId] = useState<string | null>(null);
   function applyKnownServer(id: string | null) {
-    if (id === null) return;
+    if (id === null) {
+      setPickedKnownServerId(null);
+      return;
+    }
     const known = authCatalog.find((s) => s.id === id);
     if (!known) return;
     setName(known.name);
@@ -375,7 +384,14 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
     if (known.auth === 'header') setAuthKind('header');
     else if (known.auth === 'bearer' || known.auth === 'oauth') setAuthKind('bearer');
     else setAuthKind('none');
+    setPickedKnownServerId(known.id);
   }
+  const activeKnown =
+    pickedKnownServerId === null
+      ? null
+      : (authCatalog.find((s) => s.id === pickedKnownServerId) ?? null);
+  const showHelpBlock =
+    activeKnown !== null && Boolean(activeKnown.instructions ?? activeKnown.instructions_url);
 
   // DEC-016 #4: connecting spinner while the Save handler probes the
   // server. Persistence is gated on a successful connect — if the
@@ -541,7 +557,17 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
           <TextInput
             label="URL"
             value={url}
-            onChange={(e) => setUrl(e.currentTarget.value)}
+            onChange={(e) => {
+              const next = e.currentTarget.value;
+              setUrl(next);
+              // DEC-033 — once the user diverges from the picked
+              // catalog entry's URL, the help block must clear so it
+              // doesn't keep showing instructions that no longer match
+              // what the form is about to submit.
+              if (activeKnown !== null && next !== activeKnown.url) {
+                setPickedKnownServerId(null);
+              }
+            }}
             placeholder="https://example.com/mcp or wss://…"
             required
           />
@@ -613,6 +639,35 @@ function ServerModal({ spec, onClose }: ServerModalProps) {
                 error={headerValueMissing ? 'Header value required' : undefined}
               />
             </>
+          ) : null}
+
+          {/*
+            DEC-033 / SOW-0006 — persistent help block under the
+            credential field when the picked known server carries
+            instructions or an instructions_url. Stays visible
+            regardless of credential-field state so users never lose
+            sight of where to find their token. The short inline
+            "Token required" / "Header value required" error keeps its
+            place under each input above (acceptance criterion 4).
+          */}
+          {showHelpBlock && activeKnown !== null ? (
+            <Alert variant="light" color="blue" p="xs">
+              <Stack gap={4}>
+                {activeKnown.instructions !== undefined ? (
+                  <Text size="sm">{activeKnown.instructions}</Text>
+                ) : null}
+                {activeKnown.instructions_url !== undefined ? (
+                  <Anchor
+                    href={activeKnown.instructions_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    size="xs"
+                  >
+                    Where to find this →
+                  </Anchor>
+                ) : null}
+              </Stack>
+            </Alert>
           ) : null}
 
           {error !== null ? (

@@ -102,6 +102,31 @@
       "docs": "https://dash.cloudflare.com/sign-up",
       "addedAt": "2026-04-25",
       "status": "active"
+    },
+    {
+      "id": "netdata-agent",
+      "name": "Netdata Agent (self-hosted)",
+      "url": "http://your-netdata-host:19999/mcp",
+      "transport": "streamable-http",
+      "description": "AI-friendly MCP access to a single self-hosted Netdata Agent or parent. Edit the URL to your agent's host. Requires the agent to be claimed.",
+      "auth": "bearer",
+      "instructions": "Edit URL → your Netdata Agent host. Get the API key on the host: sudo cat /var/lib/netdata/mcp_dev_preview_api_key. Agent must be claimed to Netdata Cloud.",
+      "instructions_url": "https://docs.netdata.cloud/docs/netdata-ai/mcp/README",
+      "addedAt": "2026-04-28",
+      "status": "unstable"
+    },
+    {
+      "id": "netdata-cloud",
+      "name": "Netdata Cloud",
+      "url": "https://app.netdata.cloud/api/v1/mcp",
+      "transport": "streamable-http",
+      "description": "AI-friendly MCP access to your Netdata infrastructure across all connected nodes — metrics, anomalies, alerts, processes (Business plan).",
+      "auth": "bearer",
+      "instructions": "Create an API token with scope:mcp at app.netdata.cloud → Profile (bottom-left) → User Settings → API Tokens → New token. Business plan required.",
+      "instructions_url": "https://docs.netdata.cloud/docs/netdata-cloud/authentication-and-authorization/api-tokens",
+      "docs": "https://docs.netdata.cloud/docs/netdata-ai/mcp/README",
+      "addedAt": "2026-04-28",
+      "status": "active"
     }
   ]
 }

@@ -52,6 +52,9 @@ function sanitize(raw: unknown): Catalog {
         : undefined,
       auth: s['auth'] as CatalogServer['auth'],
       docs: typeof s['docs'] === 'string' ? s['docs'] : undefined,
+      instructions: typeof s['instructions'] === 'string' ? s['instructions'] : undefined,
+      instructions_url:
+        typeof s['instructions_url'] === 'string' ? s['instructions_url'] : undefined,
       addedAt: s['addedAt'],
       status: s['status'] as CatalogServer['status'],
     });

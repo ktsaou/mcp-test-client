@@ -2,8 +2,8 @@
 
 ## Status
 
-open
-Decisions locked. Held in pending/ until SOW-0007 ships (Costa: do tab-highlight first).
+in-progress
+SOW-0007 shipped 2026-04-28 (v1.3.1). Resuming SOW-0006. CORS preflight on Netdata Cloud confirmed CORS-permissive from `https://ktsaou.github.io` (preflight 200, allow-origin echoed, Authorization in allow-headers) — Cloud entry shifts from `unstable` to `active`. Agent stays `unstable` (per-user URL + likely mixed-content).
 
 ## Requirements
 
@@ -33,7 +33,7 @@ Two Netdata MCP servers (Agent + Cloud) need credentials to use, and users won't
    - `instructions`: explains "Generate an API token with `scope:mcp` in app.netdata.cloud → Profile → User Settings → API Tokens. Business plan required."
    - `instructions_url`: `https://docs.netdata.cloud/docs/netdata-cloud/authentication-and-authorization/api-tokens`
    - `docs`: `https://docs.netdata.cloud/docs/netdata-ai/mcp/README`
-   - `status`: `unstable` (browser CORS unverified — see Followup)
+   - `status`: `active` (CORS preflight verified 2026-04-28 — `https://ktsaou.github.io` echoed in `access-control-allow-origin`, `Authorization` in `access-control-allow-headers`, POST allowed).
 6. **Netdata Agent entry** (D1 = B — placeholder URL). New entry:
    - `id: "netdata-agent"`, `auth: "bearer"`, `transport: "streamable-http"`, URL `http://your-netdata-host:19999/mcp`
    - `instructions`: tells the user to **edit the URL to their Netdata Agent host**, then run `sudo cat /var/lib/netdata/mcp_dev_preview_api_key` for the key. Mentions that the agent must be claimed.

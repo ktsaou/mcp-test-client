@@ -41,6 +41,8 @@
           "enum": ["none", "bearer", "oauth", "header"]
         },
         "docs": { "type": "string", "format": "uri" },
+        "instructions": { "type": "string", "minLength": 1, "maxLength": 280 },
+        "instructions_url": { "type": "string", "format": "uri" },
         "addedAt": { "type": "string", "format": "date" },
         "status": {
           "type": "string",
