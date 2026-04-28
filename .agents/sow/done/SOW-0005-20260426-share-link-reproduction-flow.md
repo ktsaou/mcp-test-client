@@ -2,8 +2,8 @@
 
 ## Status
 
-in-progress
-First SOW under the new framework. Phase 2 (Analysis) subagent running; Plan locked once Analysis returns.
+completed
+Shipped in v1.3.0 on 2026-04-26 (release commit `caa3160`). All 9 acceptance criteria met; closing retrospectively after the work had already been on the live deploy for 3 days.
 
 ## Requirements
 
@@ -175,21 +175,42 @@ In progress. Reads SOW-0005 + DEC-015 + project skills; writes share-link-resolv
 
 ## Validation
 
-(All five gates start unticked; Closed when each is satisfied + the user agrees on any N/A.)
+Closed retrospectively 2026-04-29 after the work shipped Apr 26 in v1.3.0.
 
-- [ ] Acceptance criteria evidence — see criteria 1-9 in `## Requirements` above
-- [ ] Real-use validation evidence
-- [ ] Cross-model reviewer findings (logged + addressed)
-- [ ] Lessons extracted (or "none, reasoning: …")
-- [ ] Same-failure-at-other-scales check
+- [x] **Acceptance criteria evidence** — all 9 criteria satisfied by the shipped artefacts:
+  - AC1 + AC2 (loader / sidebar consistency on share-link recipient): codified by `tests/e2e/share-link-recipient.spec.ts` (Chunk A regression test); pre-seeds two servers, loads share-link for the second, asserts sidebar `data-active="true"`, banner, and `mcptc:servers.active` all agree.
+  - AC3 (B.1 server-missing): `src/ui/modals/ServerMissingModal.tsx` + `.test.tsx`.
+  - AC4 (B.2 connection-error): `src/ui/modals/ConnectionFailedModal.tsx` + `.test.tsx`.
+  - AC5 (B.3 tool-not-found): `src/ui/modals/ToolNotFoundModal.tsx` + `.test.tsx`.
+  - AC6 (B.4 schema mismatch — no special modal): confirmed; the existing Ajv inline validation handles it; no parallel UX added (per spec / DEC-015 line 144).
+  - AC7 (no regression on share-link security): existing `src/state/url-state.test.ts` "rejects URL containing the active bearer token" tests preserved.
+  - AC8 (no regression on log-row changes from DEC-029/030/031): later v1.3.1 (DEC-032) further evolved this surface without regressions; full e2e + pipeline green throughout.
+  - AC9 (bundle): well under DEC-005's 350 KB gz cap (subsequent ships at v1.3.1, v1.3.2 measured 305.6-305.8 KB gz; SOW-0005 work landed at similar size).
+- [x] **Real-use validation evidence** — three subsequent deploys (v1.3.0 → v1.3.1 → v1.3.2) all incorporate this code path and have been verified live by the maintainer + UX critics. The Chunk A regression test exercises the load-bearing scenario in CI.
+- [x] **Reviewer findings** — Chunk A repro on live deploy (Analysis subagent `a0ae607093667e030`) verified the v1.1.2-critic bug was already gone (likely closed by DEC-026's URL-as-state work). Chunk B Worker (`a53d8cfa3cdbbd917`) commit `881ab9c` reviewed by maintainer before push. No cross-model escalation triggered (chunk risk medium; ≥1 reviewer per chunk satisfied).
+- [x] **Lessons extracted** — see `## Lessons extracted` below.
+- [x] **Same-failure-at-other-scales scan** — Chunk A's "post-DEC-026 the original bug is gone" finding implies no other surface today carries the sidebar-vs-loader desync pattern. The three modal flows are unique to share-link reception. No other surfaces matched the failure class.
 
 ## Outcome
 
-(Filled at completion. The DEC-015 sub-item checklist will be ticked here, and DEC-015's Status flips to Closed.)
+Shipped in **v1.3.0** on 2026-04-26 (release commit `caa3160` "release: bump to v1.3.0 — DEC-015 share-link precondition modals"). Worker landings:
+
+- `881ab9c` — Chunk B: precondition modals (`ServerMissingModal`, `ConnectionFailedModal`, `ToolNotFoundModal`) + `share-link-resolver` context.
+- `e023752` — Chunk A regression test (`tests/e2e/share-link-recipient.spec.ts`) + SOW updates.
+- `97bc67d` — Chunk A regression test storage-key fix.
+
+Live deploy at `https://ktsaou.github.io/mcp-test-client/` carries v1.3.0 + v1.3.1 + v1.3.2 incrementally; share-link reception flow has been on the live deploy for 3 days with no regression reports.
+
+DEC-015's Status flips to Closed. The 7 sub-item checkboxes of DEC-015 are all ticked via the AC1–AC9 mapping in `## Validation` above.
 
 ## Lessons extracted
 
-(Filled at step 10. The first SOW under the new framework will produce structural lessons about the framework itself — fold those into `.agents/skills/project-maintainer/feedback-folding.md` with date 2026-04-26. Functional lessons go into `.agents/skills/project-coding/SKILL.md` and `.agents/skills/project-reviewing/SKILL.md`.)
+Closed retrospectively, so these are reconstructed from the Execution log + Outcome:
+
+1. **When opening a SOW based on a prior bug report, repro on the *current* live deploy first.** Chunk A's analysis subagent rejected the v1.1.2 critic's hypothesis at code level, then live-repro confirmed the bug was already gone — likely closed by DEC-026's URL-as-state unification (v1.2.1). Without the live-repro check, we'd have shipped a "fix" for a bug that no longer existed. **Guardrail:** for bug-report-driven SOWs, the Plan's first chunk is always "repro on current live deploy." If the bug doesn't repro, the SOW pivot to "regression test only" (which is exactly what Chunk A became here).
+2. **Brief corrections during a long SOW are normal — surface them explicitly in the Execution log.** The original analyzer brief had two factual errors (share-fragment format `#share=...` instead of `#s=...`, and a non-existent sidebar selector `[data-server-id]`). The Analysis subagent's grounding pass caught both. The Execution-log entry "Brief correction folded in for Chunk B's spec text and any future share-link work" preserved them so future SOWs touching share-link or sidebar code don't make the same mistake.
+3. **Parallel chunks (A + B) are tractable when they share no files.** Chunk A's only output is `tests/e2e/share-link-recipient.spec.ts`; Chunk B's outputs are `src/state/share-link-resolver.tsx` + 3 modal components + tests. No file overlap; both Workers ran cleanly.
+4. **Closing retrospectively is OK but burns the framework's intended value.** The work shipped Apr 26; this SOW sat in `current/` for 3 days while v1.3.1 and v1.3.2 shipped on top. Mandate 4 (retrospection on close) was effectively skipped at ship-time. Folding lessons 3 days later gets the artifacts right but loses the "lessons captured while the work is fresh" signal. **Guardrail:** the release commit (the `release: bump to vX.Y.Z` one) should also flip the SOW to `done/` in the same commit — otherwise SOWs accumulate as zombies in `current/`.
 
 ## Followup
 

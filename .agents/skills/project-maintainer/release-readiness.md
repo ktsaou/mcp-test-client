@@ -42,3 +42,16 @@ description, to yourself. You do not call it shipped.
   **Guardrail:** §6 item 3 (UX-critic advisor sign-off mandatory before
   merge of visible changes); see
   [`../../sow/specs/decisions/DEC-002-ux-advisor-mandatory.md`](../../sow/specs/decisions/DEC-002-ux-advisor-mandatory.md).
+- **2026-04-29 — SOW-0005 closed retrospectively, 3 days after ship.**
+  The work shipped in v1.3.0 on Apr 26, but the SOW file sat in
+  `current/` while v1.3.1 and v1.3.2 shipped on top. Mandate 4
+  (retrospection on close) was skipped at ship-time; lessons were
+  reconstructed days later from the Execution log. The reconstruction
+  works but loses the "lessons captured while the work is fresh"
+  signal, and `current/` accumulates zombie SOWs that newer
+  maintainer-mode reads have to scan past. **Guardrail:** the
+  `release: bump to vX.Y.Z` commit MUST also `git mv` the SOW(s)
+  shipped in that release from `current/` → `done/` and fill their
+  Validation / Outcome / Lessons sections in the same commit. Ship
+  and close are one atomic step — never two. If a SOW spans multiple
+  releases, only close it on the release that ships its final chunk.
