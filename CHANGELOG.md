@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (v1.2 work tracked in DEC-016 through DEC-023 and GitHub issues.)
 
+## [1.3.3] - 2026-04-29
+
+DEC-034 — Send split-button chevron always mounted; raw-mode dropdown gains Format JSON + Reset to template.
+
+### Fixed
+
+- **Send chevron no longer disappears when switching from form to
+  raw mode.** The chevron Menu was conditionally rendered behind
+  `canSendForm = mode === 'form' && formSchema !== null`, so the
+  Send button reshaped (right corners went from flat to rounded)
+  and lost its dropdown affordance on every form→raw toggle.
+  Chevron is now mounted unconditionally; Send button is always
+  flat-right. No more visual jump.
+
+### Added
+
+- **Raw-mode dropdown items.** "Format JSON" runs `JSON.parse` then
+  re-stringifies pretty (2-space indent), replacing the editor's
+  text in place. Disabled when the editor doesn't currently parse
+  as JSON, so a parse failure can't corrupt the user's text.
+  "Reset to template" re-fills the editor with the canonical
+  `tools/call` envelope for the selected tool — single-sourced
+  with the initial form→raw seed via the existing `template`
+  useMemo.
+
+### Internal
+
+- DEC-034 records the always-mount choice and the falsifier.
+
 ## [1.3.2] - 2026-04-28
 
 DEC-033 — catalog `instructions` + `instructions_url` fields; Netdata Cloud and Netdata Agent entries.
