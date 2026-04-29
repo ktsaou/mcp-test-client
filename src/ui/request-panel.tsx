@@ -380,6 +380,40 @@ export function RequestPanel() {
 
   const canSendForm = mode === 'form' && formSchema !== null;
 
+  // DEC-034 — derived gates for the raw-mode chevron items. Format is
+  // disabled when the editor doesn't currently parse as JSON (parse
+  // failure surfaces via the disabled state instead of corrupting the
+  // user's text). Reset is only meaningful for tool selections, where
+  // `template` is the canonical tools/call envelope.
+  const canFormatRawJson = useMemo(() => {
+    if (mode !== 'raw') return false;
+    if (text.trim().length === 0) return false;
+    try {
+      JSON.parse(text);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [mode, text]);
+  const canResetRawTemplate =
+    mode === 'raw' && selection !== null && selection.kind === 'tools' && template.length > 0;
+
+  function formatRawJson() {
+    try {
+      const parsed: unknown = JSON.parse(text);
+      setText(JSON.stringify(parsed, null, 2));
+    } catch {
+      // canFormatRawJson gates the menu item; the catch is a belt-and-
+      // braces guard that preserves the user's text on the rare race
+      // where the parse succeeded for the gate then failed here.
+    }
+  }
+
+  function resetRawTemplate() {
+    if (template.length === 0) return;
+    setText(template);
+  }
+
   // DEC-019: form-mode validation gate. When the form value doesn't
   // match the tool's inputSchema, block the default Send action and
   // surface the failure count on the button. The bypass is the
@@ -538,54 +572,82 @@ export function RequestPanel() {
                 loading={sending}
                 style={{
                   minWidth: 64,
-                  borderTopRightRadius: canSendForm ? 0 : undefined,
-                  borderBottomRightRadius: canSendForm ? 0 : undefined,
+                  // DEC-034 — chevron is always mounted alongside Send,
+                  // so the button is always flat-right. Removes the
+                  // form↔raw shape jump.
+                  borderTopRightRadius: 0,
+                  borderBottomRightRadius: 0,
                 }}
               >
                 Send
               </Button>
             </Box>
           </Tooltip>
-          {canSendForm ? (
-            <Menu position="bottom-end" withinPortal trigger="click">
-              <Menu.Target>
-                {/*
-                 * Pixel-pin the chevron to the Button-size-sm height
-                 * (36 px in Mantine v9 — see --button-height-sm).
-                 * ActionIcon's "lg" preset is 34 px, which left a 1 px
-                 * top/bottom mismatch against the adjacent Send button.
-                 */}
-                <ActionIcon
-                  size={36}
-                  variant="filled"
-                  color="cyan"
-                  disabled={disabledByConn}
-                  aria-label="More send options"
-                  style={{
-                    flexShrink: 0,
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
-                    borderLeft: '1px solid rgba(255,255,255,0.18)',
-                  }}
-                >
-                  ▾
-                </ActionIcon>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item
-                  onClick={() => {
-                    void sendFormCall({ skipValidation: true });
-                  }}
-                  disabled={disabledByConn}
-                >
-                  Send without validation
-                </Menu.Item>
-                <Menu.Item disabled style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
-                  Bypass the input-schema check for this send only
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          ) : null}
+          {/*
+            DEC-034 — chevron is always mounted (form AND raw). The
+            Send button never reshapes on mode toggle; the dropdown
+            switches its items based on the current mode. Form mode
+            keeps DEC-019's "Send without validation"; raw mode hosts
+            the editor-side affordances ("Format JSON", "Reset to
+            template") that have no meaning in form mode.
+          */}
+          <Menu position="bottom-end" withinPortal trigger="click">
+            <Menu.Target>
+              {/*
+               * Pixel-pin the chevron to the Button-size-sm height
+               * (36 px in Mantine v9 — see --button-height-sm).
+               * ActionIcon's "lg" preset is 34 px, which left a 1 px
+               * top/bottom mismatch against the adjacent Send button.
+               */}
+              <ActionIcon
+                size={36}
+                variant="filled"
+                color="cyan"
+                disabled={disabledByConn}
+                aria-label="More send options"
+                style={{
+                  flexShrink: 0,
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0,
+                  borderLeft: '1px solid rgba(255,255,255,0.18)',
+                }}
+              >
+                ▾
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {mode === 'raw' ? (
+                <>
+                  <Menu.Item onClick={formatRawJson} disabled={disabledByConn || !canFormatRawJson}>
+                    Format JSON
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={resetRawTemplate}
+                    disabled={disabledByConn || !canResetRawTemplate}
+                  >
+                    Reset to template
+                  </Menu.Item>
+                  <Menu.Item disabled style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    Reformat or restore the raw JSON-RPC envelope
+                  </Menu.Item>
+                </>
+              ) : (
+                <>
+                  <Menu.Item
+                    onClick={() => {
+                      void sendFormCall({ skipValidation: true });
+                    }}
+                    disabled={disabledByConn}
+                  >
+                    Send without validation
+                  </Menu.Item>
+                  <Menu.Item disabled style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    Bypass the input-schema check for this send only
+                  </Menu.Item>
+                </>
+              )}
+            </Menu.Dropdown>
+          </Menu>
         </Group>
       </Group>
 
