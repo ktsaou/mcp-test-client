@@ -40,3 +40,9 @@ Thumbs.db
 *.tgz
 .cache/
 .playwright-mcp/
+
+# Scratch outputs from sessions (UX-critic evidence, headless snapshots,
+# advisor JSON dumps, ad-hoc fixtures). See AGENTS.md "Working files and
+# scratch outputs" — gitignored as a directory; do NOT add per-pattern
+# rules for individual scratch artefacts.
+tmp/
