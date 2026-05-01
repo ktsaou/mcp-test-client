@@ -7,7 +7,16 @@ legacy/
 package-lock.json
 *.min.js
 
-# UX-critic scratch outputs (root-level snapshot dumps from advisor runs)
+# Shell scripts and pre-bootstrap backups — prettier has no parser for them.
+*.sh
+*.bak
+
+# Scratch outputs (the in-repo tmp/ tree is gitignored; this is belt-and-
+# braces so prettier doesn't trip if anything lands outside tmp/).
+tmp/
+
+# Legacy: root-level snapshot dumps from past advisor runs (kept for the
+# files moved into tmp/ before tmp/ existed).
 /snap*.yml
 /snap*.yaml
 /snap*.md

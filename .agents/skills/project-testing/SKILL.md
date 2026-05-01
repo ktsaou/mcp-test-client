@@ -189,8 +189,8 @@ GH Pages workflow status before claiming "shipped".
 - **Every new behaviour**: a unit test or e2e step (or both, if the
   visible surface matters).
 - **Every regression**: a regression test BEFORE the fix; it must fail
-  on the pre-fix tree and pass after the fix. The SOW regression flow
-  in `~/.agents/skills/sow/SKILL.md` (Regressions section) requires this.
+  on the pre-fix tree and pass after the fix. The project-local SOW
+  regression flow in `AGENTS.md` requires this.
 - **Every DEC with a named falsifier**: an e2e or unit test that
   exercises that falsifier where automatable. `log-row-alignment.spec.ts`
   is the model — the DEC's falsifier becomes the test's assertion

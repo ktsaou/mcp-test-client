@@ -50,7 +50,7 @@ Pointer summary; for the full recipe + canonical prompt template, see [`./ux-rev
 
 ## When to escalate to cross-model review
 
-Per DEC-000 working framework + `~/.agents/skills/sow/SKILL.md` (Validation rules — when to escalate to cross-model review):
+Per DEC-000 working framework and this project's `AGENTS.md` validation rules, escalate to cross-model review when:
 
 - Chunk risk medium/high (visible surface, security, billing, data integrity)
 - Diff > 500 lines or > 10 files
